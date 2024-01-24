@@ -1,0 +1,89 @@
+* C:\Users\eddy.a\Downloads\Mixer with LT Spice\D1288_RX_Channel_TEST.asc
+Lrx1 N001 sig {Lplc} Rser={R_Lser} Rpar={R_Lpar}
+Lrx comm- comm+ {Lplc} Rser={R_Lser} Rpar={R_Lpar}
+V3 sig N001 PWL file=Arc_TX1RX1.csv
+R1 comm- 0 1G
+R2 N001 0 1m
+V4 MIX_PWM 0 PULSE({mix_off} {mix_on} {mix_delay} {mix_Tedge} {mix_Tedge} {mix_Ton} {mix_Tp})
+R4 OUT 0 100k
+XX1 comm+ comm- 0 MIX_PWM OUT plc_rx_channel_d1288
+
+* block symbol definitions
+.subckt plc_rx_channel_d1288 comm+ comm- RX_GND MIX_PWM RX_OUT
+V1 VREF_LOW RX_GND 1.25
+V5 3V3 RX_GND 3.3
+R3 comm+ comm- 49.9
+R4 N007 comm+ 10k
+R5 N017 comm- 10k
+R6 comm+ comm- 100
+R7 RXMix_DIFF N017 10k
+C1 RXMix_DIFF N017 120p
+R8 N007 VREF 10k
+C2 VREF N007 120p
+R9 N010 RXMix_DIFF 649
+R10 N016 N010 649
+C3 RX_MIX N010 3.9n
+C4 N016 VREF 1n
+R11 E MIX_PWM 49.9
+R12 RX_GND E 10k
+XX1 E RX_GND S N022 analog_switch
+R13 VREF S 1m
+R14 N005 RX_MIX 10k
+R15 N019 RX_MIX 10k
+R16 N022 N019 1m
+R17 N006 N005 10k
+C5 N006 N005 4.7p
+R18 N012 N006 84.5k
+R19 N018 N012 84.5k
+C6 N018 RX_GND 330p
+C7 N013 N012 680p
+R20 N014 N013 19.6k
+R21 N020 N014 21k
+C8 N020 RX_GND 150p
+R24 N011 N008 24.9k
+R22 N021 N011 4.99k
+R23 N003 RX_OUT 24.9k
+C10 RX_OUT N003 10p
+R25 N009 N003 4.99k
+R26 VREF_LOW N009 4.99k
+R1 VREF N021 4.99k
+V2 5V0 RX_GND 5
+R2 5V0 N023 20k
+R27 N023 RX_GND 20k
+C12 N023 RX_GND 100n
+D1 N007 5V0 1N4148
+D2 N017 5V0 1N4148
+D3 RX_GND N007 1N4148
+D4 RX_GND N017 1N4148
+R28 N021 N015 1m
+XU1 N007 N017 5V0 RX_GND RXMix_DIFF AD8691
+XU2 N016 RX_MIX 5V0 RX_GND RX_MIX AD8691
+XU3 N023 VREF 5V0 RX_GND VREF AD8691
+XU4 N019 N005 5V0 RX_GND N006 AD8691
+XU5 N018 N013 5V0 RX_GND N013 AD8691
+XU6 N020 N015 5V0 RX_GND N015 AD8691
+XU7 VREF N011 5V0 RX_GND N008 AD8691
+XU8 N001 N004 3V3 RX_GND N002 AD8691
+C11 N009 N008 1µ V=16 Irms=2.59 Rser=0.0171188 Lser=0 mfg="KEMET" pn="C0603C105K4RAC" type="X7R"
+C9 N015 N014 6.8n V=50 Irms=247m Rser=0.759039 Lser=0 mfg="KEMET" pn="C0603C103K5RAC" type="X7R"
+R29 N001 VREF_LOW 1m
+R30 N004 N003 1m
+R31 RX_OUT N002 1m
+C13 E RX_GND 100p
+.ends plc_rx_channel_d1288
+
+.subckt analog_switch E GND S D
+S1 S D E GND MIX_SW
+.model MIX_SW SW(Ron=10 Roff=10G Vt=1.65 Vh=-1 Lser=0 Vser=0)
+.ends analog_switch
+
+.model D D
+.lib C:\Users\eddy.a\Documents\LTspiceXVII\lib\cmp\standard.dio
+.tran 0 10 0
+.inc RX_Params-JupiterPlus.txt
+.param k=1
+K11 Lrx1 Lrx {k}
+.inc RX_Sweeps.txt
+.lib ADI.lib
+.backanno
+.end

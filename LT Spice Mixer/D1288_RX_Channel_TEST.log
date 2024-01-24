@@ -1,0 +1,193 @@
+Circuit: * C:\Users\eddy.a\Downloads\Mixer with LT Spice\D1288_RX_Channel_TEST.asc
+
+V3: Removing PWL point (8.29823,0.0376094)
+Early termination of direct N-R iteration.
+Direct Newton iteration failed to find .op point.  (Use ".option noopiter" to skip.)
+Starting Gmin stepping
+Gmin = 10
+Gmin = 1.07374
+Gmin = 0.115292
+Gmin = 0.0123794
+Gmin = 0.00132923
+vernier = 0.5
+vernier = 0.25
+vernier = 0.125
+vernier = 0.0625
+vernier = 0.03125
+vernier = 0.015625
+vernier = 0.0078125
+vernier = 0.00390625
+Gmin = 0.00106338
+vernier = 0.00195313
+vernier = 0.000976563
+vernier = 0.000488281
+Gmin = 0
+Gmin stepping failed
+
+Starting source stepping with srcstepmethod=0
+Source Step = 3.0303%
+Source Step = 33.3333%
+Source Step = 39.4028%
+Source Step = 39.4324%
+Source Step = 39.462%
+Source Step = 39.4916%
+Source Step = 39.5212%
+Source Step = 39.5508%
+vernier = 0.00146484
+Source Step = 39.5922%
+Source Step = 39.6366%
+Source Step = 39.681%
+Source Step = 39.7254%
+Source Step = 39.7698%
+vernier = 0.00219727
+Source Step = 39.8297%
+Source Step = 39.8963%
+Source Step = 39.9629%
+Source Step = 40.0294%
+Source Step = 40.096%
+vernier = 0.0032959
+Source Step = 40.1826%
+Source Step = 40.2825%
+Source Step = 40.3823%
+Source Step = 40.4822%
+Source Step = 40.5821%
+vernier = 0.00494385
+Source Step = 40.7069%
+Source Step = 40.8567%
+Source Step = 41.0066%
+Source Step = 41.1564%
+Source Step = 41.3062%
+vernier = 0.00741577
+Source Step = 41.486%
+Source Step = 41.7107%
+Source Step = 41.9354%
+Source Step = 42.1601%
+Source Step = 42.3848%
+vernier = 0.0111237
+Source Step = 42.6433%
+Source Step = 42.9804%
+Source Step = 43.3174%
+Source Step = 43.6545%
+Source Step = 43.9916%
+vernier = 0.0166855
+Source Step = 44.3624%
+Source Step = 44.868%
+Source Step = 45.3736%
+Source Step = 45.8792%
+Source Step = 46.3849%
+vernier = 0.0250282
+Source Step = 46.9158%
+Source Step = 47.6742%
+Source Step = 48.4326%
+Source Step = 49.1911%
+Source Step = 49.9495%
+Source Step = 50.7079%
+vernier = 0.0375423
+Source Step = 51.8456%
+Source Step = 52.9832%
+Source Step = 54.1209%
+Source Step = 55.2585%
+Source Step = 56.3962%
+vernier = 0.0563135
+Source Step = 58.0457%
+Source Step = 59.7522%
+Source Step = 61.4587%
+Source Step = 63.1652%
+Source Step = 64.8716%
+vernier = 0.0844703
+Source Step = 67.2607%
+Source Step = 69.8204%
+Source Step = 72.3801%
+Source Step = 74.9398%
+Source Step = 77.4995%
+vernier = 0.126705
+Source Step = 80.9551%
+Source Step = 84.7947%
+Source Step = 88.6342%
+Source Step = 92.4738%
+Source Step = 96.3133%
+vernier = 0.190058
+Source Step = 100%
+Source stepping succeeded in finding the operating point.
+
+
+
+Measurement "vin" FAIL'ed
+
+Measurement "vsup" FAIL'ed
+
+Measurement "iin_rms" FAIL'ed
+
+Measurement "iin_max" FAIL'ed
+
+Measurement "vplc_avg" FAIL'ed
+
+Measurement "vplc_min" FAIL'ed
+
+Measurement "vplc_max" FAIL'ed
+
+Measurement "vplc_pkpk" FAIL'ed
+
+Measurement "vplc_rms" FAIL'ed
+
+Measurement "vout_avg" FAIL'ed
+
+Measurement "vout_min" FAIL'ed
+
+Measurement "vout_max" FAIL'ed
+
+Measurement "vout_pkpk" FAIL'ed
+
+Measurement "vout_rms" FAIL'ed
+
+Measurement "iout_rms" FAIL'ed
+
+Measurement "iout_pkpk" FAIL'ed
+
+Measurement "iout_max" FAIL'ed
+
+Measurement "iout_min" FAIL'ed
+
+Measurement "i_rplc_rms" FAIL'ed
+
+Measurement "i_rplc_pkpk" FAIL'ed
+
+Measurement "i_rplc_max" FAIL'ed
+
+Measurement "i_lplc_rms" FAIL'ed
+
+Measurement "i_lplc_pkpk" FAIL'ed
+
+Measurement "i_lplc_max" FAIL'ed
+
+Measurement "p_rldo" FAIL'ed
+
+Measurement "p_ldo" FAIL'ed
+
+Measurement "p_rplc" FAIL'ed
+
+Measurement "pin" FAIL'ed
+
+Measurement "pout" FAIL'ed
+
+Measurement "efficiency" FAIL'ed
+
+
+Date: Mon Jan 10 04:39:22 2022
+Total elapsed time: 20213.151 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 676329234
+traniter = 676324150
+tranpoints = 292607565
+accept = 240844710
+rejected = 51762855
+matrix size = 192
+fillins = 696
+solver = Normal
+Thread vector: 21.7/11.2[4] 5.0/4.1[4] 4.4/2.9[4] 0.9/1.5[1]  2592/500
+Matrix Compiler1: 82.21 KB object code size  13.7/7.0/[3.2]
+Matrix Compiler2: 28.77 KB object code size  3.3/3.5/[1.1]
+

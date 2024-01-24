@@ -1,0 +1,115 @@
+;;########### PLC ############
+.param Vcc=3.3;
+.param Vphase=0;
+.param Rldo=1m
+
+;;########### PLC RX Signal ############
+.param sig_amp 	 = 50m
+.param sig_freq  = 75k;
+.param sig_DC 	 = 0;
+.param sig_phase = 10;
+; .param sig_delay = 2.3722006u;
+.param sig_delay = 500n;
+
+;;########### Mixer PWM Signal ############
+.param mix_off 	 = 0;
+.param mix_on 	 = 3.3;
+; .p;a;r;a;m mix_freq  = sig_freq-1.5k;
+.param mix_freq  = 110k;
+.param mix_D 	 = 0.5; %
+.param mix_Tp 	 = 1/mix_freq;
+.param mix_Ton 	 = mix_Tp*mix_D;
+.param mix_Tedge = 100n;
+.param rand_phi  = flat(1)*mix_Ton
+.param mix_delay = mix_Ton+rand_phi;
+
+.param LO_phase_freq = 100
+
+
+;;########### PLC Resonance ############
+.param Lplc=9u
+.param R_Lser=200m
+.param R_Lpar=40
+
+; .param Cplc=1.49u
+; .param Rplc=21.1
+
+
+;;########### Filter ############
+; .param Lf=15u
+; .param Cf=0.3u
+; .param Rf=100m
+; .param R_DSON=0.05
+
+.param Rfield=1Meg
+
+;;==================================================================================
+;;------------------ Time Params ----------------------
+.param Tend=10m
+.param Tmeas=1m
+.param t1=Tend-(Tmeas*1.1)
+.param t2=Tend-(Tmeas*0.1)
+;;------------------ Measurments ----------------------
+;;~~~~~~~~~~~ Input Voltages ~~~~~~~~~~~~~~~~
+.meas TRAN Vin RMS V(Vcc) from t1 to t2
+.meas TRAN Vsup RMS V(Vsup) from t1 to t2
+
+;;~~~~~~~~~~~ Input Currents ~~~~~~~~~~~~~~~~
+.meas TRAN Iin_RMS RMS I(Lvin) from t1 to t2
+.meas TRAN Iin_max MAX I(Lvin) from t1 to t2
+
+;;~~~~~~~~~~~ Output Voltage ~~~~~~~~~~~~~~~~
+.meas TRAN Vplc_avg avg V(Vplc,Vsup) from t1 to t2
+.meas TRAN Vplc_min min V(Vplc,Vsup) from t1 to t2
+.meas TRAN Vplc_max max V(Vplc,Vsup) from t1 to t2
+.meas TRAN Vplc_pkpk PP V(Vplc,Vsup) from t1 to t2
+.meas TRAN Vplc_RMS RMS V(Vplc,Vsup) from t1 to t2
+
+.meas TRAN Vout_avg avg V(Vplc+,Vplc-) from t1 to t2
+.meas TRAN Vout_min min V(Vplc+,Vplc-) from t1 to t2
+.meas TRAN Vout_max max V(Vplc+,Vplc-) from t1 to t2
+.meas TRAN Vout_pkpk PP V(Vplc,Vsup) from t1 to t2
+.meas TRAN Vout_RMS RMS V(Vplc,Vsup) from t1 to t2
+
+;; ~~~~~~~~~~~ Output Current ~~~~~~~~~~~~~~~~
+.meas TRAN Iout_RMS RMS I(Lf) from t1 to t2
+.meas TRAN Iout_pkpk PP I(Lf) from t1 to t2
+.meas TRAN Iout_max MAX I(Lf) from t1 to t2
+.meas TRAN Iout_min MIN I(Lf) from t1 to t2
+
+;; ~~~~~~~~~~~ Rplc Current ~~~~~~~~~~~~~~~~
+.meas TRAN I_Rplc_RMS RMS I(Rplc) from t1 to t2
+.meas TRAN I_Rplc_pkpk PP I(Rplc) from t1 to t2
+.meas TRAN I_Rplc_max MAX I(Rplc) from t1 to t2
+
+;; ~~~~~~~~~~~ Lplc Current ~~~~~~~~~~~~~~~~
+.meas TRAN I_Lplc_RMS RMS I(Lplc) from t1 to t2
+.meas TRAN I_Lplc_pkpk PP I(Lplc) from t1 to t2
+.meas TRAN I_Lplc_max MAX I(Lplc) from t1 to t2
+
+;; ~~~~~~~~~~~ Power Calculations ~~~~~~~~~~~~~~~~
+.meas TRAN P_Rldo param (Iin_RMS**2)*Rldo
+.meas TRAN P_ldo param (Vin-Vsup)*Iin_RMS
+.meas TRAN P_Rplc param I_Rplc_RMS*Vplc_RMS
+.meas TRAN Pin param Iin_RMS*Vin
+;.meas TRAN Pout param P_Rplc + (((Iout_RMS)**2)*Rf)
+.meas TRAN Pout param (Vout_RMS**2)/Rfield
+.meas TRAN Efficiency param Pout/Pin
+
+;;------------------ Freq Params ----------------------
+.param fw1=50k
+.param fw2=90k
+;;------------------ Measurments ----------------------
+;; ~~~~~~~~~~~ Input Voltages ~~~~~~~~~~~~~~~~
+.meas AC tmp1 MAX mag(V(Vplc)) from fw1 to fw2
+.meas AC TX_fpeak when mag(V(Vplc))=tmp1*0.999999 cross=last
+.meas AC TX_Gain AVG (mag(V(Vplc))/mag(v(in))) from TX_fpeak*0.99999 to TX_fpeak*1.00001
+.meas AC TX_BW trig mag(V(Vplc))=tmp1/sqrt(2) rise=last targ mag(V(Vplc))=tmp1/sqrt(2) fall=last
+
+.meas AC tmp2 MAX mag(V(zp)) from fw1 to fw2
+.meas AC RX_fpeak when mag(V(zp))=tmp2 cross=last
+.meas AC RX_fpeak_Gain AVG (mag(V(zp))/1v) from RX_fpeak*0.99999 to RX_fpeak*1.00001
+.meas AC RX_BW trig mag(V(zp))=tmp2/sqrt(2) rise=last targ mag(V(zp))=tmp2/sqrt(2) fall=last
+
+.SAVE V(out)
+

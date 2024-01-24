@@ -1,0 +1,22 @@
+;----- Parametric Sweeps -------
+
+; .step param Vcc list 0.5 0.6 0.7 0.8 0.9 1 1.25 1.5 1.75 2
+
+;.step param Vsup list 3.968 10.9327
+;.step param freq list 55k 60k 65k
+; .step param amp list 0.5 1 1.65
+
+;.step param Rsource list 1 2 5
+
+
+; .step param sig_amp list 0.5 0.55 0.56 0.6
+; .step param sig_phase list 0 20
+
+
+; .step param LO_phase_freq list 4 40
+; .step param Vphase list 0.265 0.765
+
+;.step param LO_phase_freq list 4 40
+
+; .step param mix_freq list 59k 60k
+; .step param mix_delay list 0 1u 2u 8u

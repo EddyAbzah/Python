@@ -1,0 +1,5 @@
+CMD:
+auto-py-to-exe
+
+Path:
+C:\Users\eddy.a\AppData\Local\Programs\Python\Python312\Scripts
