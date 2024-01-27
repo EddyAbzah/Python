@@ -11,7 +11,6 @@ if os.getlogin() == "eddy.a":
 
 conversion = {'volt_rms': lambda n: (10 ** (n / 20)) / (2 * math.sqrt(2)),
               'dbm': lambda n: 10 * math.log10((n ** 2) / 0.05),
-              'mana': lambda n: n + 100,
               'log': lambda n: log(n)}
 cut_all_plots = [True, 0, 10e6]
 
