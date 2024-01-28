@@ -13,8 +13,8 @@ cut_all_plots = [True, 0, 10e6]
 df = pd.DataFrame()
 file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\Bode Impedance.csv"
 df = pd.concat([df, Bode_to_DF.get_df(file_path, apply_log=True).rename(lambda title: 'Impedance ' + title, axis='columns')])
-file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\Bode Transmission.csv"
-df = pd.concat([df, Bode_to_DF.get_df(file_path).rename(lambda title: 'Transmission ' + title, axis='columns')])
+# file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\Bode Transmission.csv"
+# df = pd.concat([df, Bode_to_DF.get_df(file_path).rename(lambda title: 'Transmission ' + title, axis='columns')])
 
 # LTspice_to_DF:
 file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\LTspice Diff.txt"

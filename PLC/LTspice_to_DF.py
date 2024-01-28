@@ -9,24 +9,27 @@ if os.getlogin() == "eddy.a":
     import Plot_Graphs_with_Sliders as _G
     import my_tools
 
-conversion = {'volt_rms': lambda n: (10 ** (n / 20)) / (2 * math.sqrt(2)),
-              'dbm': lambda n: 10 * math.log10((n ** 2) / 0.05),
-              'log': lambda n: log(n)}
+conversion = {'volt_rms': lambda n1, n2: (10 ** (n1 / 20)) / (2 * math.sqrt(2)),
+              'dbm': lambda n1, n2: 10 * math.log10((n1 ** 2) / 0.05),
+              'log': lambda n1, n2: log(n1),
+              'add': lambda n1, n2: n1 + n2,
+              'mul': lambda n1, n2: n1 * n2}
 cut_all_plots = [True, 0, 10e6]
 
 
-def get_df(path, traces=['Magnitude'], apply_map='off'):
+def get_df(path, traces=['Magnitude'], apply_map='off', map_coefficient=None):
     """
     Get a CSV exported from LTspice, and return a pandas DataFrame.
     Real and imaginary parts will be separated and prefixed with "Magnitude" and "Phase".
     Args:
         path: String - Full file path with extension.
         traces: List of strings - traces (data) to be returned; default = ['Magnitude'].
-        apply_map: String - choose to convert the values to "volt_rms", "dbm", or "log"; default = 'off'.
+        apply_map: String - choose to convert the values to "volt_rms", "dbm", "log", "add", or "mul"; default = 'off'.
+        map_coefficient: number - choose the number for the "add" (addition) or "mul" (multiply) functions; default = None.
     Returns:
         df_full (pandas DataFrame).
     """
-    print(f'LTspice_to_DF.get_df: {path = }, {traces = }, {apply_map = }')
+    print(f'LTspice_to_DF.get_df: {path = }, {traces = }, {apply_map = }, {map_coefficient = }')
     with open(path, 'r') as file:
         file = file.read()
         full_title = file.split('\n')[0].replace('Freq.', 'Frequency (Hz)').replace(',', ':').split('\t')
@@ -37,20 +40,21 @@ def get_df(path, traces=['Magnitude'], apply_map='off'):
         if traces is not None and len(traces) > 0:
             df = df[[col for col in df.columns if any([ts in col for ts in traces])]]
         if apply_map is not None and apply_map in conversion:
-            df = df.apply(conversion[apply_map])
+            df = df.apply(lambda n: conversion[apply_map](n, map_coefficient))
     return df
 
 
 if __name__ == "__main__":
-    file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\LTspice Diff.txt"
+    folder = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\\"
+    file_path = folder + "LTspice Diff.txt"
     df1 = get_df(file_path)
     df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\LTspice DC+.txt"
+    file_path = folder + "LTspice DC+.txt"
     df2 = get_df(file_path)
     df2.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\LTspice DC-.txt"
+    file_path = folder + "LTspice DC-.txt"
     df3 = get_df(file_path)
     df3.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
