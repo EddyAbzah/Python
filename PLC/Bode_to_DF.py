@@ -43,21 +43,21 @@ def get_df(path, traces=['Magnitude'], trace_sep='\n\n', apply_log=False):
 
 
 if __name__ == "__main__":
-    file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\Bode Impedance.csv"
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\LTspice vs Bode\\"
+    file_path = folder + "Bode Impedance.csv"
     df1 = get_df(file_path, apply_log=True)
     df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    file_path = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\Bode Transmission.csv"
+    file_path = folder + "Bode Transmission.csv"
     df2 = get_df(file_path)
     df2.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    file_path = file_path[:file_path.rfind('\\')]
     df1.rename(lambda title: 'Impedance ' + title, axis='columns', inplace=True)
     df2.rename(lambda title: 'Transmission ' + title, axis='columns', inplace=True)
     df_all = pd.concat([df1, df2])
     if cut_all_plots[0]:
         df_all = df_all[df_all.index > cut_all_plots[1]]
         df_all = df_all[df_all.index < cut_all_plots[2]]
-    df_all.to_csv(file_path + '\\Bode - all measurements.csv')
-    df_all.sort_index().to_csv(file_path + '\\Bode - all measurements (sorted).csv')
-    Library_Functions.print_chrome(df_all, file_path, 'Bode - all measurements')
+    df_all.to_csv(folder + 'Bode - all measurements.csv')
+    df_all.sort_index().to_csv(folder + 'Bode - all measurements (sorted).csv')
+    Library_Functions.print_chrome(df_all, folder, 'Bode - all measurements')

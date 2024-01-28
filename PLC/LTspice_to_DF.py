@@ -45,7 +45,7 @@ def get_df(path, traces=['Magnitude'], apply_map='off', map_coefficient=None):
 
 
 if __name__ == "__main__":
-    folder = r"C:\Users\eddy.a\Downloads\Jupiter48\LTspice vs Bode\\"
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\LTspice vs Bode\\"
     file_path = folder + "LTspice Diff.txt"
     df1 = get_df(file_path)
     df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
