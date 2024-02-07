@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 
-path_folder = r'M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\PLC 30_01_24 19_13'
+path_folder = r'M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted - EddyA 2.2024\Cable Automation\Cable Automation 05'
 path_file_out = 'Jup48 New DC Filter'
 df = pd.read_csv(f'{path_folder}\\{path_file_out}.csv')
 scenarios = [s for s in df.iloc[:, :10].fillna('off').astype(str).agg(', '.join, axis=1).unique()]
@@ -10,6 +10,7 @@ data_points = df['Measurement'].unique()
 
 set_yaxis_range = [False, 0, 45]
 set_summary_traces = [True, 4]
+remove_nans_from_plot = True
 
 
 sex = [pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]
@@ -29,15 +30,19 @@ for scenario_index, scenario in enumerate(scenarios):
         sex[data_point_index] = pd.concat([sex[data_point_index], sdf], axis=0)
         for row in sdf.iterrows():
             line_dict = None
+            plot_name = f'{data_point} - {row[1][0]}'
             if set_summary_traces[0] and 'Sample' not in row[1][0]:
                 line_dict = dict(width=set_summary_traces[1])
-            fig.add_trace(go.Scatter(visible=(scenario_index == 0 and data_point_index == 0), name=f'{data_point} - {row[1][0]}',
-                                     y=list(row[1])[1:], x=row[1].keys()[1:], line=line_dict))
+            if remove_nans_from_plot:
+                row = row[1].dropna()[1:]
+            else:
+                row = row[1][1:]
+            fig.add_trace(go.Scatter(visible=(scenario_index == 0 and data_point_index == 0), name=plot_name, y=list(row), x=row.keys(), line=line_dict,
+                          hovertemplate=f'{scenario}<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'))
             if set_yaxis_range[0]:
                 fig.update_layout(yaxis_range=[set_yaxis_range[1], set_yaxis_range[2]])
     plot_counter.append(plot_count)
 fig.update_layout(title=scenarios[0], title_font_color="#407294", title_font_size=30, legend_title="Traces:", legend_title_font_color="green")
-# hovertemplate=f'{scenario}<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>')
 
 
 steps = list()
