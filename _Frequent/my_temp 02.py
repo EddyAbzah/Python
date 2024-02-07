@@ -1,27 +1,66 @@
-import os
-import sys
-import glob
-import math
-import plotly
-import inspect
-import pathlib
-import smtplib
-import statistics
-import numpy as np
-import pandas as pd
-from enum import Enum
-from scipy import signal
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
-import Plot_Graphs_with_Sliders as _G
-import my_tools
+import numpy as np
+# generate data in DataFrame
 
-path_in = r"V:\HW_Infrastructure\Analog_Team\ARC_Data\Results\Jupiter\Jupiter+ Improved 2024 (7B0F73A7-A4)\Arc Full FAs 04 - AC side (02-01-2024)\Full FA Test 04 Rec095 spi 1[A] x1Str 10% Sag.txt"
-df = pd.read_csv(path_in).dropna(how='all', axis='columns')
-# df = my_tools.convert_df_counters(df)
-print(f'df.columns = {", ".join(list(df.columns))}')
-df.index = df.index / 16667
-print()
-# 'RXout','Vac1','Vac2','Iac1','IacRMS','Vdc'
+data = {
+    'x': [1, 2, 3, 4, 5],
+    'y_rssi_1': [50, 60, 70, 80, 90],
+    'y_snr_1': [1, 1, 1, 1, 1],
+    'y_rssi_2': [100, 200, 300, 400, 500],
+    'y_snr_2': [2, 2, 2, 2, 2],
+}
+# Create figure
+fig = go.Figure()
+# Add traces
+scenarios = ['y_rssi_1', 'y_rssi_2']
+for scenario in scenarios:
+    fig.add_trace(
+        go.Scatter(
+            visible=(scenario==scenarios[0]),
+            line=dict(color="#00ced1", width=6),
+            name=scenario,
+            x=data['x'],
+            y=data[scenario],
+            # customdata=np.array([data[scenario.replace('rssi', 'snr')]]*len(data['x'])),
+            hovertemplate=
+            'x: %{x}<br>' +
+            'y: %{y}<br>' +
+            'trace: %{name}<extra></extra>'
+        )
+    )
+# Create and add slider
+steps = [dict(method='restyle',
+              args=['visible', [i==j for i in range(len(scenarios))]],
+              label=scenarios[j]) for j in range(len(scenarios))]
+fig.update_layout(
+    sliders=[dict(
+        active=0,
+        pad={"t": 50},
+        steps=steps
+    )]
+)
+# Create and add button
+button_layer_1_height = 1.12
+fig.update_layout(
+    updatemenus=[
+        dict(buttons=list([
+            dict(label='Show snr',
+                 method='restyle',
+                 args=['y', [data[scenario.replace('rssi', 'snr')] for scenario in scenarios]]),
+            dict(label='Show rssi',
+                 method='restyle',
+                 args=['y', [data[scenario] for scenario in scenarios]])
+    ]),
+            direction="left",
+            pad={"r": 10, "t": 10},
+            showactive=True,
+            x=0.11,
+            xanchor="left",
+            y=button_layer_1_height,
+            yanchor="top"
+        ),
+    ],
+    title_text="Toggle y"
+)
+# Save figure
+fig.write_html("slider_and_button.html", auto_open=True)

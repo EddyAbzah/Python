@@ -11,7 +11,7 @@ if os.getlogin() == "eddy.a":
 # Bode_to_DF:
 cut_all_plots = [True, 0, 10e6]
 df = pd.DataFrame()
-folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\LTspice vs Bode\\"
+folder = r"M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted\Simulations\LTspice vs Bode\\"
 # file_path = folder + "Bode Impedance.csv"
 # df = pd.concat([df, Bode_to_DF.get_df(file_path, apply_log=True).rename(lambda title: 'Impedance ' + title, axis='columns')])
 file_path = folder + "Bode Transmission.csv"
@@ -29,4 +29,6 @@ df = pd.concat([df, LTspice_to_DF.get_df(file_path).rename(lambda title: 'DC- ' 
 if cut_all_plots[0]:
     df = df[df.index > cut_all_plots[1]]
     df = df[df.index < cut_all_plots[2]]
+Library_Functions.print_chrome(df, folder, 'Bode vs LTspice Linear - all measurements', scale='lin')
+Library_Functions.print_chrome(df, folder, 'Bode vs LTspice Logarithmic - all measurements', scale='log')
 Library_Functions.print_chrome(df, folder, 'Bode vs LTspice - all measurements')
