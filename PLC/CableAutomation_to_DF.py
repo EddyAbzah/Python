@@ -11,7 +11,7 @@ if os.getlogin() == "eddy.a":
     import my_tools
 
 
-drop_measurements = [True, -10, 100]
+drop_measurements = [False, -10, 100]
 
 def split_excel_scenarios(path, sheet_name='Measurement', scenario_name='Setup of OPT', filter_cells=('power', 'arc'), stop_cells=('inv_telem', 'opt_ka')):
     """
@@ -84,7 +84,7 @@ def excel_to_df(path, scenarios, sheet_name='Measurement', skip_table=('inv_tele
             sdf = pd.concat([pd.DataFrame({'Measurement': table_title}, index=df[start_index + 1:stop_index].index).join(df[start_index + 1:stop_index])], axis=0)
             sdf.columns = ['Measurement', 'Sample'] + ['OPT_' + ''.join([c for c in s if c.isdigit()]) for s in df.iloc[start_index, 1:]]
             if drop_measurements[0]:
-                sdf = sdf.map(lambda x: x if isinstance(x, str) or (drop_measurements[1] < x < drop_measurements[2]) else None)
+                sdf = sdf.map(lambda x: x if isinstance(x, str) or (drop_measurements[1] < x < drop_measurements[2]) else np.nan)
             sdf.reset_index(drop=True, inplace=True)
             all_dfs = pd.concat([all_dfs, pd.DataFrame({k: v for k, v in scenario.items() if 'index' not in k}, index=sdf.index).join(sdf)], axis=0)
         print()
@@ -93,7 +93,7 @@ def excel_to_df(path, scenarios, sheet_name='Measurement', skip_table=('inv_tele
 
 
 if __name__ == "__main__":
-    path_folder = r'M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\PLC 30_01_24 19_13'
+    path_folder = r'M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted - EddyA 2.2024\Cable Automation\Cable Automation 05'
     path_file_in = 'Jup48 New DC Filter.xlsx'
     path_file_out = 'Jup48 New DC Filter'
     scenarios = split_excel_scenarios(f'{path_folder}\\{path_file_in}')

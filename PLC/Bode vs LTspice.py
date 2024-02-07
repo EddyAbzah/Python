@@ -11,7 +11,7 @@ if os.getlogin() == "eddy.a":
 # Bode_to_DF:
 cut_all_plots = [True, 0, 10e6]
 df = pd.DataFrame()
-folder = r"M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted\Simulations\LTspice vs Bode\\"
+folder = r"M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted - EddyA 2.2024\Bode100 Measurements Vs LTspice\Temp\\"
 # file_path = folder + "Bode Impedance.csv"
 # df = pd.concat([df, Bode_to_DF.get_df(file_path, apply_log=True).rename(lambda title: 'Impedance ' + title, axis='columns')])
 file_path = folder + "Bode Transmission.csv"
