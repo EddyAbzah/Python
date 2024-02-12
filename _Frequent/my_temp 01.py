@@ -1,46 +1,45 @@
-import os
-import sys
-import glob
-import math
-import plotly
-import inspect
-import pathlib
-import smtplib
-import statistics
-import numpy as np
-import pandas as pd
-from enum import Enum
-from scipy import signal
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
-import Plot_Graphs_with_Sliders as _G
-import my_tools
-
-# ####   True   ###   False   #### #
-output_text = False
-if output_text:
-    default_stdout = sys.stdout
-    sys.stdout = open(r'C:\Users\eddy.a\Downloads\VDC\Terminal Log 01.txt', 'w')
-
-# df = pd.DataFrame()
-# mana = ['default S1+2+3', 'default S1+2', 'default S1', 'high S1', 'high S1+2', 'high S1+2+3', 'default S2', 'default S3']
-path_in = r"V:\HW_Infrastructure\Analog_Team\ARC_Data\Results\Jupiter\Jupiter+ Improved 2024 (7B0F73A7-A4)\Arc Full FAs 04 - AC side (02-01-2024)"
-files = glob.glob(f'{path_in}\\*spi*.txt')
-files.sort()
-for file in files:
-    df = pd.read_csv(file).dropna(how='all', axis='columns')
-    # df = my_tools.convert_df_counters(df)
-    print(f'df.columns = {", ".join(list(df.columns))}')
-    df.index = df.index / 16667
-    path_out = path_in + r'\RAW Plots'
-    for t, sub_p in zip(["RXout + Vdc", "Vac + Iac"], [["RXout", "Vdc"], ["Vac1", "Vac2", "Iac1"]]):
-        dff = df[sub_p]
-        name = "Rec" + file.split("Rec")[-1][:7] + " " + t + " - " + file.split("Str ")[-1][:-4]
-        _PC(dff, path=path_out, file_name=name, title=name, auto_open=False)
+from tkinter import ttk
+from tkinter import *
 
 
-if output_text:
-    sys.stdout.close()
-    sys.stdout = default_stdout
+class GameSettingsGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Game Settings")
+
+        self.list_number_of_players = [2, 2, 3, 4, 5]
+        self.list_board_matrix = [3, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.list_symbols_in_series_for_a_win = [3, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+        self.selected_players = IntVar(value=self.list_number_of_players[0])
+        self.selected_board_size = IntVar(value=self.list_board_matrix[0])
+        self.selected_symbols_for_win = IntVar(value=self.list_symbols_in_series_for_a_win[0])
+
+        label_players = ttk.Label(root, text="Number of Players:")
+        label_players.grid(row=0, column=0, padx=10, pady=10, sticky=W)
+        dropdown_players = ttk.OptionMenu(root, self.selected_players, *self.list_number_of_players)
+        dropdown_players.grid(row=0, column=1, padx=10, pady=10, sticky=W)
+
+        label_board_size = ttk.Label(root, text="Board Size:")
+        label_board_size.grid(row=1, column=0, padx=10, pady=10, sticky=W)
+        dropdown_board_size = ttk.OptionMenu(root, self.selected_board_size, *self.list_board_matrix)
+        dropdown_board_size.grid(row=1, column=1, padx=10, pady=10, sticky=W)
+
+        label_symbols_for_win = ttk.Label(root, text="Symbols in Series for a Win:")
+        label_symbols_for_win.grid(row=2, column=0, padx=10, pady=10, sticky=W)
+        dropdown_symbols_for_win = ttk.OptionMenu(root, self.selected_symbols_for_win, *self.list_symbols_in_series_for_a_win)
+        dropdown_symbols_for_win.grid(row=2, column=1, padx=10, pady=10, sticky=W)
+
+        button_submit = ttk.Button(root, text="Submit", command=self.get_selected_values)
+        button_submit.grid(row=3, column=0, columnspan=2, pady=10)
+
+    def get_selected_values(self):
+        print(f"Number of Players: {self.selected_players.get()}")
+        print(f"Board Size: {self.selected_board_size.get()}")
+        print(f"Symbols in Series for a Win: {self.selected_symbols_for_win.get()}")
+
+
+if __name__ == "__main__":
+    root = Tk()
+    app = GameSettingsGUI(root)
+    root.mainloop()

@@ -11,10 +11,10 @@ if os.getlogin() == "eddy.a":
 
 
 regex_pattern = '[^ ()a-zA-Z0-9,:%#_+°∞πΣµΩΩ±≥≤≈√²—-]'
-cut_all_plots = [True, 0, 10e6]
+cut_all_plots = [False, 0, 10e6]
 
 
-def get_df(path, traces=['Magnitude'], trace_sep='\n\n', apply_log=False):
+def get_df(path, traces=None, trace_sep='\n\n', apply_log=False):
     """
     Get a CSV exported from Bode, and return a pandas DataFrame.
     Args:
@@ -30,8 +30,10 @@ def get_df(path, traces=['Magnitude'], trace_sep='\n\n', apply_log=False):
     with open(path, 'r') as file:
         for i, sub_file in enumerate(file.read().split(trace_sep)):
             full_title = re.sub(regex_pattern, '', sub_file.split('\n')[0]).replace('Magnitude ()', 'Magnitude (Ω)')
-            if full_title is not None and full_title != '':
-                full_title = ','.join([full_title.split(',')[0].split(': ')[1]] + [b[0] + ' - ' + b[-1] for b in [a.split(': ') for a in full_title.split(',')[1:]]])
+            if full_title is not None and full_title != '' and full_title != 'Frequency (Hz)':
+                x_title = full_title.split(',')[0].split(': ')[1] if ':' in full_title.split(',')[0] else full_title.split(',')[0]
+                y_title = ' - '.join([s for s in full_title.split(',')[1].split(': ') if 'Trace' not in s])
+                full_title = x_title + ',' + y_title
                 print(f'trace number {i:00}: titles = {full_title}')
                 df = pd.read_csv(StringIO(full_title + sub_file[sub_file.find('\n'):]), index_col=0).dropna(how='all', axis='columns')
                 if traces is not None and len(traces) > 0:
@@ -43,21 +45,31 @@ def get_df(path, traces=['Magnitude'], trace_sep='\n\n', apply_log=False):
 
 
 if __name__ == "__main__":
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Jupiter48\LTspice vs Bode\\"
-    file_path = folder + "Bode Impedance.csv"
-    df1 = get_df(file_path, apply_log=True)
-    df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Bode measurements\\"
+    file_path = folder + "Room temperature.csv"
+    df1 = get_df(file_path, apply_log=False)
+    # df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    file_path = folder + "Bode Transmission.csv"
-    df2 = get_df(file_path)
-    df2.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements\\"
+    file_path = folder + "Oven measurements - thin wires.csv"
+    df2 = get_df(file_path, apply_log=False)
+    # df2.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    df1.rename(lambda title: 'Impedance ' + title, axis='columns', inplace=True)
-    df2.rename(lambda title: 'Transmission ' + title, axis='columns', inplace=True)
-    df_all = pd.concat([df1, df2])
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements\\"
+    file_path = folder + "Oven measurements - thick wires.csv"
+    df3 = get_df(file_path, apply_log=False)
+    # df3.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
+
+    df1.rename(lambda title: 'Room temperature ' + title, axis='columns', inplace=True)
+    df2.rename(lambda title: 'Oven thin wires ' + title, axis='columns', inplace=True)
+    df3.rename(lambda title: 'Oven thick wires  ' + title, axis='columns', inplace=True)
+    df_all = pd.concat([df1, df2, df3])
+    df_all.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
     if cut_all_plots[0]:
         df_all = df_all[df_all.index > cut_all_plots[1]]
         df_all = df_all[df_all.index < cut_all_plots[2]]
     df_all.to_csv(folder + 'Bode - all measurements.csv')
     df_all.sort_index().to_csv(folder + 'Bode - all measurements (sorted).csv')
-    Library_Functions.print_chrome(df_all, folder, 'Bode - all measurements')
+    Library_Functions.print_chrome(df_all, folder, 'Bode all measurements - Linear', scale='lin')
+    Library_Functions.print_chrome(df_all, folder, 'Bode all measurements - Logarithmic', scale='log')
+    Library_Functions.print_chrome(df_all, folder, 'Bode all measurements')
