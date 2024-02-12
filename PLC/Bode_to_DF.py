@@ -45,18 +45,18 @@ def get_df(path, traces=None, trace_sep='\n\n', apply_log=False):
 
 
 if __name__ == "__main__":
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Bode measurements\\"
-    file_path = folder + "Room temperature.csv"
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Bode measurements"
+    file_path = folder + "\\" + "Room temperature.csv"
     df1 = get_df(file_path, apply_log=False)
     # df1.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements\\"
-    file_path = folder + "Oven measurements - thin wires.csv"
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements"
+    file_path = folder + "\\" + "Oven measurements - thin wires.csv"
     df2 = get_df(file_path, apply_log=False)
     # df2.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements\\"
-    file_path = folder + "Oven measurements - thick wires.csv"
+    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\PushPull\Oven measurements"
+    file_path = folder + "\\" + "Oven measurements - thick wires.csv"
     df3 = get_df(file_path, apply_log=False)
     # df3.to_csv(file_path[:-4] + ' (Pivot)' + file_path[-4:])
 
