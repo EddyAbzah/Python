@@ -67,5 +67,5 @@ if __name__ == "__main__":
         df_all = df_all[df_all.index > cut_all_plots[1]]
         df_all = df_all[df_all.index < cut_all_plots[2]]
     df_all.to_csv(file_path + '\\LTspice - all measurements.csv')
-    df_all.sort_index().to_csv(file_path + "\\" + "LTspice - all measurements (sorted).csv')
+    df_all.sort_index().to_csv(file_path + "\\" + "LTspice - all measurements (sorted).csv")
     Library_Functions.print_chrome(df_all, file_path, 'LTspice - all measurements')
