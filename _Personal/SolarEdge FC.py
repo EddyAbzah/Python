@@ -15,13 +15,40 @@ list_of_players = {"Eddy A.": 9, "Yan O.": 7, "Omer Sh.": 7, "Shlomi A.": 6, "Ma
 # list_of_players = {"Eddy A.": 9, "Yan O.": 7, "Omer Sh.": 7, "Shlomi A.": 6, "Max K.": 6, "Elroee Sh.": 5, "Elad T.": 4, "Alon M.": 4, "Noam M.": 4, "Tal O.": 4, "Kobi S.": 4, "Amit N.": 4, "Ido G.": 4, "Sagie Q.": 4}
 
 
-
 # iteration_counter = 756756
 # time = 01:27:80.0000
 # yield
 # min_sum_ratio = (0.0, 0.4344039811047981)
 # min_sd_ratio = (4.358898943540674, 0.2696100478085411)
 # min_ratio = (0.0, 0.4344039811047981)
+
+class Player:
+    min_rating = 0
+    max_rating = 10
+
+    def __init__(self, name, rating):
+        self.name = name
+        self.rating = rating
+        self.played_with = {}
+        self.played_against = {}
+        self.performance = 0
+
+    def new_game(self, played_with, played_against, performance):
+        self.played_with.update(played_with)
+        self.played_against.update(played_against)
+        self.performance += performance
+
+    def calculate_new_rating(self, performance_weight):
+        temp_rating = self.rating + (self.performance * performance_weight)
+        if temp_rating > self.max_rating:
+            self.rating = self.max_rating
+        elif temp_rating < self.min_rating:
+            self.rating = self.min_rating
+        else:
+            self.rating = temp_rating
+
+    def get_player(self):
+        return self.name, self.rating
 
 
 def group_distribution(total_players):
@@ -36,7 +63,7 @@ def group_distribution(total_players):
 def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
     print(f'\nfind_close_sum_groups({len(players) = }, {group_sizes = }, {sum_pass = })')
     print(f'Number of possible combinations = {math.comb(sum(group_sizes), group_sizes[0]) * math.comb(sum(group_sizes[:2]), group_sizes[1]) * math.comb(group_sizes[1], group_sizes[2])}')
-    players = list(players.items())
+    players = [player.get_player() for player in players]
     random.shuffle(players)
     all_combinations = list(combinations(players, group_sizes[0]))
 
@@ -56,10 +83,10 @@ def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
                 group_2 = dict(group_2)
                 group_3 = dict(group_3)
                 if len(group_3) < len(group_2):
-                    group_3.update({"SEX": max(*group_1.values(), *group_2.values())})
+                    group_3.update({"MANA": max(*group_1.values(), *group_2.values())})
                 elif len(group_1) > len(group_2):
-                    group_2.update({"SEX": max(*group_1.values(), *group_3.values())})
-                    group_3.update({"SEX": max(*group_1.values(), *group_2.values())})
+                    group_2.update({"MANA": max(*group_1.values(), *group_3.values())})
+                    group_3.update({"MANA": max(*group_1.values(), *group_2.values())})
 
                 sum_1 = sum(group_1.values())
                 sum_2 = sum(group_2.values())
@@ -85,7 +112,10 @@ def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
                     group_1 = dict(sorted(group_1.items()))
                     group_2 = dict(sorted(group_2.items()))
                     group_3 = dict(sorted(group_3.items()))
-                    print(f'{iteration_counter = }\n')
+                    print(f'{iteration_counter = }')
+                    print(f'{min_sum_ratio = }')
+                    print(f'{min_sd_ratio = }')
+                    print(f'{min_ratio = }\n')
                     return [(group_1, sum_1, avg_1, sd_1), (group_2, sum_2, avg_2, sd_2), (group_3, sum_3, avg_3, sd_3)]
     print(f'{iteration_counter = }')
     print(f'{min_sum_ratio = }')
@@ -94,10 +124,11 @@ def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
     return None     # If no close sum groups are found, return None
 
 
-group_sizes = group_distribution(len(list_of_players))
-sum_pass = 0.1
-sd_pass = 0.4
-result = find_close_sum_groups(list_of_players, group_sizes, sum_pass, sd_pass)
+players_class = [Player(name, score) for name, score in list_of_players.items()]
+group_sizes = group_distribution(len(players_class))
+sum_pass = 0.2
+sd_pass = 0.5
+result = find_close_sum_groups(players_class, group_sizes, sum_pass, sd_pass)
 if result:
     for g_index, group in enumerate(result):
         print(f'Group {g_index + 1} (Sum = {group[1]}, Avg = {group[2]:.1f}, SD = {group[3]:.1f}) =\n{group[0]}\n'.replace(", '", "\n").replace("{", '').replace('}', '').replace("'", ''))
