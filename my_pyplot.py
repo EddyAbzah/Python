@@ -5,8 +5,10 @@ import smtplib
 import pandas as pd
 import plotly.graph_objects as go
 from enum import Enum
+from dateutil.parser import parse
 from matplotlib import pyplot as plt
 from plotly.subplots import make_subplots
+
 
 label_prefix = 'Plot'
 label_index = 1
@@ -54,6 +56,14 @@ def omit_plot(df, label=''):
 
 def plot(df, label=''):
     global label_index
+    if isinstance(df, pd.DataFrame):
+        for column in df.columns:
+            try:
+                parse(df[column].iloc[0], fuzzy=False)
+                df.set_index(column, inplace=True)
+            except:
+                pass
+        df = df.select_dtypes(exclude=['object'])
     if label == '':
         if isinstance(df, pd.DataFrame):
             label = list(df.head(0))

@@ -5,9 +5,10 @@ import csv
 import itertools
 import pandas as pd
 from datetime import datetime
-from my_pyplot import plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
-import Plot_Graphs_with_Sliders as _G
-import my_tools
+if os.getlogin() == "eddy.a":
+    from my_pyplot import plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
+    import Plot_Graphs_with_Sliders as _G
+    import my_tools
 
 # ####   True   ###   False   #### #
 venus_T_or_jupiter_F = False
@@ -18,17 +19,11 @@ output_text = False   # txt output instead of the console
 path_txt = f'Terminal Log ({datetime.now().strftime("%d-%m-%Y %H-%M-%S")}).txt'
 # ####   Folders   and   filters   #### #
 path_output = r'M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy'
-# path_logs = r'V:\HW_Infrastructure\Analog_Team\ARC_Data\Results\Venus3\6kW-7497F876 MLCC\New 370Vdc tests 01' + '\\'
-# path_logs += 'FAs 01 - KA1 (12-09-2023)'
-# path_logs += 'FAs 02 - KA2 (13-09-2023)'
-# path_logs += 'FAs 04 - Different solutions 01 (20-09-2023)'
-# path_logs += 'FAs 05 - Different solutions 02 (21-09-2023)'
-# path_logs += 'FAs 06 - 5kW + OverPower (01-10-2023)'
-path_logs = r'M:\Users\MohamadH\Tasks\Non-Standard JPI CM_SW\MPPT + MX FAs 01 (03-10-2023)'
+path_logs = r'M:\Users\HW Infrastructure\PLC team\ARC\Temp-Noam\Test_False_Alarms 19_02_24 20_58'
 check_if_arcs = False
 Fill_NaN_with_blanks = True
 rec_filter__start_end = [False, 101, 666]
-find_info_in_folder = [True, '_RecInfo.csv', lambda group: int((group - 1) / find_info_in_folder[3]), 0]
+find_info_in_folder = [False, '_RecInfo.csv', lambda group: int((group - 1) / find_info_in_folder[3]), 0]
 
 
 if venus_T_or_jupiter_F:
