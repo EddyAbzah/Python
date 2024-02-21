@@ -1,11 +1,37 @@
 import math
 import random
 import statistics
-from itertools import combinations
+import itertools
 from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
 import Plot_Graphs_with_Sliders as _G
 import my_tools
 
+people = ['a', 'b', 'c', 'd', 'e', 'f']
+
+def get_partitions(people, group_count):
+    # first, find all combinations of 2 people
+    for partition1 in itertools.combinations(people, 2):
+        remaining_people = [person for person in people if person not in partition1]
+        # for the remaining people, find all combinations of 2 people
+        for partition2 in itertools.combinations(remaining_people, 2):
+            remaining_people2 = [person for person in remaining_people if person not in partition2]
+
+            # sort the partitions so it doesn't matter what order they're in
+            yield tuple(sorted((partition1, partition2, tuple(remaining_people2))))
+
+
+unique_partitions = set(get_partitions(people, 3))
+# print all unique grouping options
+for i, partitions in enumerate(unique_partitions, 1):
+    print(f"Option {i}: {partitions}")
+print()
+
+
+people = ['Person1', 'Person2', 'Person3', 'Person4', 'Person5', 'Person6', 'Person7', 'Person8', 'Person9', 'Person10']
+group_size = 5
+combinations = list(itertools.combinations(people, group_size))
+for i, combination in enumerate(combinations,1):
+    print("Combo", i, ": ", combination)
 
 # list_of_players = {"Eddy A.": 9, "Yan O.": 7, "Omer Sh.": 7, "Shlomi A.": 6, "Max K.": 6, "Elroee Sh.": 5, "Elad T.": 4, "Alon M.": 4,
 #                    "Noam M.": 4, "Tal O.": 4, "Kobi S.": 4, "Amit N.": 4, "Ido G.": 4, "Sagie Q.": 4, "Tomer H.": 3, "Yogev F.": 3,
@@ -21,6 +47,7 @@ list_of_players = {"Eddy A.": 9, "Yan O.": 7, "Omer Sh.": 7, "Shlomi A.": 6, "Ma
 # min_sum_ratio = (0.0, 0.4344039811047981)
 # min_sd_ratio = (4.358898943540674, 0.2696100478085411)
 # min_ratio = (0.0, 0.4344039811047981)
+# 84 * 20 * 1 = 1680 / 3 = 560
 
 class Player:
     min_rating = 0
@@ -51,17 +78,17 @@ class Player:
         return self.name, self.rating
 
 
-def group_distribution(total_players):
-    if total_players % 3 == 0:
-        return [total_players // 3] * 3
-    elif total_players % 3 == 1:
-        return [total_players // 3 + 1] + [total_players // 3] * 2
+def group_distribution(number_of_groups, total_players):
+    if total_players % number_of_groups == 0:
+        return [total_players // number_of_groups] * number_of_groups
+    elif total_players % number_of_groups == 1:
+        return [total_players // number_of_groups + 1] + [total_players // 3] * 2
     else:
-        return [total_players // 3 + 1] * 2 + [total_players // 3]
+        return [total_players // number_of_groups + 1] * 2 + [total_players // number_of_groups]
 
 
 def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
-    print(f'\nfind_close_sum_groups({len(players) = }, {group_sizes = }, {sum_pass = })')
+    print(f'\nfind_close_sum_groups({len(players) = }, {group_sizes = }, {sum_pass = }, {sd_pass = })')
     print(f'Number of possible combinations = {math.comb(sum(group_sizes), group_sizes[0]) * math.comb(sum(group_sizes[:2]), group_sizes[1]) * math.comb(group_sizes[1], group_sizes[2])}')
     players = [player.get_player() for player in players]
     random.shuffle(players)
@@ -94,12 +121,12 @@ def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
                 avg_1 = statistics.mean(group_1.values())
                 avg_2 = statistics.mean(group_2.values())
                 avg_3 = statistics.mean(group_3.values())
-                sd_1 = statistics.stdev(group_1.values())
-                sd_2 = statistics.stdev(group_2.values())
-                sd_3 = statistics.stdev(group_3.values())
-
-                sum_ratio = statistics.stdev([sum_1, sum_2, sum_3])
-                sd_ratio = statistics.stdev([sd_1, sd_2, sd_3])
+                sd_1 = statistics.pstdev(group_1.values())
+                sd_2 = statistics.pstdev(group_2.values())
+                sd_3 = statistics.pstdev(group_3.values())
+                
+                sum_ratio = statistics.pstdev([sum_1, sum_2, sum_3])
+                sd_ratio = statistics.pstdev([sd_1, sd_2, sd_3])
                 ratio = (sum_ratio + sd_ratio) / 2
                 if sum_ratio < min_sum_ratio[0]:
                     min_sum_ratio = (sum_ratio, sd_ratio)
@@ -125,7 +152,8 @@ def find_close_sum_groups(players, group_sizes, sum_pass, sd_pass):
 
 
 players_class = [Player(name, score) for name, score in list_of_players.items()]
-group_sizes = group_distribution(len(players_class))
+number_of_groups = 3
+group_sizes = group_distribution(number_of_groups, len(players_class))
 sum_pass = 0.2
 sd_pass = 0.5
 result = find_close_sum_groups(players_class, group_sizes, sum_pass, sd_pass)
