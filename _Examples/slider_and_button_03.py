@@ -79,4 +79,5 @@ fig.update_layout(updatemenus=[dict(buttons=list([
     # dict(label='All', method='restyle', args=['y', [list(data[scenario].values()) for scenario in scenarios]])])
 
 
-fig.write_html(path_folder + "\\slider_and_button.html", auto_open=True)
+# fig.write_html(path_folder + "\\slider_and_button.html", auto_open=True)
+fig.show()
