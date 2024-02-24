@@ -19,4 +19,5 @@ fig.update_layout(updatemenus=[dict(buttons=list([dict(label='Show inv_rssi', me
                                                   dict(label='Show all', method='restyle', args=['y', [list(data[scenario].values()) for scenario in scenarios]])]),
                                     direction="right", pad={"r": 10, "t": 10}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"),])
 
-fig.write_html("slider_and_button.html", auto_open=True)
+# fig.write_html("slider_and_button.html", auto_open=True)
+fig.show()

@@ -53,4 +53,5 @@ fig.update_layout(
     ]
 )
 
-fig.write_html("slider_and_button.html", auto_open=True)
+# fig.write_html("slider_and_button.html", auto_open=True)
+fig.show()
