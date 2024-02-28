@@ -1,3 +1,4 @@
+import math
 import os
 import plotly
 import numpy as np
@@ -14,7 +15,7 @@ if os.getlogin() == "eddy.a":
 # ## DataFrame:
 round_df_numbers = True
 replace_nans_and_infs = [True, -1, 666666]
-sorting_order = ['Portia ID', 'Optimizer ID', 'Date']
+sorting_order_main = [True, ['Optimizer ID', 'Portia ID', 'Date']]      # for the main DF only!
 rename_df_columns = {"deviceid": "Portia ID", "managerid": "Manager ID", "time": "Date", "OPT ID": "Optimizer ID",
                      "param_129": "Last RSSI", "param_141": "Paired RSSI", "param_157": "Upper RSSI limit", "param_142": "Lower RSSI limit"}
 
@@ -24,6 +25,7 @@ rssi_original_ratio = [2.51188643150958, 0.3981071705534972, 1]
 
 # ## Plotting:
 rssi_true__or__ratio_false = False
+sorting_order_plots = [True, ['Optimizer ID', 'Portia ID'], 'Date']      # This will make the plotting VERY SLOW!
 plot_old_limits = False
 remove_glitches = [False, 1.5, 0.6667]
 split_figs = 100
@@ -31,8 +33,8 @@ plot_addresses = {}
 
 
 def round_numbers(df):
-    how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Old Upper Ratio limit": 2,
-                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "New vs Old Ratio": 2}
+    how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Old Upper Ratio limit": 2, "Last RSSI Diff": 0,
+                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "RSSI Ratio Diff": 2, "New vs Old Ratio": 2}
     df = df.round(how_to_round)
     for data_set, round_number in how_to_round.items():
         if round_number == 0:
@@ -71,7 +73,33 @@ def rssi_ratio_algorithm(sdf, data):
     return pd.concat([sdf, pd.DataFrame({"New Upper Ratio limit": upper, "New Lower Ratio limit": lower, "New C Ratio": c_ratio, "Ratio Adjustments": ka_timeouts}, index=sdf.index)], axis=1)
 
 
-def combine_dfs(file_in_1, file_in_2, file_out):
+def concat_dfs(file_in_1, file_in_2, file_out):
+    df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')
+    df2 = pd.read_csv(file_in_2).dropna(how='all', axis='columns')
+    df = pd.concat([df1, df2])
+    df.drop_duplicates(keep='last', inplace=True)
+    df.to_csv(file_out, index=False)
+
+
+def mana_temp(df):
+    rssi = []
+    ratio = []
+    for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
+        print(f'sex {optimizer_index + 1}')
+        temp_df = df[df["Optimizer ID"] == optimizer_id]
+        length = len(temp_df)
+        jump = int(len(temp_df) / 4)
+        rssi.append([df.iloc[i:i + jump]["Last RSSI"].mean() for i in range(0, length - jump, jump)])
+        ratio.append([df.iloc[i:i + jump]["RSSI Ratio"].mean() for i in range(0, length - jump, jump)])
+    for optimizer_id in df["Optimizer ID"].unique():
+        print(optimizer_id)
+    for sex in rssi:
+        print('\t'.join([str(s) for s in sex]))
+    for sex in ratio:
+        print('\t'.join([str(s) for s in sex]))
+
+
+def combine_df_and_p141(file_in_1, file_in_2, file_out):
     print(f'\nReading df1 ({file_in_1})')
     df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')       # converters={'optimizerid_hex': partial(int, base=16)}
     df1['Optimizer ID'] = df1['optimizerid'].apply(lambda n: f'{n:X}')      # df['optimizerid'].apply(hex)
@@ -122,6 +150,8 @@ def combine_dfs(file_in_1, file_in_2, file_out):
                     temp_df.loc[:, "RSSI Ratio"] = remove_glitches_algorithm(temp_df)
                     temp_df = temp_df.dropna(axis=0)
                 temp_df = rssi_ratio_algorithm(temp_df, "RSSI Ratio")
+                temp_df["Last RSSI Diff"] = temp_df["Last RSSI"] - temp_df["Last RSSI"].mean()
+                temp_df["RSSI Ratio Diff"] = temp_df["RSSI Ratio"] - temp_df["RSSI Ratio"].mean()
                 df_full = pd.concat([df_full, temp_df], axis=0)
 
         del df1
@@ -131,9 +161,9 @@ def combine_dfs(file_in_1, file_in_2, file_out):
             df_full = round_numbers(df_full)
         for col in df_full.columns:
             print(f'df_full[{col}].nunique() = {df_full[col].nunique()}')
-        if sorting_order is not None and len(sorting_order) > 0:
-            print(f'\nSorting values by {sorting_order} before export')
-            for sort_by in sorting_order:
+        if sorting_order_main[0]:
+            print(f'\nSorting values by {sorting_order_main[1]} before export')
+            for sort_by in sorting_order_main[1]:
                 df_full.sort_values(sort_by, inplace=True)
 
         print(f'\nFinal df = df_full')
@@ -149,15 +179,23 @@ def plot_df(df, file_out, auto_open_html=True):
     print(f'plot_df(): {file_out = }, {split_figs = }, {auto_open_html = }')
     fig_count = 0
     print(f'{df["Optimizer ID"].nunique() = }')
+    if sorting_order_plots[0]:
+        print(f'\nSorting values by {sorting_order_plots[1]} and then by {sorting_order_plots[2]} before plot')
+        for sort_by in sorting_order_plots[1]:
+            df.sort_values(sort_by, inplace=True)
     for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
         if optimizer_index % split_figs == 0:
             fig = make_subplots(cols=1, rows=1, shared_xaxes=False)
             steps = list()
             fig_count += 1
         print(f'Plotting Optimizer number {optimizer_index + 1} in fig number {fig_count}, place {int(optimizer_index % split_figs) + 1}: {optimizer_id = }')
+        if sorting_order_plots[0]:
+            df.sort_values(sorting_order_plots[2], inplace=True)
         plot_addresses.update({optimizer_id: {"Optimizer Index": optimizer_index + 1, "Fig Index": fig_count, "Plot Index": int(optimizer_index % split_figs) + 1}})
         sdf = df[df["Optimizer ID"] == optimizer_id]
         plot_title = f'Optimizer {optimizer_id} (Inverter {sdf["Portia ID"].iloc[0]} / {sdf["Manager ID"].iloc[0]}): Ratio Adjustments = {sdf["Ratio Adjustments"].iloc[-1]}'
+        if optimizer_index % split_figs == 0:
+            fig_title = plot_title
 
         if rssi_true__or__ratio_false:
             if plot_old_limits:
@@ -176,18 +214,28 @@ def plot_df(df, file_out, auto_open_html=True):
                     fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace1] * sdf[trace2], name=f"{optimizer_id} - {trace1}", visible=optimizer_index % split_figs == 0,
                                              hovertemplate=f'Optimizer HEX ID: {optimizer_id}<br>' + 'Date: %{x}<br>' + trace1 + ': %{y}<extra></extra>'), col=1, row=1)
         else:
+            visible = optimizer_index % split_figs == 0
+            hover_label = {"font_size": 14, "namelength": -1}
+            time_is_not_visible = False
+            if time_is_not_visible:
+                hover_template = [f'<b>Optimizer HEX ID: {optimizer_id}</b><extra></extra><br><br>', ': %{y}<br>Date: %{x:%Y-%m-%d %H:%M:%S}<br>Time: %{text}']
+                hour = [h.split(' ')[-1] for h in sdf.index]
+            else:
+                hover_template = [f'<b>Optimizer HEX ID: {optimizer_id}</b><extra></extra><br><br>', ': %{y}<br>Date: %{x:%Y-%m-%d %H:%M:%S}']
+                hour = None
+            marker_color = [int(h.split(' ')[-1][:2]) for h in sdf.index]
+            line = dict(dash='dot', color='darkturquoise')
             if plot_old_limits:
                 plots = ["RSSI Ratio", "Old C Ratio", "Old Upper Ratio limit", "Old Lower Ratio limit"]
             else:
                 plots = ["RSSI Ratio"]
             for trace in plots:
-                fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=optimizer_index % split_figs == 0,
-                                         mode='lines+markers', marker_color=[int(h.split(' ')[-1][:2]) for h in sdf.index], line=dict(dash='dot', color='darkturquoise'),
-                                         hovertemplate=f'Optimizer HEX ID: {optimizer_id}<br>' + 'Date: %{x}<br>' + trace + ': %{y}<extra></extra>'), col=1, row=1)
+                fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=visible, mode='lines+markers', line=line, text=hour,
+                                         hovertemplate=hover_template[0] + f'{trace}' + hover_template[1], hoverlabel=hover_label, marker_color=marker_color), col=1, row=1)
             if rssi_ratio_algorithm_enable[0]:
                 for trace in ["New Upper Ratio limit", "New Lower Ratio limit", "New C Ratio"]:
-                    fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=optimizer_index % split_figs == 0,
-                                             hovertemplate=f'Optimizer HEX ID: {optimizer_id}<br>' + 'Date: %{x}<br>' + trace + ': %{y}<extra></extra>'), col=1, row=1)
+                    fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=visible, text=hour,
+                                             hovertemplate=hover_template[0] + f'{trace}' + hover_template[1], hoverlabel=hover_label, marker_color=marker_color), col=1, row=1)
 
         if optimizer_index % split_figs == 0:
             figs_per_fig = len(fig.data)
@@ -197,9 +245,9 @@ def plot_df(df, file_out, auto_open_html=True):
         steps.append(step)
 
         if (optimizer_index + 1) % split_figs == 0 or optimizer_index == df["Optimizer ID"].nunique() - 1:
-            fig.update_layout(title=plot_title, title_font_color="#2589BB", title_font_size=40, legend_title="Traces:", legend_title_font_color="#2589BB")
+            fig.update_layout(title=fig_title, title_font_color="#2589BB", title_font_size=40, legend_title="Traces:", legend_title_font_color="#2589BB")
             fig.update_layout(sliders=[dict(active=0, pad={"t": 50}, steps=steps, currentvalue={"prefix": "Plot number "})])
-            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - split_figs + 2} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html)
+            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - (optimizer_index % split_figs) + 1} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html)
 
 
 def summarize(df):
@@ -231,74 +279,148 @@ def summarize(df):
     return df_full
 
 
-def plot_histogram(df, file_out, auto_open_html=True):
+def plot_histogram(main_df, summary_df, file_out, auto_open_html=True):
     print(f'plot_histogram(): {file_out = }, {auto_open_html = }')
 
+    # ## fig 01:
+    fig_title = "Samples above or below Old and New Ratios"
     fig = make_subplots(rows=1, cols=1)
     bins = [0, 1, 10, 100, 1000, 10000]
+    bins_labels = ['0', '1-10', '10-100', '100-1000', '1000+']
     value_types = ["Absolute", "Percentage"]
     vals = {value_types[0]: [], value_types[1]: []}
     for index, value_type in enumerate(value_types):
         for col in ['Samples above Old Ratio', 'Samples below Old Ratio', 'Samples above New Ratio', 'Samples below New Ratio']:
-            hist, bins = np.histogram(df[col], bins=bins)
+            hist, bins = np.histogram(summary_df[col], bins=bins)
             if index == 1:
                 hist = [h / sum(hist) * 100 for h in hist]
                 hover_template = f'{col}<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'
             else:
                 hover_template = f'{col}<br>' + 'x: %{x}<br>' + 'y: %{y}<extra></extra>'
             vals[value_type].append(hist)
-            bins_labels = ['0', '1-10', '10-100', '100-1000', '1000+']
             fig.add_trace(go.Bar(y=hist, x=bins_labels, name=col, visible=index == 0, hovertemplate=hover_template), row=1, col=1)
-    fig.update_layout(title="Samples above or below Old and New Ratios", title_font_color="#407294", title_font_size=40, legend_title="Plots:",
-                      xaxis_title="Samples", yaxis_title="Events or Percentage")
+    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Samples", yaxis_title="Events or Percentage")
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
-    fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types],
-                                        direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
-    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 01 {file_out[-5:]}', auto_open=auto_open_html)
+    fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
+    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 01 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
 
+    # ## fig 02:
+    fig_title = "New Ratios and amount of changes"
     fig = make_subplots(rows=1, cols=1)
-    bins = [0, 1, 2, 3, 4, 5, 10, 100, 1000, 1000000]
+    bins = [0, 0.5, 1, 1.5, 2, 3, 4, 5, 10, 100, 10000]
+    bins_labels = ['0-0.5', '0.5-1', '1-1.5', '1.5-2', '2-5', '5-10', '10-100', '100-1000', '1000+']
     value_types = ["Absolute", "Percentage"]
     vals = {value_types[0]: [], value_types[1]: []}
     for index, value_type in enumerate(value_types):
-        for col in ['New Upper Ratio limit', 'New Lower Ratio limit', 'New C Ratio', 'Ratio Adjustments']:
-            hist, bins = np.histogram(df[col], bins=bins)
+        for col in ['Ratio Adjustments', 'New C Ratio', 'New Lower Ratio limit', 'New Upper Ratio limit']:
+            hist, bins = np.histogram(summary_df[col], bins=bins)
             if index == 1:
                 hist = [h / sum(hist) * 100 for h in hist]
                 hover_template = f'{col}<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'
             else:
                 hover_template = f'{col}<br>' + 'x: %{x}<br>' + 'y: %{y}<extra></extra>'
             vals[value_type].append(hist)
-            bins_labels = ['0', '1-10', '10-100', '100-1000', '1000+']
             fig.add_trace(go.Bar(y=hist, x=bins_labels, name=col, visible=index == 0, hovertemplate=hover_template), row=1, col=1)
-    fig.update_layout(title="New Ratios and amount of changes", title_font_color="#407294", title_font_size=40, legend_title="Plots:",
-                      xaxis_title="Ratio", yaxis_title="Events or Percentage")
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
-    fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types],
-                                        direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
-    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 02 {file_out[-5:]}', auto_open=auto_open_html)
+    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Ratio", yaxis_title="Events or Percentage")
+    fig.update_traces(marker_line_color='black', marker_line_width=0.5)
+    fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
+    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 02 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
+
+    # fig 03:
+    fig_title = "RSSI change per Day"
+    fig = make_subplots(rows=1, cols=1)
+    bins = [0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100000]
+    bins_labels = [f'{bins[i]}-{bins[i+1]}' for i in range(len(bins) - 2)] + [f'{bins[-2]}+']
+    value_types = ["Absolute", "Percentage"]
+    vals = {value_types[0]: [], value_types[1]: []}
+    main_df.loc[:, "Time"] = main_df.index.map(lambda s: s[11:13])
+    main_df.loc[:, "Date"] = main_df.index.map(lambda s: s[:10])
+    rssi_change_per_year = list()
+    rssi_change_per_day = list()
+    for optimizer_index, optimizer_id in enumerate(main_df["Optimizer ID"].unique()):
+        try:
+            temp_df = main_df[main_df["Optimizer ID"] == optimizer_id]
+            date = temp_df["Date"].unique()[10]
+            rssi_change_per_year.append(10 * math.log10(max(temp_df["Last RSSI"]) / min(temp_df["Last RSSI"])))
+            temp_df = temp_df[temp_df["Date"] == date]
+            rssi_change_per_day.append(10 * math.log10(max(temp_df["Last RSSI"]) / min(temp_df["Last RSSI"])))
+            print(f'Fig 03 Optimizer number {optimizer_index + 1}, {optimizer_id = }, {date = }')
+        except:
+            print(f'ERROR! Fig 03 Optimizer number {optimizer_index + 1}, {optimizer_id = }, {date = }: min() = 0')
+    for index, value_type in enumerate(value_types):
+        hist, bins = np.histogram(rssi_change_per_year, bins=bins)
+        if index == 1:
+            hist = [h / sum(hist) * 100 for h in hist]
+            hover_template = f'RSSI Change per Year<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'
+        else:
+            hover_template = f'RSSI Change per Year<br>' + 'x: %{x}<br>' + 'y: %{y}<extra></extra>'
+        vals[value_type].append(hist)
+        fig.add_trace(go.Bar(y=hist, x=bins_labels, name=f'RSSI Change per Year', visible=index == 0, hovertemplate=hover_template), row=1, col=1)
+        hist, bins = np.histogram(rssi_change_per_day, bins=bins)
+        if index == 1:
+            hist = [h / sum(hist) * 100 for h in hist]
+            hover_template = f'RSSI Change per Day<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'
+        else:
+            hover_template = f'RSSI Change per Day<br>' + 'x: %{x}<br>' + 'y: %{y}<extra></extra>'
+        vals[value_type].append(hist)
+        fig.add_trace(go.Bar(y=hist, x=bins_labels, name=f'RSSI Change per Day', visible=index == 0, hovertemplate=hover_template), row=1, col=1)
+    fig.update_traces(marker_line_color='black', marker_line_width=0.5)
+    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Ratio", yaxis_title="Events or Percentage")
+    fig.update_traces(marker_line_color='black', marker_line_width=0.5)
+    fig.update_layout(updatemenus=[
+        dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
+    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 03 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
+
+    # fig 04:
+    fig_title = "RSSI change per Hour"
+    fig = make_subplots(rows=1, cols=1)
+    bins = [0, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 2.5, 3, 4, 5, 10, 100000]
+    bins_labels = [f'{bins[i]}-{bins[i + 1]}' for i in range(len(bins) - 2)] + [f'{bins[-2]}+']
+    value_types = ["Absolute", "Percentage"]
+    vals = {value_types[0]: [], value_types[1]: []}
+    for index, value_type in enumerate(value_types):
+        for time in main_df["Time"].unique():
+            temp_df = main_df[main_df["Time"] == time]
+            hist, bins = np.histogram(temp_df["RSSI Ratio Diff"].apply(lambda n: abs(n)), bins=bins)
+            if index == 1:
+                hist = [h / sum(hist) * 100 for h in hist]
+                hover_template = f'RSSI Ratio Diff at {time}<br>' + 'x: %{x}<br>' + 'y: %{y:.2f}<extra></extra>'
+            else:
+                hover_template = f'RSSI Ratio Diff at {time}<br>' + 'x: %{x}<br>' + 'y: %{y}<extra></extra>'
+            vals[value_type].append(hist)
+            fig.add_trace(go.Bar(y=hist, x=bins_labels, name=f'RSSI Ratio Diff at {time}', visible=index == 0, hovertemplate=hover_template), row=1, col=1)
+    fig.update_traces(marker_line_color='black', marker_line_width=0.5)
+    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Ratio", yaxis_title="Events or Percentage")
+    fig.update_traces(marker_line_color='black', marker_line_width=0.5)
+    fig.update_layout(updatemenus=[
+        dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
+    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 04 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
 
 
 if __name__ == "__main__":
-    folder = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data"
-    # folder = r"C:\Users\eddy.a\Downloads\Raw Data"
-    # sub_folder = "100 days - (1.5, 0.6667) filter + 2 sample delay\\"
-    # sub_folder = "100 days - no filter + 2 sample delay\\"
-    sub_folder = "Plots\\"
-    file_path = "100 days"
-    file_path_output_csv = f"{folder}\\{sub_folder}{file_path} - analysis with {rssi_ratio_algorithm_enable[1]} Sample Delay.csv"
+    T_read__or__F_write = False
+    combine_two_RAW_files_together = False
+    folder = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\236 Day Analysis"
+    sub_folder = "Optimizer plots\\"
+    file_path = "236 days"
+    file_path_output_csv = f"{folder}\\{file_path} - analysis with {rssi_ratio_algorithm_enable[1]} Sample Delay.csv"
 
-    file_path_output_csv = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\100 days - no filter + 2 sample delay\100 days - analysis with 2 Sample Delay.csv"
+    # ## pre-RAW analysis:
+    if combine_two_RAW_files_together:
+        concat_dfs(f"{folder}\\RSSI_Issue_-_P129_no_duplicates_2023_10_09.csv", f"{folder}\\RSSI_Issue_-_P129_no_duplicates_2024_02_22.csv", f"{folder}\\{file_path} - RAW data.csv")
 
-    # main_df = combine_dfs(f"{folder}\\{file_path} - RAW data.csv", f"{folder}\\P141.csv", file_path_output_csv)
-    # main_df = pd.read_csv(file_path_output_csv,  index_col=0).dropna(how='all', axis='columns')
-    # plot_df(main_df, file_out=f"{folder}\\{sub_folder}Optimizer RSSI Monitor.html", auto_open_html=False)
-    # main_df = summarize(main_df)
-    # main_df.to_csv(f"{folder}\\{sub_folder}{file_path} - Summary.csv", index=False)
-    # main_df = pd.read_csv(f"{folder}\\{sub_folder}{file_path} - Summary.csv").dropna(how='all', axis='columns')
+    # ## RAW analysis:
+    if T_read__or__F_write:
+        main_df = pd.read_csv(file_path_output_csv, index_col=0).dropna(how='all', axis='columns')
+    else:
+        main_df = combine_df_and_p141(f"{folder}\\{file_path} - RAW data.csv", f"{folder}\\P141.csv", file_path_output_csv)
+    plot_df(main_df, file_out=f"{folder}\\{sub_folder}Optimizer RSSI Monitor.html", auto_open_html=False)
 
-    main_df = pd.read_csv(r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\100 days - no filter + 2 sample delay\100 days - Summary.csv").dropna(how='all', axis='columns')
-
-    # plot_histogram(main_df, file_out=f"{folder}\\{sub_folder}Optimizer RSSI Histogram.html", auto_open_html=True)
-
-    plot_histogram(main_df, file_out=r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\100 days - no filter + 2 sample delay\Optimizer RSSI Histograms.html", auto_open_html=True)
+    # ## Summary:
+    if T_read__or__F_write:
+        summary_df = pd.read_csv(f"{folder}\\{file_path} - Summary.csv").dropna(how='all', axis='columns')
+    else:
+        summary_df = summarize(main_df)
+        summary_df.to_csv(f"{folder}\\{file_path} - Summary.csv", index=False)
+    plot_histogram(main_df, summary_df, file_out=f"{folder}\\Optimizer RSSI Histogram.html", auto_open_html=True)
