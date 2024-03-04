@@ -399,7 +399,7 @@ def plot_histogram(main_df, summary_df, file_out, auto_open_html=True):
 
 
 if __name__ == "__main__":
-    T_read__or__F_write = False
+    T_read__or__F_write = True
     combine_two_RAW_files_together = False
     folder = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\236 Day Analysis"
     sub_folder = "Optimizer plots\\"
