@@ -3,7 +3,7 @@
 # pyinstaller --noconfirm --onedir --windowed --contents-directory "Keypress Simulator 03" --icon "icon.ico"  "Keypress Simulator 03.py"
 
 import sys
-from tkinter import Tk, IntVar, Checkbutton, Text, Button
+from tkinter import Tk, IntVar, Checkbutton, Text, Button, END
 from pynput import keyboard
 
 stop_app = False
@@ -107,6 +107,7 @@ with (keyboard.Listener(on_press=on_press, on_release=on_release, win32_event_fi
 
     # Text input:
     textbox = Text(root, font=font, height=1, width=20)
+    textbox.insert(END, "; ")
     textbox.pack()
 
     root.protocol("WM_DELETE_WINDOW", close)
