@@ -11,7 +11,7 @@ if os.getlogin() == "eddy.a":
 
 
 regex_pattern = '[^ ()a-zA-Z0-9,:%#_+°∞πΣµΩΩ±≥≤≈√²—-]'
-cut_all_plots = [False, 0, 10e6]
+cut_all_plots = [False, 0, 10e6]        # Frequency cut for the plot only
 
 
 def get_df(path, traces=None, trace_sep='\n\n', apply_log=False):
