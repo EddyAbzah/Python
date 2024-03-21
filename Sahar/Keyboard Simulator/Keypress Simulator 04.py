@@ -55,12 +55,13 @@ def on_press(key):
                 keyboard.Controller().type(text)
             else:
                 text = text.split('\n')
-                for line in text:
+                for index, line in enumerate(text):
                     keyboard.Controller().type(line)
-                    keyboard.Controller.press(keyboard.Controller(), key=keyboard.Key.shift_r)
-                    keyboard.Controller.press(keyboard.Controller(), key=keyboard.Key.enter)
-                    keyboard.Controller.release(keyboard.Controller(), key=keyboard.Key.enter)
-                    keyboard.Controller.release(keyboard.Controller(), key=keyboard.Key.shift_r)
+                    if index < len(text) - 1:
+                        keyboard.Controller.press(keyboard.Controller(), key=keyboard.Key.shift_r)
+                        keyboard.Controller.press(keyboard.Controller(), key=keyboard.Key.enter)
+                        keyboard.Controller.release(keyboard.Controller(), key=keyboard.Key.enter)
+                        keyboard.Controller.release(keyboard.Controller(), key=keyboard.Key.shift_r)
         except:    # paste what is in the clipboard anyway
             enable_application = False
             keyboard.Controller.press(keyboard.Controller(), key='v')
