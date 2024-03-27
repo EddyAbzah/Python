@@ -1,0 +1,105 @@
+Macro,Family,Protein,Sugar,Fats,White meat,Red meat,Fish,Oil,Milk,Salts,Caffeine
+water,Drink,0,0,0,0,0,0,0,0,0,0
+black coffee,Drink,0,0,0,0,0,0,0,0,0,5
+coffee with milk,Drink,0,1,0,0,0,0,0,2,0,3
+pomegranate soda,Drink,0,1,0,0,0,0,0,0,0,0
+diet coke,Drink,0,2,0,0,0,0,0,0,0,1
+tea with biscuits,Drink,0,3,0,0,0,0,0,0,0,0
+beer,Drink,0,1,0,0,0,0,0,0,1,0
+air,Healthy,0,0,0,0,0,0,0,0,0,0
+tari bari,Healthy,3,0,1,0,0,0,0,0,0,0
+humus,Healthy,4,0,0,0,0,0,0,0,0,0
+humus chips,Healthy,4,2,2,0,0,0,2,0,0,0
+soup,Healthy,0,0,0,0,0,0,0,0,1,0
+american peanuts,Healthy,4,3,3,0,0,0,0,0,0,0
+pear,Fruit,0,1,0,0,0,0,0,0,0,0
+gamba,Fruit,0,1,0,0,0,0,0,0,0,0
+apple,Fruit,0,1,0,0,0,0,0,0,0,0
+peach,Fruit,0,3,0,0,0,0,0,0,0,0
+nectarine,Fruit,0,3,0,0,0,0,0,0,0,0
+plum,Fruit,0,3,0,0,0,0,0,0,0,0
+banana,Fruit,0,1,0,0,0,0,0,0,0,0
+grapes,Fruit,0,1,0,0,0,0,0,0,0,0
+avocado small,Fruit,0,0,3,0,0,0,0,0,0,0
+avocado,Fruit,0,0,6,0,0,0,0,0,0,0
+watermelon,Fruit,0,2,0,0,0,0,0,0,0,0
+mango,Fruit,0,3,0,0,0,0,0,0,0,0
+bamba,Crisps,4,3,4,0,0,0,0,0,0,0
+bamba small,Crisps,2,1,2,0,0,0,0,0,0,0
+tapoo,Crisps,1,1,3,0,0,0,0,0,4,0
+popcorn,Crisps,0,0,2,0,0,0,0,0,4,0
+cheetos,Crisps,0,0,2,0,0,0,0,0,4,0
+bisley,Crisps,0,0,2,0,0,0,0,0,4,0
+sulties,Crisps,0,0,1,0,0,0,0,0,4,0
+fish,Fish,6,0,3,0,0,4,2,0,0,0
+fish with maalub,Fish,6,0,4,0,0,4,3,0,0,0
+fish and chips,Fish,5,2,5,0,0,4,4,0,2,0
+fish and eggs,Fish,7,1,4,0,0,4,4,0,2,0
+fish with pasta,Fish,6,3,4,0,0,7,4,0,0,0
+rice and fish,Fish,3,0,1,0,0,3,1,0,0,0
+sushi,Fish,4,0,2,0,0,4,0,0,0,0
+sushi small,Fish,2,0,1,0,0,2,0,0,0,0
+greko shwarma,Junk,4,0,4,2,2,0,1,0,2,0
+greko scurdelia,Junk,0,2,2,0,0,0,1,0,1,0
+greko,Junk,4,2,6,2,2,0,2,0,3,0
+tarabin,Junk,4,3,4,4,0,0,4,0,1,0
+abo hasan,Junk,3,1,2,3,0,0,2,0,0,0
+shwarma,Junk,3,0,3,2,3,0,0,0,2,0
+ycs,Junk,2,1,5,0,0,0,0,4,0,0
+ycs small,Junk,1,1,2,0,0,0,0,2,0,0
+sugar small,Junk,0,2,0,0,0,0,0,0,0,0
+sugar medium,Junk,0,4,0,0,0,0,0,0,0,0
+sugar large,Junk,0,6,0,0,0,0,0,0,0,0
+al haesh,Junk,5,0,3,3,3,0,1,0,3,0
+tuna sandwich,Junk,5,0,2,0,0,2,0,0,1,0
+homus chips,Junk,4,0,2,0,0,0,2,0,0,0
+cake,Junk,0,4,1,0,0,0,0,2,0,0
+cake small,Junk,0,2,1,0,0,0,0,1,0,0
+mukpatz,Junk,2,3,2,2,2,0,3,0,0,0
+schnitzel in a baguette,Junk,2,3,0,2,0,0,0,0,0,0
+fritata sandwich,Junk,3,2,0,0,0,0,1,0,1,0
+hamburger,Junk,3,2,3,0,3,0,2,0,0,0
+mcdonald's,Junk,3,2,1,3,0,0,2,0,1,0
+on the fire,Junk,5,1,2,3,3,0,1,0,1,0
+labane,Milky,2,2,1,0,0,0,0,5,0,0
+yoplait with granola,Milky,0,3,0,0,0,0,0,3,0,0
+yoplait,Milky,3,1,0,0,0,0,0,4,0,0
+yoplait tut,Milky,3,2,0,0,0,0,0,4,0,0
+yoplait pro danone,Milky,6,2,0,0,0,0,0,4,0,0
+ice cream,Milky,1,4,1,0,0,0,0,4,0,0
+la baka loca steak,Mom's,5,2,2,0,5,0,0,0,2,0
+gulasch with beans,Mom's,5,0,4,2,2,0,2,0,0,0
+rice with beans,Mom's,4,0,3,0,0,0,1,0,0,0
+rice with schnitzel,Mom's,4,0,1,2,0,0,1,0,0,0
+rice with ktzitzot,Mom's,4,0,1,0,2,0,1,0,0,0
+rice with fish,Mom's,4,0,1,0,0,2,1,0,0,0
+schips pasta,Mom's,3,0,6,3,0,0,4,0,0,0
+pasta with schnitzel,Mom's,4,2,0,4,0,0,0,0,0,0
+haluz,Mom's,2,2,4,0,0,0,3,4,0,0
+mataz,Mom's,2,2,1,0,0,0,0,4,0,0
+qulaq,Mom's,2,2,2,0,0,0,2,2,0,0
+sfikha,Mom's,2,2,0,0,2,0,0,0,0,0
+pizza,Mom's,2,1,1,0,0,0,0,4,0,0
+sima's pizza,Mom's,2,1,5,0,0,0,1,4,2,0
+schuschbarak mit tchorza,Mom's,3,2,1,0,3,0,2,0,0,0
+rice with kuba,Mom's,1,0,2,0,3,0,0,0,1,0
+zaatar,Mom's,0,1,0,0,0,0,1,0,2,0
+maalub,Mom's,0,1,1,0,0,0,0,0,1,0
+rice with gulasch,Mom's,2,1,1,0,2,0,2,0,0,0
+mom's spaghetti,Mom's,2,1,1,2,0,0,2,0,0,0
+mom's spaghetti with eggs,Mom's,4,1,1,2,0,0,2,0,0,0
+mom's spaghetti with ktzitzot,Mom's,4,1,1,0,2,0,2,0,0,0
+rice with chicken,Mom's,3,0,0,3,0,0,0,0,0,0
+schnitzel with mugdara,Mom's,3,0,1,0,0,0,1,0,0,0
+kuskus and chicken and eggs,Mom's,5,0,1,3,0,0,2,0,0,0
+fried eggs,Mom's,3,0,1,0,0,0,0,0,0,0
+ravioli,Mom's,2,0,1,0,0,0,1,2,0,0
+chocolate small,Sugary,0,2,1,0,0,0,0,1,0,0
+chocolate,Sugary,0,4,2,0,0,0,0,2,0,0
+chocolate large,Sugary,0,6,3,0,0,0,0,3,0,0
+kariot,Sugary,0,4,0,0,0,0,0,2,0,0
+kariot small,Sugary,0,2,0,0,0,0,0,1,0,0
+kariot large,Sugary,0,6,0,0,0,0,0,3,0,0
+dganim,Sugary,2,3,0,0,0,0,0,0,0,0
+dganim small,Sugary,1,1,0,0,0,0,0,0,0,0
+dganim large,Sugary,3,5,0,0,0,0,0,0,0,0
