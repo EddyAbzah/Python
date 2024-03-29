@@ -64,7 +64,7 @@ class PhotoEditorApp(App):
     include_subfolders_value = BooleanProperty(False)
     extension_value = StringProperty(".jpg")
     file_out_value = StringProperty("edit 01")
-    export_log_value = BooleanProperty(True)
+    export_log_value = BooleanProperty(False)
 
     brightness_value = NumericProperty(1)
     contrast_value = NumericProperty(1)
