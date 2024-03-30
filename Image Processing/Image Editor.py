@@ -18,9 +18,10 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Window.size = (1000, 800)
 gui_spacing = 20
 gui_input_size_hint_x = 0.86
-gui_input_size_hint_y = [3.5, 0.1, 3.5, 3.5, 0.1, 1.5, 1.5]
+gui_input_size_hint_y = [3.5, 0.6, 3.5, 3.5, 0.6, 1.8, 1.8]
 gui_others_size_hint_x = [0.7, 0.125]
-gui_others_size_hint_y = 1
+gui_others_size_hint_y = 1.5
+gui_start_button_hints = (0.25, 2.2)
 timestamp_default = "%Y-%m-%d %H-%M-%S"
 sider_min = 0
 sider_max = 2
@@ -52,12 +53,20 @@ def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1
 
 
 def get_files(folders, include_subfolders, filter_in, filter_out):
+    """
+    Get all files, with a matching names using fnmatch.fnmatch().
+    Args:
+        folders: List of folders.
+        include_subfolders: Bool.
+        filter_in: List; if you leave this empty, you will be left with [''].
+        filter_out: List; if you leave this empty, you will be left with [''].
+    """
     files = []
     for folder in folders:
         folder = folder.strip()
         for root, dirs, all_files in os.walk(folder):
             for file in all_files:
-                if (filter_in == "" or any(fnmatch(file, f) for f in filter_in)) and (filter_out == "" or not any(fnmatch(file, f) for f in filter_out)):
+                if (filter_in[0] == "" or any(fnmatch(file, f) for f in filter_in)) and (filter_out[0] == "" or not any(fnmatch(file, f) for f in filter_out)):
                     files.append(os.path.join(root, file))
             if not include_subfolders:
                 break
@@ -210,7 +219,7 @@ class PhotoEditorApp(App):
         main_layout.add_widget(horizontal_layout)
 
         # Last but not least:
-        edit_button = Button(text="Start editing", size_hint=(0.25, 3), pos_hint={"x": 0.5 - (0.25 / 2)})
+        edit_button = Button(text="Start editing", size_hint=gui_start_button_hints, pos_hint={"x": 0.5 - (gui_start_button_hints[0] / 2)})
         edit_button.bind(on_release=self.start)
         main_layout.add_widget(edit_button)
         return main_layout
