@@ -1,4 +1,5 @@
 import os
+from fnmatch import fnmatch
 from datetime import datetime
 from PIL import Image, ImageEnhance, ImageFilter
 from kivy.app import App
@@ -10,11 +11,17 @@ from kivy.core.window import Window
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import NumericProperty, BooleanProperty, StringProperty
+from kivy.config import Config
 
 
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Window.size = (1000, 800)
 gui_spacing = 20
+gui_input_size_hint_x = 0.86
+gui_input_size_hint_y = [3.5, 0.1, 3.5, 3.5, 0.1, 1.5, 1.5]
+gui_others_size_hint_x = [0.7, 0.125]
+gui_others_size_hint_y = 1
+timestamp_default = "%Y-%m-%d %H-%M-%S"
 sider_min = 0
 sider_max = 2
 sider_default = 1
@@ -44,182 +51,223 @@ def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1
     image.save(output_path, exif=exif)
 
 
-def get_files(folder, include_subfolders, extension):
+def get_files(folders, include_subfolders, filter_in, filter_out):
     files = []
-    for root, dirs, all_files in os.walk(folder):
-        for file in all_files:
-            if file.endswith(extension):
-                files.append(os.path.join(root, file))
-        if not include_subfolders:
-            break
+    for folder in folders:
+        folder = folder.strip()
+        for root, dirs, all_files in os.walk(folder):
+            for file in all_files:
+                if (filter_in == "" or any(fnmatch(file, f) for f in filter_in)) and (filter_out == "" or not any(fnmatch(file, f) for f in filter_out)):
+                    files.append(os.path.join(root, file))
+            if not include_subfolders:
+                break
     return files
 
 
 class PhotoEditorApp(App):
-    folder_value = StringProperty(r"C:\Users\eddy.a\Downloads\Takeout\Google Photos")
-    include_subfolders_value = BooleanProperty(False)
-    extension_value = StringProperty(".jpg")
-    file_out_value = StringProperty("edit 01")
-    export_log_value = BooleanProperty(False)
-
-    brightness_value = NumericProperty(sider_default)
-    contrast_value = NumericProperty(sider_default)
-    saturation_value = NumericProperty(sider_default)
-    sharpness_value = NumericProperty(sider_default)
-    sharpness_enhancement_value = BooleanProperty(False)
-    color_balance_r_value = NumericProperty(sider_default)
-    color_balance_g_value = NumericProperty(sider_default)
-    color_balance_b_value = NumericProperty(sider_default)
+    edit_counter = 1
+    edit_name_memory = f"edit {edit_counter:02}"
 
     def build(self):
         main_layout = BoxLayout(orientation='vertical', spacing=gui_spacing)
 
-        # Inputs
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)#, size_hint=(1, 0.25))
-        horizontal_layout.add_widget(Label(text="Folder"))
-        self.folder_input = TextInput(text=self.folder_value)
+        # Inputs:
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[0]))
+        horizontal_layout.add_widget(Label(text="Folder", size_hint=(gui_input_size_hint_x, 1)))
+        self.folder_input = TextInput(text="")
         horizontal_layout.add_widget(self.folder_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        horizontal_layout.add_widget(Label(text="Include subfolders"))
-        self.include_subfolders_input = CheckBox(active=self.include_subfolders_value)
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[1]))
+        horizontal_layout.add_widget(Label(text="Include subfolders", size_hint=(gui_input_size_hint_x, 1)))
+        self.include_subfolders_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.include_subfolders_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        horizontal_layout.add_widget(Label(text="Extension to filter"))
-        self.extension_input = TextInput(text=self.extension_value)
-        horizontal_layout.add_widget(self.extension_input)
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[2]))
+        horizontal_layout.add_widget(Label(text="Filter in", size_hint=(gui_input_size_hint_x, 1)))
+        self.filter_in_input = TextInput(text="*.jpg")
+        horizontal_layout.add_widget(self.filter_in_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        horizontal_layout.add_widget(Label(text="Edit Name"))
-        self.file_out_input = TextInput(text=self.file_out_value)
-        horizontal_layout.add_widget(self.file_out_input)
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[3]))
+        horizontal_layout.add_widget(Label(text="Filter out", size_hint=(gui_input_size_hint_x, 1)))
+        self.filter_out_input = TextInput(text="")
+        horizontal_layout.add_widget(self.filter_out_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        horizontal_layout.add_widget(Label(text="Export log"))
-        self.export_log_input = CheckBox(active=self.export_log_value)
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[4]))
+        horizontal_layout.add_widget(Label(text="Export log (saved in the first folder)", size_hint=(gui_input_size_hint_x, 1)))
+        self.export_log_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.export_log_input)
         main_layout.add_widget(horizontal_layout)
 
-        # Sliders
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.brightness_label = Label(text=f"Brightness = {self.brightness_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[5]))
+        horizontal_layout.add_widget(Label(text="Edit Name (if empty the original will be overwritten!)", size_hint=(gui_others_size_hint_x[0], 1)))
+        self.edit_name_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.edit_name_reset.bind(on_release=self.edit_name_input_reset)
+        horizontal_layout.add_widget(self.edit_name_reset)
+        self.edit_name_input = TextInput(text=self.edit_name_memory)
+        horizontal_layout.add_widget(self.edit_name_input)
+        main_layout.add_widget(horizontal_layout)
+
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[6]))
+        horizontal_layout.add_widget(Label(text="Timestamp (leave empty to omit)", size_hint=(gui_others_size_hint_x[0], 1)))
+        self.timestamp_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.timestamp_reset.bind(on_release=self.timestamp_input_reset)
+        horizontal_layout.add_widget(self.timestamp_reset)
+        self.timestamp_input = TextInput(text=timestamp_default)
+        horizontal_layout.add_widget(self.timestamp_input)
+        main_layout.add_widget(horizontal_layout)
+
+        # Sliders:
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.brightness_label = Label(text=f"Brightness = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.brightness_label)
+        self.brightness_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.brightness_reset.bind(on_release=self.on_brightness_slider_change)
+        horizontal_layout.add_widget(self.brightness_reset)
         self.brightness_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.brightness_slider.bind(value=self.on_brightness_slider_change)
         horizontal_layout.add_widget(self.brightness_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.contrast_label = Label(text=f"Contrast = {self.contrast_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.contrast_label = Label(text=f"Contrast = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.contrast_label)
+        self.contrast_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.contrast_reset.bind(on_release=self.on_contrast_slider_change)
+        horizontal_layout.add_widget(self.contrast_reset)
         self.contrast_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.contrast_slider.bind(value=self.on_contrast_slider_change)
         horizontal_layout.add_widget(self.contrast_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.saturation_label = Label(text=f"Saturation = {self.contrast_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.saturation_label = Label(text=f"Saturation = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.saturation_label)
+        self.saturation_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.saturation_reset.bind(on_release=self.on_saturation_slider_change)
+        horizontal_layout.add_widget(self.saturation_reset)
         self.saturation_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.saturation_slider.bind(value=self.on_saturation_slider_change)
         horizontal_layout.add_widget(self.saturation_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.sharpness_label = Label(text=f"Sharpness = {self.contrast_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.sharpness_label = Label(text=f"Sharpness = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.sharpness_label)
+        self.sharpness_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.sharpness_reset.bind(on_release=self.on_sharpness_slider_change)
+        horizontal_layout.add_widget(self.sharpness_reset)
         self.sharpness_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.sharpness_slider.bind(value=self.on_sharpness_slider_change)
         horizontal_layout.add_widget(self.sharpness_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.sharpness_enhancement_label = Label(text=f"Sharpness enhancement = {self.sharpness_enhancement_value}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.sharpness_enhancement_label = Label(text=f"Sharpness enhancement = {False}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.sharpness_enhancement_label)
+        self.sharpness_enhancement_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.sharpness_enhancement_reset.bind(on_release=self.on_sharpness_enhancement_bool_change)
+        horizontal_layout.add_widget(self.sharpness_enhancement_reset)
         self.sharpness_enhancement_bool = CheckBox()
         self.sharpness_enhancement_bool.bind(active=self.on_sharpness_enhancement_bool_change)
         horizontal_layout.add_widget(self.sharpness_enhancement_bool)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.color_balance_r_label = Label(text=f"Color Balance (Red) = {self.color_balance_r_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.color_balance_r_label = Label(text=f"Color Balance (Red) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_r_label)
+        self.color_balance_r_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.color_balance_r_reset.bind(on_release=self.on_color_balance_r_slider_change)
+        horizontal_layout.add_widget(self.color_balance_r_reset)
         self.color_balance_r_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.color_balance_r_slider.bind(value=self.on_color_balance_r_slider_change)
         horizontal_layout.add_widget(self.color_balance_r_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.color_balance_g_label = Label(text=f"Color Balance (Green) = {self.color_balance_g_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.color_balance_g_label = Label(text=f"Color Balance (Green) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_g_label)
+        self.color_balance_g_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.color_balance_g_reset.bind(on_release=self.on_color_balance_g_slider_change)
+        horizontal_layout.add_widget(self.color_balance_g_reset)
         self.color_balance_g_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.color_balance_g_slider.bind(value=self.on_color_balance_g_slider_change)
         horizontal_layout.add_widget(self.color_balance_g_slider)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing)
-        self.color_balance_b_label = Label(text=f"Color Balance (Blue) = {self.color_balance_b_value:.2f}")
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
+        self.color_balance_b_label = Label(text=f"Color Balance (Blue) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_b_label)
+        self.color_balance_b_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.color_balance_b_reset.bind(on_release=self.on_color_balance_b_slider_change)
+        horizontal_layout.add_widget(self.color_balance_b_reset)
         self.color_balance_b_slider = Slider(min=sider_min, max=sider_max, value=sider_default, orientation='horizontal')
         self.color_balance_b_slider.bind(value=self.on_color_balance_b_slider_change)
         horizontal_layout.add_widget(self.color_balance_b_slider)
         main_layout.add_widget(horizontal_layout)
 
-        edit_button = Button(text="Edit Image", size_hint=(0.25, 1), pos_hint={"x": 0.5 - (0.25 / 2)})
+        # Last but not least:
+        edit_button = Button(text="Start editing", size_hint=(0.25, 3), pos_hint={"x": 0.5 - (0.25 / 2)})
         edit_button.bind(on_release=self.start)
         main_layout.add_widget(edit_button)
         return main_layout
 
-    def on_brightness_slider_change(self, instance, value):
-        self.brightness_value = value
+    def edit_name_input_reset(self, instance):
+        self.edit_name_input.text = self.edit_name_memory
+
+    def timestamp_input_reset(self, instance):
+        self.timestamp_input.text = timestamp_default
+
+    def on_brightness_slider_change(self, instance, value=sider_default):
+        self.brightness_slider.value = value
         self.brightness_label.text = f"Brightness = {value:.2f}"
 
-    def on_contrast_slider_change(self, instance, value):
-        self.contrast_value = value
+    def on_contrast_slider_change(self, instance, value=sider_default):
+        self.contrast_slider.value = value
         self.contrast_label.text = f"Contrast = {value:.2f}"
 
-    def on_saturation_slider_change(self, instance, value):
-        self.saturation_value = value
+    def on_saturation_slider_change(self, instance, value=sider_default):
+        self.saturation_slider.value = value
         self.saturation_label.text = f"Saturation = {value:.2f}"
 
-    def on_sharpness_slider_change(self, instance, value):
-        self.sharpness_value = value
+    def on_sharpness_slider_change(self, instance, value=sider_default):
+        self.sharpness_slider.value = value
         self.sharpness_label.text = f"Sharpness = {value:.2f}"
 
-    def on_sharpness_enhancement_bool_change(self, instance, value):
-        self.sharpness_enhancement_value = value
+    def on_sharpness_enhancement_bool_change(self, instance, value=False):
+        self.sharpness_enhancement_bool.active = value
         self.sharpness_enhancement_label.text = f"Sharpness enhancement = {value}"
 
-    def on_color_balance_r_slider_change(self, instance, value):
-        self.color_balance_r_value = value
+    def on_color_balance_r_slider_change(self, instance, value=sider_default):
+        self.color_balance_r_slider.value = value
         self.color_balance_r_label.text = f"Color Balance (Red) = {value:.2f}"
 
-    def on_color_balance_g_slider_change(self, instance, value):
-        self.color_balance_g_value = value
+    def on_color_balance_g_slider_change(self, instance, value=sider_default):
+        self.color_balance_g_slider.value = value
         self.color_balance_g_label.text = f"Color Balance (Green) = {value:.2f}"
 
-    def on_color_balance_b_slider_change(self, instance, value):
-        self.color_balance_b_value = value
+    def on_color_balance_b_slider_change(self, instance, value=sider_default):
+        self.color_balance_b_slider.value = value
         self.color_balance_b_label.text = f"Color Balance (Blue) = {value:.2f}"
 
     def start(self, instance):
-        folder = self.folder_input.text
+        folders = self.folder_input.text.replace('\n', ',').replace(';', ',').split(',')
         include_subfolders = self.include_subfolders_input.active
-        extension = self.extension_input.text
-        edit_name = self.file_out_input.text
-        file_out = f" ({edit_name})."
+        filter_in = self.filter_in_input.text.replace('\n', ',').replace(';', ',').split(',')
+        filter_out = self.filter_out_input.text.replace('\n', ',').replace(';', ',').split(',')
+        timestamp = datetime.now().strftime(self.timestamp_input.text)
+        edit_name = self.edit_name_input.text
+        self.edit_name_memory = edit_name
 
-        brightness_factor = self.brightness_value
-        contrast_factor = self.contrast_value
-        saturation_factor = self.saturation_value
-        sharpness_factor = self.sharpness_value
-        sharpness_enhancement = self.sharpness_enhancement_value
-        color_balance = (self.color_balance_r_value, self.color_balance_g_value, self.color_balance_b_value)
+        brightness_factor = self.brightness_slider.value
+        contrast_factor = self.contrast_slider.value
+        saturation_factor = self.saturation_slider.value
+        sharpness_factor = self.sharpness_slider.value
+        sharpness_enhancement = self.sharpness_enhancement_bool.active
+        color_balance = (self.color_balance_r_slider.value, self.color_balance_g_slider.value, self.color_balance_b_slider.value)
 
         string_applied_enhancements = f"""These are the applied enhancements:
 {brightness_factor = :.2f}
@@ -230,25 +278,40 @@ class PhotoEditorApp(App):
 color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[2]:.2f})"""
 
         try:
-            files = get_files(folder, include_subfolders, extension)
+            files = get_files(folders, include_subfolders, filter_in, filter_out)
             if len(files) > 0:
                 for index_file, file in enumerate(files):
-                    edit_photo(file, file_out.join(file.rsplit('.', 1)), brightness_factor, contrast_factor, saturation_factor, sharpness_factor, sharpness_enhancement, color_balance)
+                    if edit_name != "":
+                        file_out = f" ({edit_name}).".join(file.rsplit('.', 1))
+                    else:
+                        file_out = file
+                    if timestamp != "":
+                        file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
+                    edit_photo(file, file_out, brightness_factor, contrast_factor, saturation_factor, sharpness_factor, sharpness_enhancement, color_balance)
             else:
                 raise Exception("There are no files to edit")
 
             if self.export_log_input.active:
-                f = open(f"{folder}\\Python Image Editor - {edit_name} ({datetime.now().strftime("%Y-%m-%d %H-%M-%S")}).txt", "a")
-                f.write("Python Image Editor\n\n")
-                f.write(f"{edit_name = }\n")
-                f.write(f"Date = {datetime.now().strftime("%Y-%m-%d %H-%M-%S")}\n")
-                f.write("Files:\n")
+                if edit_name != "":
+                    file_out = f"{folders[0]}\\Python Image Editor ({edit_name}).txt"
+                else:
+                    file_out = f"{folders[0]}\\Python Image Editor.txt"
+                if timestamp != "":
+                    file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
+                f = open(file_out, "a")
+                f.write(f"Python Image Editor\n\n")
+                f.write(f"edit_name = {edit_name}\n")
+                f.write(f"Date = {timestamp}\n")
+                f.write(f"Files:\n")
                 for index_file, file in enumerate(files):
                     f.write(f"File {index_file + 1:03} = {file}\n")
                 f.write(f"\n{string_applied_enhancements}\n")
                 f.close()
 
-            self.show_popup(f"Successfully edited {len(files)} file(s) with extension '{extension}' in folder:\n'{folder}'", string_applied_enhancements)
+            self.edit_counter += 1
+            self.edit_name_input.text = f"edit {self.edit_counter:02}"
+
+            self.show_popup(f"Successfully edited {len(files)} file(s) in folder(s):\n'{'\n'.join(folders)}'", string_applied_enhancements)
         except Exception as e:
             self.show_popup("Error", f"An error occurred: {str(e)}")
 
