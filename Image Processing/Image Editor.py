@@ -14,6 +14,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.config import Config
 
 
+# Add Output folder
+# Add RESET ALL
+# string lower
+
+
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Window.size = (1000, 800)
 gui_spacing = 20
@@ -29,6 +34,9 @@ sider_default = 1
 
 
 def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1.0, saturation_factor=1.0, sharpness_factor=1.0, sharpness_enhancement=False, color_balance=(1.0, 1.0, 1.0)):
+    """
+    Gets an image at "image_path" and saves an edited image file at "output_path".
+    """
     image = Image.open(image_path)
     exif = image.getexif()
 
@@ -283,7 +291,7 @@ class PhotoEditorApp(App):
 {contrast_factor = :.2f}
 {saturation_factor = :.2f}
 {sharpness_factor = :.2f}
-{sharpness_enhancement = :.2f}
+{sharpness_enhancement = }
 color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[2]:.2f})"""
 
         try:
