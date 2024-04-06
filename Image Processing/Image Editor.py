@@ -14,16 +14,16 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.config import Config
 
 
-# Add Output folder
 # Add RESET ALL
-# string lower
+# Check folder new
+# fix bug → timestamp find )
 
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Window.size = (1000, 800)
 gui_spacing = 20
 gui_input_size_hint_x = 0.86
-gui_input_size_hint_y = [3.5, 0.6, 3.5, 3.5, 0.6, 1.8, 1.8]
+gui_input_size_hint_y = [3.5, 2, 0.6, 3.5, 3.5, 0.6, 2, 2]
 gui_others_size_hint_x = [0.7, 0.125]
 gui_others_size_hint_y = 1.5
 gui_start_button_hints = (0.25, 2.2)
@@ -60,17 +60,17 @@ def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1
     image.save(output_path, exif=exif)
 
 
-def get_files(folders, include_subfolders, filter_in, filter_out):
+def get_files(folders_in, include_subfolders, filter_in, filter_out):
     """
     Get all files, with a matching names using fnmatch.fnmatch().
     Args:
-        folders: List of folders.
+        folders_in: List of folders / Strings.
         include_subfolders: Bool.
-        filter_in: List; if you leave this empty, you will be left with [''].
-        filter_out: List; if you leave this empty, you will be left with [''].
+        filter_in: List of Strings; if you leave this empty, you will be left with [''].
+        filter_out: List of Strings; if you leave this empty, you will be left with [''].
     """
     files = []
-    for folder in folders:
+    for folder in folders_in:
         folder = folder.strip()
         for root, dirs, all_files in os.walk(folder):
             for file in all_files:
@@ -90,36 +90,42 @@ class PhotoEditorApp(App):
 
         # Inputs:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[0]))
-        horizontal_layout.add_widget(Label(text="Folder", size_hint=(gui_input_size_hint_x, 1)))
+        horizontal_layout.add_widget(Label(text="Folders in", size_hint=(gui_input_size_hint_x, 1)))
         self.folder_input = TextInput(text="")
         horizontal_layout.add_widget(self.folder_input)
         main_layout.add_widget(horizontal_layout)
 
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[1]))
+        horizontal_layout.add_widget(Label(text="Folder out", size_hint=(gui_input_size_hint_x, 1)))
+        self.folder_output = TextInput(text="")
+        horizontal_layout.add_widget(self.folder_output)
+        main_layout.add_widget(horizontal_layout)
+
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[2]))
         horizontal_layout.add_widget(Label(text="Include subfolders", size_hint=(gui_input_size_hint_x, 1)))
         self.include_subfolders_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.include_subfolders_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[2]))
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[3]))
         horizontal_layout.add_widget(Label(text="Filter in", size_hint=(gui_input_size_hint_x, 1)))
         self.filter_in_input = TextInput(text="*.jpg")
         horizontal_layout.add_widget(self.filter_in_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[3]))
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[4]))
         horizontal_layout.add_widget(Label(text="Filter out", size_hint=(gui_input_size_hint_x, 1)))
         self.filter_out_input = TextInput(text="")
         horizontal_layout.add_widget(self.filter_out_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[4]))
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[5]))
         horizontal_layout.add_widget(Label(text="Export log (saved in the first folder)", size_hint=(gui_input_size_hint_x, 1)))
         self.export_log_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.export_log_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[5]))
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[6]))
         horizontal_layout.add_widget(Label(text="Edit Name (if empty the original will be overwritten!)", size_hint=(gui_others_size_hint_x[0], 1)))
         self.edit_name_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
         self.edit_name_reset.bind(on_release=self.edit_name_input_reset)
@@ -128,7 +134,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.edit_name_input)
         main_layout.add_widget(horizontal_layout)
 
-        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[6]))
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[7]))
         horizontal_layout.add_widget(Label(text="Timestamp (leave empty to omit)", size_hint=(gui_others_size_hint_x[0], 1)))
         self.timestamp_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
         self.timestamp_reset.bind(on_release=self.timestamp_input_reset)
@@ -271,7 +277,8 @@ class PhotoEditorApp(App):
         self.color_balance_b_label.text = f"Color Balance (Blue) = {value:.2f}"
 
     def start(self, instance):
-        folders = self.folder_input.text.replace('\n', ',').replace(';', ',').split(',')
+        folders_in = self.folder_input.text.replace('\n', ',').replace(';', ',').split(',')
+        folder_out = self.folder_output.text
         include_subfolders = self.include_subfolders_input.active
         filter_in = self.filter_in_input.text.replace('\n', ',').replace(';', ',').split(',')
         filter_out = self.filter_out_input.text.replace('\n', ',').replace(';', ',').split(',')
@@ -295,24 +302,27 @@ class PhotoEditorApp(App):
 color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[2]:.2f})"""
 
         try:
-            files = get_files(folders, include_subfolders, filter_in, filter_out)
+            files = get_files(folders_in, include_subfolders, filter_in, filter_out)
             if len(files) > 0:
                 for index_file, file in enumerate(files):
+                    file_out = file
                     if edit_name != "":
                         file_out = f" ({edit_name}).".join(file.rsplit('.', 1))
-                    else:
-                        file_out = file
                     if timestamp != "":
                         file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
+                    if folder_out != "":
+                        file_out = folder_out + "\\" + file_out.rsplit('\\', 1)[-1]
                     edit_photo(file, file_out, brightness_factor, contrast_factor, saturation_factor, sharpness_factor, sharpness_enhancement, color_balance)
             else:
                 raise Exception("There are no files to edit")
 
             if self.export_log_input.active:
-                if edit_name != "":
-                    file_out = f"{folders[0]}\\Python Image Editor ({edit_name}).txt"
+                if folder_out != "":
+                    file_out = f"{folder_out}\\Python Image Editor.txt"
                 else:
-                    file_out = f"{folders[0]}\\Python Image Editor.txt"
+                    file_out = f"{folders_in[0]}\\Python Image Editor.txt"
+                if edit_name != "":
+                    file_out = f"{folders_in[0]}\\Python Image Editor ({edit_name}).txt"
                 if timestamp != "":
                     file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
                 f = open(file_out, "a")
@@ -328,7 +338,7 @@ color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[
             self.edit_counter += 1
             self.edit_name_input.text = f"edit {self.edit_counter:02}"
 
-            self.show_popup(f"Successfully edited {len(files)} file(s) in folder(s):\n'{'\n'.join(folders)}'", string_applied_enhancements)
+            self.show_popup(f"Successfully edited {len(files)} file(s) in folder(s):\n'{'\n'.join(folders_in)}'", string_applied_enhancements)
         except Exception as e:
             self.show_popup("Error", f"An error occurred: {str(e)}")
 
