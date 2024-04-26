@@ -16,7 +16,7 @@ from kivy.config import Config
 
 # Add RESET ALL
 # Check folder new
-# fix bug → timestamp find )
+# fix bug → timestamp find
 
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
@@ -26,14 +26,30 @@ gui_input_size_hint_x = 0.86
 gui_input_size_hint_y = [3.5, 2, 0.6, 3.5, 3.5, 0.6, 2, 2]
 gui_others_size_hint_x = [0.7, 0.125]
 gui_others_size_hint_y = 1.5
-gui_start_button_hints = (0.25, 2.2)
+gui_last_buttons_size_hint_x = 200
+gui_last_buttons_size_hint_y = 5
+gui_start_button_hints = (1, 0.75)
 timestamp_default = "%Y-%m-%d %H-%M-%S"
 sider_min = 0
 sider_max = 2
 sider_default = 1
+unmask_sharp_min = (0, 0, 30)
+unmask_sharp_max = (3, 300, 0)
+unmask_sharp_default = (0, 0, 255)   # default = (radius=2, percent=150, threshold=3)
 
 
-def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1.0, saturation_factor=1.0, sharpness_factor=1.0, sharpness_enhancement=False, color_balance=(1.0, 1.0, 1.0)):
+def unmask_sharp_parameters_calculation(slider_value):
+    if slider_value == 0:
+        return unmask_sharp_default
+    else:
+        slider_value = slider_value / sider_max
+        radius = slider_value * (unmask_sharp_max[0] - unmask_sharp_min[0])
+        percent = int((slider_value % 0.1 * 10) * (unmask_sharp_max[1] - unmask_sharp_min[1])) + 1
+        threshold = unmask_sharp_min[2] + int((slider_value % 0.05 * 20) * (unmask_sharp_max[2] - unmask_sharp_min[2])) + 1
+        return radius, percent, threshold
+
+
+def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1.0, saturation_factor=1.0, sharpness_factor=1.0, unsharp_mask=unmask_sharp_default, color_balance=(1.0, 1.0, 1.0)):
     """
     Gets an image at "image_path" and saves an edited image file at "output_path".
     """
@@ -48,8 +64,8 @@ def edit_photo(image_path, output_path, brightness_factor=1.0, contrast_factor=1
         image = ImageEnhance.Color(image).enhance(saturation_factor)
     if sharpness_factor != 1:
         image = ImageEnhance.Sharpness(image).enhance(sharpness_factor)
-    if sharpness_enhancement:
-        image = image.filter(ImageFilter.UnsharpMask())
+    if unsharp_mask != unmask_sharp_default:
+        image = image.filter(ImageFilter.UnsharpMask(radius=unsharp_mask[0], percent=unsharp_mask[1], threshold=unsharp_mask[2]))
     if any([n != 1 for n in color_balance]):
         r, g, b = image.split()
         r = r.point(lambda i: i * color_balance[0])
@@ -189,14 +205,14 @@ class PhotoEditorApp(App):
         main_layout.add_widget(horizontal_layout)
 
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
-        self.sharpness_enhancement_label = Label(text=f"Sharpness enhancement = {False}", size_hint=(gui_others_size_hint_x[0], 1))
-        horizontal_layout.add_widget(self.sharpness_enhancement_label)
-        self.sharpness_enhancement_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
-        self.sharpness_enhancement_reset.bind(on_release=self.on_sharpness_enhancement_bool_change)
-        horizontal_layout.add_widget(self.sharpness_enhancement_reset)
-        self.sharpness_enhancement_bool = CheckBox()
-        self.sharpness_enhancement_bool.bind(active=self.on_sharpness_enhancement_bool_change)
-        horizontal_layout.add_widget(self.sharpness_enhancement_bool)
+        self.unsharp_mask_label = Label(text=f"Unsharp Mask = ({unmask_sharp_default[0]:.2f}, {unmask_sharp_default[1]:03}, {unmask_sharp_default[2]:03})", size_hint=(gui_others_size_hint_x[0], 1))
+        horizontal_layout.add_widget(self.unsharp_mask_label)
+        self.unsharp_mask_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
+        self.unsharp_mask_reset.bind(on_release=self.on_unsharp_mask_slider_change)
+        horizontal_layout.add_widget(self.unsharp_mask_reset)
+        self.unsharp_mask_slider = Slider(min=sider_min, max=sider_max, value=sider_min, orientation='horizontal')
+        self.unsharp_mask_slider.bind(value=self.on_unsharp_mask_slider_change)
+        horizontal_layout.add_widget(self.unsharp_mask_slider)
         main_layout.add_widget(horizontal_layout)
 
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
@@ -233,9 +249,15 @@ class PhotoEditorApp(App):
         main_layout.add_widget(horizontal_layout)
 
         # Last but not least:
-        edit_button = Button(text="Start editing", size_hint=gui_start_button_hints, pos_hint={"x": 0.5 - (gui_start_button_hints[0] / 2)})
+        horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_last_buttons_size_hint_x, size_hint=(1, gui_last_buttons_size_hint_y))
+        import_button = Button(text="Import Settings", size_hint=gui_start_button_hints)
+        import_button.bind(on_release=self.import_settings)
+        horizontal_layout.add_widget(import_button)
+
+        edit_button = Button(text="Start editing", size_hint=gui_start_button_hints)
         edit_button.bind(on_release=self.start)
-        main_layout.add_widget(edit_button)
+        horizontal_layout.add_widget(edit_button)
+        main_layout.add_widget(horizontal_layout)
         return main_layout
 
     def edit_name_input_reset(self, instance):
@@ -260,9 +282,10 @@ class PhotoEditorApp(App):
         self.sharpness_slider.value = value
         self.sharpness_label.text = f"Sharpness = {value:.2f}"
 
-    def on_sharpness_enhancement_bool_change(self, instance, value=False):
-        self.sharpness_enhancement_bool.active = value
-        self.sharpness_enhancement_label.text = f"Sharpness enhancement = {value}"
+    def on_unsharp_mask_slider_change(self, instance, value=sider_min):
+        self.unsharp_mask_slider.value = value
+        unmask_sharp_parameters = unmask_sharp_parameters_calculation(self.unsharp_mask_slider.value)
+        self.unsharp_mask_label.text = f"Unsharp Mask = ({unmask_sharp_parameters[0]:.2f}, {unmask_sharp_parameters[1]:03}, {unmask_sharp_parameters[2]:03})"
 
     def on_color_balance_r_slider_change(self, instance, value=sider_default):
         self.color_balance_r_slider.value = value
@@ -275,6 +298,9 @@ class PhotoEditorApp(App):
     def on_color_balance_b_slider_change(self, instance, value=sider_default):
         self.color_balance_b_slider.value = value
         self.color_balance_b_label.text = f"Color Balance (Blue) = {value:.2f}"
+
+    def import_settings(self, instance):
+        print('import_settings')
 
     def start(self, instance):
         folders_in = self.folder_input.text.replace('\n', ',').replace(';', ',').split(',')
@@ -290,7 +316,7 @@ class PhotoEditorApp(App):
         contrast_factor = self.contrast_slider.value
         saturation_factor = self.saturation_slider.value
         sharpness_factor = self.sharpness_slider.value
-        sharpness_enhancement = self.sharpness_enhancement_bool.active
+        unsharp_mask = unmask_sharp_parameters_calculation(self.unsharp_mask_slider.value)
         color_balance = (self.color_balance_r_slider.value, self.color_balance_g_slider.value, self.color_balance_b_slider.value)
 
         string_applied_enhancements = f"""These are the applied enhancements:
@@ -298,7 +324,7 @@ class PhotoEditorApp(App):
 {contrast_factor = :.2f}
 {saturation_factor = :.2f}
 {sharpness_factor = :.2f}
-{sharpness_enhancement = }
+unsharp_mask = ({unsharp_mask[0]:.2f}, {unsharp_mask[1]:03}, {unsharp_mask[2]:03})
 color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[2]:.2f})"""
 
         try:
@@ -312,7 +338,7 @@ color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[
                         file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
                     if folder_out != "":
                         file_out = folder_out + "\\" + file_out.rsplit('\\', 1)[-1]
-                    edit_photo(file, file_out, brightness_factor, contrast_factor, saturation_factor, sharpness_factor, sharpness_enhancement, color_balance)
+                    edit_photo(file, file_out, brightness_factor, contrast_factor, saturation_factor, sharpness_factor, unsharp_mask, color_balance)
             else:
                 raise Exception("There are no files to edit")
 
