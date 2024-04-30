@@ -14,11 +14,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.config import Config
 
 
-# Add RESET ALL
-# Check folder new
-# fix bug → timestamp find
-
-
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Window.size = (1000, 800)
 gui_spacing = 20
@@ -28,7 +23,7 @@ gui_others_size_hint_x = [0.7, 0.125]
 gui_others_size_hint_y = 1.5
 gui_last_buttons_size_hint_x = 200
 gui_last_buttons_size_hint_y = 5
-gui_start_button_hints = (1, 0.75)
+gui_button_hints = (1, 0.75)
 timestamp_default = "%Y-%m-%d %H-%M-%S"
 sider_min = 0
 sider_max = 2
@@ -104,43 +99,50 @@ class PhotoEditorApp(App):
     def build(self):
         main_layout = BoxLayout(orientation='vertical', spacing=gui_spacing)
 
-        # Inputs:
+        # ## ### #### #####   Inputs   ##### #### ### ## #
+        # Folder in:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[0]))
         horizontal_layout.add_widget(Label(text="Folders in", size_hint=(gui_input_size_hint_x, 1)))
         self.folder_input = TextInput(text="")
         horizontal_layout.add_widget(self.folder_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Folder out:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[1]))
         horizontal_layout.add_widget(Label(text="Folder out", size_hint=(gui_input_size_hint_x, 1)))
         self.folder_output = TextInput(text="")
         horizontal_layout.add_widget(self.folder_output)
         main_layout.add_widget(horizontal_layout)
 
+        # Include subfolders:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[2]))
         horizontal_layout.add_widget(Label(text="Include subfolders", size_hint=(gui_input_size_hint_x, 1)))
         self.include_subfolders_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.include_subfolders_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Filter in:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[3]))
         horizontal_layout.add_widget(Label(text="Filter in", size_hint=(gui_input_size_hint_x, 1)))
         self.filter_in_input = TextInput(text="*.jpg")
         horizontal_layout.add_widget(self.filter_in_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Filter out:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[4]))
         horizontal_layout.add_widget(Label(text="Filter out", size_hint=(gui_input_size_hint_x, 1)))
         self.filter_out_input = TextInput(text="")
         horizontal_layout.add_widget(self.filter_out_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Export log:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[5]))
         horizontal_layout.add_widget(Label(text="Export log (saved in the first folder)", size_hint=(gui_input_size_hint_x, 1)))
         self.export_log_input = CheckBox(active=False)
         horizontal_layout.add_widget(self.export_log_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Edit Name:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[6]))
         horizontal_layout.add_widget(Label(text="Edit Name (if empty the original will be overwritten!)", size_hint=(gui_others_size_hint_x[0], 1)))
         self.edit_name_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
@@ -150,6 +152,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.edit_name_input)
         main_layout.add_widget(horizontal_layout)
 
+        # Timestamp:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_input_size_hint_y[7]))
         horizontal_layout.add_widget(Label(text="Timestamp (leave empty to omit)", size_hint=(gui_others_size_hint_x[0], 1)))
         self.timestamp_reset = Button(text="Reset", size_hint=(gui_others_size_hint_x[1], 1))
@@ -159,7 +162,8 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.timestamp_input)
         main_layout.add_widget(horizontal_layout)
 
-        # Sliders:
+        # ## ### #### #####   Sliders   ##### #### ### ## #
+        # Brightness:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.brightness_label = Label(text=f"Brightness = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.brightness_label)
@@ -171,6 +175,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.brightness_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Contrast:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.contrast_label = Label(text=f"Contrast = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.contrast_label)
@@ -182,6 +187,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.contrast_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Saturation:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.saturation_label = Label(text=f"Saturation = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.saturation_label)
@@ -193,6 +199,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.saturation_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Sharpness:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.sharpness_label = Label(text=f"Sharpness = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.sharpness_label)
@@ -204,6 +211,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.sharpness_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Unsharp Mask:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.unsharp_mask_label = Label(text=f"Unsharp Mask = ({unmask_sharp_default[0]:.2f}, {unmask_sharp_default[1]:03}, {unmask_sharp_default[2]:03})", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.unsharp_mask_label)
@@ -215,6 +223,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.unsharp_mask_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Color Balance (Red):
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.color_balance_r_label = Label(text=f"Color Balance (Red) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_r_label)
@@ -226,6 +235,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.color_balance_r_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Color Balance (Green):
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.color_balance_g_label = Label(text=f"Color Balance (Green) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_g_label)
@@ -237,6 +247,7 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.color_balance_g_slider)
         main_layout.add_widget(horizontal_layout)
 
+        # Color Balance (Blue):
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_spacing, size_hint=(1, gui_others_size_hint_y))
         self.color_balance_b_label = Label(text=f"Color Balance (Blue) = {sider_default:.2f}", size_hint=(gui_others_size_hint_x[0], 1))
         horizontal_layout.add_widget(self.color_balance_b_label)
@@ -248,13 +259,20 @@ class PhotoEditorApp(App):
         horizontal_layout.add_widget(self.color_balance_b_slider)
         main_layout.add_widget(horizontal_layout)
 
-        # Last but not least:
+        # ## ### #### #####   Buttons   ##### #### ### ## #
+        # Reset Settings:
         horizontal_layout = BoxLayout(orientation='horizontal', spacing=gui_last_buttons_size_hint_x, size_hint=(1, gui_last_buttons_size_hint_y))
-        import_button = Button(text="Import Settings", size_hint=gui_start_button_hints)
+        reset_button = Button(text="Reset Settings", size_hint=gui_button_hints)
+        reset_button.bind(on_release=self.reset_settings)
+        horizontal_layout.add_widget(reset_button)
+        
+        # Import Settings:
+        import_button = Button(text="Import Settings", size_hint=gui_button_hints)
         import_button.bind(on_release=self.import_settings)
         horizontal_layout.add_widget(import_button)
 
-        edit_button = Button(text="Start editing", size_hint=gui_start_button_hints)
+        # Start editing:
+        edit_button = Button(text="Start editing", size_hint=gui_button_hints)
         edit_button.bind(on_release=self.start)
         horizontal_layout.add_widget(edit_button)
         main_layout.add_widget(horizontal_layout)
@@ -299,6 +317,16 @@ class PhotoEditorApp(App):
         self.color_balance_b_slider.value = value
         self.color_balance_b_label.text = f"Color Balance (Blue) = {value:.2f}"
 
+    def reset_settings(self, instance):
+        self.on_brightness_slider_change(instance)
+        self.on_contrast_slider_change(instance)
+        self.on_saturation_slider_change(instance)
+        self.on_sharpness_slider_change(instance)
+        self.on_unsharp_mask_slider_change(instance)
+        self.on_color_balance_r_slider_change(instance)
+        self.on_color_balance_g_slider_change(instance)
+        self.on_color_balance_b_slider_change(instance)
+
     def import_settings(self, instance):
         print('import_settings')
 
@@ -330,6 +358,8 @@ color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[
         try:
             files = get_files(folders_in, include_subfolders, filter_in, filter_out)
             if len(files) > 0:
+                if folder_out != "":
+                    os.makedirs(folder_out, exist_ok=True)
                 for index_file, file in enumerate(files):
                     file_out = file
                     if edit_name != "":
