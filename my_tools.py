@@ -10,9 +10,9 @@ def delete_thumbs(folder):
     """
         Delete tricky files
     """
-    os.chdir(folder)
-    os.rename('Thumbs.db', 'Thumbs.dbdb')
-    os.remove('Thumbs.dbdb')
+    # os.chdir(folder)
+    os.rename(folder + 'Thumbs.db', folder + 'Thumbs.dbdb')
+    os.remove(folder + 'Thumbs.dbdb')
 
 
 def delete_folder(folder):
