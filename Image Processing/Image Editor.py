@@ -2,6 +2,7 @@ import os
 from fnmatch import fnmatch
 from datetime import datetime
 from PIL import Image, ImageEnhance, ImageFilter
+from plyer import filechooser
 from kivy.app import App
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
@@ -25,9 +26,9 @@ gui_last_buttons_size_hint_x = 200
 gui_last_buttons_size_hint_y = 5
 gui_button_hints = (1, 0.75)
 timestamp_default = "%Y-%m-%d %H-%M-%S"
-sider_min = 0
-sider_max = 2
-sider_default = 1
+sider_min = 0.0
+sider_max = 2.0
+sider_default = 1.0
 unmask_sharp_min = (0, 0, 30)
 unmask_sharp_max = (3, 300, 0)
 unmask_sharp_default = (0, 0, 255)   # default = (radius=2, percent=150, threshold=3)
@@ -328,7 +329,30 @@ class PhotoEditorApp(App):
         self.on_color_balance_b_slider_change(instance)
 
     def import_settings(self, instance):
-        print('import_settings')
+        path = filechooser.open_file(title="Pick the exported TXT file", filters=[("Normal text file", "*.txt")])
+        with open(path[0], "r") as file:
+            for line in file.readlines():
+                if "brightness_factor" in line:
+                    self.on_brightness_slider_change(instance, float(line.split(" = ")[-1]))
+                elif "contrast_factor" in line:
+                    self.on_contrast_slider_change(instance, float(line.split(" = ")[-1]))
+                elif "saturation_factor" in line:
+                    self.on_saturation_slider_change(instance, float(line.split(" = ")[-1]))
+                elif "sharpness_factor" in line:
+                    self.on_sharpness_slider_change(instance, float(line.split(" = ")[-1]))
+                elif "unsharp_mask" in line:
+                    self.on_unsharp_mask_slider_change(instance, float(line.split(" = ")[-1].split(" (")[0]))
+                elif "color_balance" in line:
+                    self.on_color_balance_r_slider_change(instance, float(line.split(" = (")[-1].split(", ")[0]))
+                    self.on_color_balance_g_slider_change(instance, float(line.split(", ")[1]))
+                    self.on_color_balance_b_slider_change(instance, float(line.split(", ")[-1].replace(")", "")))
+        self.show_popup(f"Successfully imported these settings:",
+                        f"""brightness_factor = {self.brightness_slider.value:.2f}
+contrast_factor = {self.contrast_slider.value:.2f}
+saturation_factor = {self.saturation_slider.value:.2f}
+sharpness_factor = {self.sharpness_slider.value:.2f}
+unsharp_mask = {self.unsharp_mask_slider.value:.2f}
+color_balance = ({self.color_balance_r_slider.value:.2f}, {self.color_balance_g_slider.value:.2f}, {self.color_balance_b_slider.value:.2f})""")
 
     def start(self, instance):
         folders_in = self.folder_input.text.replace('\n', ',').replace(';', ',').split(',')
@@ -352,7 +376,7 @@ class PhotoEditorApp(App):
 {contrast_factor = :.2f}
 {saturation_factor = :.2f}
 {sharpness_factor = :.2f}
-unsharp_mask = ({unsharp_mask[0]:.2f}, {unsharp_mask[1]:03}, {unsharp_mask[2]:03})
+unsharp_mask = {self.unsharp_mask_slider.value:.2f} ({unsharp_mask[0]:.2f}, {unsharp_mask[1]:03}, {unsharp_mask[2]:03})
 color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[2]:.2f})"""
 
         try:
@@ -369,32 +393,32 @@ color_balance = ({color_balance[0]:.2f}, {color_balance[1]:.2f}, {color_balance[
                     if folder_out != "":
                         file_out = folder_out + "\\" + file_out.rsplit('\\', 1)[-1]
                     edit_photo(file, file_out, brightness_factor, contrast_factor, saturation_factor, sharpness_factor, unsharp_mask, color_balance)
+
+                if self.export_log_input.active:
+                    if edit_name == "":
+                        file_out = "Python Image Editor" + (f" ({timestamp})" if timestamp != "" else "") + ".txt"
+                    else:
+                        file_out = f"Python Image Editor ({edit_name}" + (f' _ {timestamp})' if timestamp != '' else ')') + ".txt"
+                    if folder_out != "":
+                        file_out = folder_out + "\\" + file_out
+                    else:
+                        file_out = folders_in[0] + "\\" + file_out
+                    f = open(file_out, "a")
+                    f.write(f"Python Image Editor\n\n")
+                    f.write(f"edit_name = {edit_name}\n")
+                    f.write(f"Date = {timestamp}\n")
+                    f.write(f"Files:\n")
+                    for index_file, file in enumerate(files):
+                        f.write(f"File {index_file + 1:03} = {file}\n")
+                    f.write(f"\n{string_applied_enhancements}\n")
+                    f.close()
+
             else:
                 raise Exception("There are no files to edit")
-
-            if self.export_log_input.active:
-                if folder_out != "":
-                    file_out = f"{folder_out}\\Python Image Editor.txt"
-                else:
-                    file_out = f"{folders_in[0]}\\Python Image Editor.txt"
-                if edit_name != "":
-                    file_out = f"{folders_in[0]}\\Python Image Editor ({edit_name}).txt"
-                if timestamp != "":
-                    file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
-                f = open(file_out, "a")
-                f.write(f"Python Image Editor\n\n")
-                f.write(f"edit_name = {edit_name}\n")
-                f.write(f"Date = {timestamp}\n")
-                f.write(f"Files:\n")
-                for index_file, file in enumerate(files):
-                    f.write(f"File {index_file + 1:03} = {file}\n")
-                f.write(f"\n{string_applied_enhancements}\n")
-                f.close()
-
             self.edit_counter += 1
             self.edit_name_input.text = f"edit {self.edit_counter:02}"
-
             self.show_popup(f"Successfully edited {len(files)} file(s) in folder(s):\n'{'\n'.join(folders_in)}'", string_applied_enhancements)
+
         except Exception as e:
             self.show_popup("Error", f"An error occurred: {str(e)}")
 
