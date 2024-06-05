@@ -6,15 +6,6 @@ import re
 import os
 
 
-def delete_thumbs(folder):
-    """
-        Delete tricky files
-    """
-    # os.chdir(folder)
-    os.rename(folder + 'Thumbs.db', folder + 'Thumbs.dbdb')
-    os.remove(folder + 'Thumbs.dbdb')
-
-
 def delete_folder(folder):
     """
         Delete folder
@@ -22,7 +13,8 @@ def delete_folder(folder):
     try:
         shutil.rmtree(folder)
     except:
-        delete_thumbs(folder)
+        os.rename(folder + '\\Thumbs.db', folder + '\\Thumbs.dbdb')
+        os.remove(folder + '\\Thumbs.dbdb')
     finally:
         os.rmdir(folder)
 
