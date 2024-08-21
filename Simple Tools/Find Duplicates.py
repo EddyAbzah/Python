@@ -1,7 +1,7 @@
 import os
 import re
 
-folders = [r"C:\Users\eddya\Downloads\_Sorted\Family Photos\מעורבב 03", r"C:\Users\eddya\Downloads\_Sorted\Family Photos\מעורבב 02"]
+folders = [r"", r""]
 files_dict = {}  # Dictionary to store file details
 originals = []  # List to store paths of duplicate files
 duplicates = []  # List to store paths of duplicate files
