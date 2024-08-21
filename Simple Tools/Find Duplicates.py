@@ -17,7 +17,7 @@ for folder_path in folders:
 
             if remove_parentheses:
                 if '(' in file and ')' in file:
-                    file = re.sub(r"\([0-9]\)", "", file)
+                    file = re.sub(r"\([0-9]*\)", "", file)
             if size_up_only:
                 file_info = file_size
             else:
