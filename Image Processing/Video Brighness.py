@@ -56,10 +56,10 @@ def smooth_lighting(frames):
 #     ffmpeg.output(audio, video, processed_video_path, vcodec='copy', acodec='copy').run()
 
 
-def merge_audio_with_ffmpeg_windows(original_video_path, processed_video_path):
+def merge_audio_with_ffmpeg_windows(video_path, audio_path, processed_video_path):
     """Use FFmpeg to merge the original audio with the processed video and overwrite the original"""
-    print(f"Merging audio from '{original_video_path}' to {processed_video_path}")
-    ffmpeg_command = f'ffmpeg -i "{processed_video_path}" -i "{original_video_path}" -c copy -map 0:v -map 1:a -shortest -y "{original_video_path}"'
+    print(f"Merging audio from '{audio_path}' to {video_path}")
+    ffmpeg_command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c copy -map 0:v -map 1:a -shortest -y "{processed_video_path}"'
     os.system(ffmpeg_command)
     print(f"Audio merged")
 
@@ -110,14 +110,15 @@ def process_video(input_video_path, output_video_path):
 
 
 if __name__ == '__main__':
-    # videos = [r"C:\Users\eddy.a\Videos\ESP 01 (2g9-01-2023)\2023-01-29 _ 00-10-59.mp4",
-    #           r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-08-52.mp4",
-    #           r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-06-01.mp4",
-    #           r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-02-35.mp4"]
-    videos = [r"C:\Users\eddya\Videos\OG.mp4"]
+    videos = [r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-10-59.mp4",
+              r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-08-52.mp4",
+              r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-06-01.mp4",
+              r"C:\Users\eddy.a\Videos\ESP 01 (29-01-2023)\2023-01-29 _ 00-02-35.mp4"][1:]
+    # videos = [r"C:\Users\eddya\Videos\OG.mp4"]
     for input_video in videos:
-        for video_codec in ['H264', 'X264', 'mp4v']:
-            output_video = input_video.replace(".mp4", f" (EDIT {video_codec = }.mp4")
+        for video_codec in ['X264', 'mp4v']:
+            output_video = input_video.replace(".mp4", f" ({video_codec}).mp4")
+            merged_video = output_video.replace(").mp4", f" MERGED).mp4")
             process_video(input_video, output_video)
-            merge_audio_with_ffmpeg_windows(input_video, output_video)
+            merge_audio_with_ffmpeg_windows(input_video, output_video, merged_video)
             # merge_audio_with_ffmpeg_python(input_video, output_video)
