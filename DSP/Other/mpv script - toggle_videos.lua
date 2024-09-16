@@ -1,8 +1,9 @@
 -- Lua script for mpv Video Player to toggle between 3 videos:
 
-local video1 = "C:\\Users\\eddya\\Downloads\\Photos - Family\\2024.06.15 - נחל דישון לוהט\\2024-06-15 _ 17-15-02.mp4"
-local video2 = "C:\\Users\\eddya\\Downloads\\Photos - Family\\2024.06.15 - נחל דישון לוהט\\WhatsApp SEX.mp4"
-local video3 = "C:\\Users\\eddya\\Downloads\\Photos - Family\\2024.06.15 - נחל דישון לוהט\\WhatsApp OG.mp4"
+-- For file paths you two options: a. path in double quotes but \ is escaped (\\); b. raw string in [[]] but no double quotes.
+local video1 = [[Path\01.mp4]]
+local video2 = [[Path\01.mp4]]
+local video3 = [[Path\01.mp4]]
 mp.commandv("loadfile", video1, "replace")
 mp.commandv("loadfile", video2, "append")
 mp.commandv("loadfile", video3, "append")
