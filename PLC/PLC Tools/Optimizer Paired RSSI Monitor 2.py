@@ -280,7 +280,7 @@ def plot_histogram(main_df, summary_df, file_out):
             vals[value_type].append(hist)
             fig.add_trace(go.Bar(y=hist, x=bins_labels, name=f'RSSI Ratio at {ratios_labels[ratio_i]}', visible=index == 0, hovertemplate=hover_template), row=1, col=1)
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
-    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Ratio", yaxis_title="Events or Percentage")
+    fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Time of day", yaxis_title="Events or Percentage")
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
     fig.update_layout(updatemenus=[
         dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
