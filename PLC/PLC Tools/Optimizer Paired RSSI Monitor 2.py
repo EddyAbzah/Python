@@ -287,9 +287,6 @@ def plot_histogram(main_df, summary_df, file_out):
     plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 03 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
 
 
-
-
-
 if __name__ == "__main__":
     folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\RSSI Ratio - Meyer Burger modules\CSVs"
     file_path_in = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06.csv"
