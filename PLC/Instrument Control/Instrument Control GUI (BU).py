@@ -9,10 +9,10 @@ KV = '''
 BoxLayout:
     orientation: 'vertical'
 
-    # Image Placeholder taking top half of the window
+    # Image taking top half of the window
     Image:
         size_hint_y: 0.5  # Top half of the window
-        source: ''  # Blank picture placeholder
+        source: 'Temp pic.png'  # Use your image here
 
     # Main Content Area
     BoxLayout:
@@ -34,9 +34,9 @@ BoxLayout:
                 spacing: 10
 
                 MDLabel:
-                    text: "Range Slider: "
+                    text: "Frequency Range [kHz]: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDSlider:
                     id: slider_start
@@ -62,34 +62,34 @@ BoxLayout:
                 spacing: 10
 
                 MDLabel:
-                    text: "Start: "
+                    text: "Start Frequency [kHz]: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDTextField:
                     id: start_input
-                    hint_text: "Enter start value"
+                    hint_text: "Enter start frequency"
                     text: str(app.start_value)
                     input_filter: 'int'
                     on_text_validate: app.set_start_value(self.text)
 
                 MDLabel:
-                    text: "Stop: "
+                    text: "Stop Frequency [kHz]: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDTextField:
                     id: stop_input
-                    hint_text: "Enter stop value"
+                    hint_text: "Enter stop frequency"
                     text: str(app.stop_value)
                     input_filter: 'int'
                     on_text_validate: app.set_stop_value(self.text)
 
-            # Number Inputs (Number 1, Number 2, and Number 3)
+            # Number Inputs (RBW, VBW, Test type, and Impedance)
             BoxLayout:
                 orientation: 'vertical'
                 size_hint_y: None
-                height: '180dp'
+                height: '220dp'
                 spacing: 10
 
                 BoxLayout:
@@ -99,12 +99,12 @@ BoxLayout:
                     spacing: 10
 
                     MDLabel:
-                        text: "Number 1: "
+                        text: "RBW [kHz]: "
                         size_hint_x: None
-                        width: 100
+                        width: 150
 
                     MDTextField:
-                        hint_text: "Enter value"
+                        hint_text: "Enter RBW"
                         input_filter: 'float'
 
                 BoxLayout:
@@ -114,13 +114,28 @@ BoxLayout:
                     spacing: 10
 
                     MDLabel:
-                        text: "Number 2: "
+                        text: "VBW [kHz]: "
                         size_hint_x: None
-                        width: 100
+                        width: 150
 
                     MDTextField:
-                        hint_text: "Enter value"
+                        hint_text: "Enter VBW"
                         input_filter: 'float'
+
+                # Test type Dropdown Menu
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: '48dp'
+
+                    MDLabel:
+                        text: "Test type: "
+                        size_hint_x: None
+                        width: 150
+
+                    MDDropDownItem:
+                        text: "Select Test type"
+                        on_release: self.set_item("Select Test type")
 
                 BoxLayout:
                     orientation: 'horizontal'
@@ -129,12 +144,12 @@ BoxLayout:
                     spacing: 10
 
                     MDLabel:
-                        text: "Number 3: "
+                        text: "Impedance [ohm]: "
                         size_hint_x: None
-                        width: 100
+                        width: 150
 
                     MDTextField:
-                        hint_text: "Enter value"
+                        hint_text: "Enter Impedance"
                         input_filter: 'float'
 
         # Right Side with Dropdown Menus and Additional Inputs
@@ -151,13 +166,13 @@ BoxLayout:
                 height: '48dp'
 
                 MDLabel:
-                    text: "Dropdown 1: "
+                    text: "Coupling: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDDropDownItem:
-                    text: "Option 1"
-                    on_release: self.set_item("Option 1")
+                    text: "Select Coupling"
+                    on_release: self.set_item("Select Coupling")
 
             # Dropdown Menu 2
             BoxLayout:
@@ -166,13 +181,13 @@ BoxLayout:
                 height: '48dp'
 
                 MDLabel:
-                    text: "Dropdown 2: "
+                    text: "Average type: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDDropDownItem:
-                    text: "Option 2"
-                    on_release: self.set_item("Option 2")
+                    text: "Select Average type"
+                    on_release: self.set_item("Select Average type")
 
             # Number Inputs
             BoxLayout:
@@ -181,12 +196,12 @@ BoxLayout:
                 height: '48dp'
 
                 MDLabel:
-                    text: "Number 4: "
+                    text: "Attenuation [dB]: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDTextField:
-                    hint_text: "Enter value"
+                    hint_text: "Enter Attenuation"
                     input_filter: 'float'
 
             BoxLayout:
@@ -195,12 +210,26 @@ BoxLayout:
                 height: '48dp'
 
                 MDLabel:
-                    text: "Number 5: "
+                    text: "Reference Level [dBm]: "
                     size_hint_x: None
-                    width: 100
+                    width: 150
 
                 MDTextField:
-                    hint_text: "Enter value"
+                    hint_text: "Enter Reference Level"
+                    input_filter: 'float'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: '48dp'
+
+                MDLabel:
+                    text: "Y Reference Level [dBm]: "
+                    size_hint_x: None
+                    width: 150
+
+                MDTextField:
+                    hint_text: "Enter Y Reference Level"
                     input_filter: 'float'
 '''
 
