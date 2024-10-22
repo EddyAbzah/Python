@@ -15,9 +15,8 @@ if os.getlogin() == "eddy.a":
 # ## DataFrame:
 auto_open_html = False
 round_df_numbers = True
-date_format = "%d/%m/%y %H:%M"
-date_time_index = [9, 11]   # take only the hours
-date_date_index = [0, 8]    # take the whole date - not working
+date_format = "%d/%m/%Y %H:%M"
+add_leading_zeros_to_hours = True
 replace_nans_and_infs = [True, -1, 666666]
 sorting_order_main = [True, ['Optimizer ID', 'Portia ID', 'Date']]      # for the main DF only!
 rename_df_columns = {"siteid": "Site ID", "deviceid": "Portia ID", "managerid": "Manager ID", "get_time": "Date", "optimizerid": "Optimizer ID",
@@ -32,8 +31,10 @@ split_figs = 60
 plot_addresses = {}
 
 
-def round_numbers(df):
+def round_numbers(df, iteration):
     how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Upper RSSI limit": 0, "Lower RSSI limit": 0, "Last SNR": 2}
+    if add_temperature and iteration == 2:
+        how_to_round.update({"AC Production (W)": 0, "AC Consumption (W)": 0, "Humidity (%)": 0, "Temperature (C)": 0})
     df = df.round(how_to_round)
     for data_set, round_number in how_to_round.items():
         if round_number == 0:
@@ -61,7 +62,10 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
     df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')       # converters={'optimizerid_hex': partial(int, base=16)}
     df1 = df1.rename(columns=rename_df_columns)
     df1["Optimizer ID"] = df1["Optimizer ID"].apply(lambda n: f'{n:X}')      # df['optimizerid'].apply(hex)
-    df1["Date"] = pd.to_datetime(df1["Date"]).dt.strftime(date_format)
+    if add_leading_zeros_to_hours:
+        df1["Date"] = df1["Date"].apply(lambda s: f'{s[:6]}20{s[6:]}' if len(s) < 15 else s)
+        df1["Date"] = df1["Date"].apply(lambda s: f'{s[:11]}0{s[11:]}' if len(s) < 16 else s)
+    df1["Date"] = pd.to_datetime(df1["Date"], format=date_format)
     df1.drop(columns=[col for col in df1 if col not in rename_df_columns.values()], inplace=True)
     print(f'{list(df1.columns) = }')
     print(f'{df1.shape = }')
@@ -94,7 +98,7 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
         del df2
         del df3
         if round_df_numbers:
-            df_full = round_numbers(df_full)
+            df_full = round_numbers(df_full, 1)
         for col in df_full.columns:
             print(f'df_full[{col}].nunique() = {df_full[col].nunique()}')
         if sorting_order_main[0]:
@@ -106,8 +110,26 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
         print(f'{list(df_full.columns) = }')
         print(f'{df_full.shape = }')
         df_full.set_index('Date', inplace=True)
-        df_full.to_csv(file_out)
         return df_full
+
+
+def combine_main_and_temperature(df1, df2):
+    # df2.index = df2.index.map(lambda s: s[:-1] + '0')  # round the hours from 10:51 to 10:50
+    merged_dfs = []
+    for portia_index, portia_id in enumerate(df1["Site ID"].unique()):
+        sdf1 = df1[df1["Site ID"] == portia_id]
+        sdf2 = df2[df2["Site ID"] == portia_id]
+        sdf1.index = pd.to_datetime(sdf1.index, format=date_format)
+        sdf2.index = pd.to_datetime(sdf2.index)
+        # average_temperature = sdf.groupby('Date')['Temperature'].mean().reset_index()
+        merged_df = pd.merge_asof(sdf1.sort_values('Date'), sdf2[['AC Production (W)', 'AC Consumption (W)', 'Humidity (%)', 'Temperature (C)']].sort_values('Date'), on='Date', direction='backward')
+        # Ensure numeric columns are inferred from object dtype before interpolating
+        # merged_df = merged_df.infer_objects()
+        merged_df.interpolate(method='linear', inplace=True)
+        merged_dfs.append(merged_df)
+    merged_dfs = pd.concat(merged_dfs, ignore_index=True)
+    merged_dfs.set_index("Date", inplace=True)
+    return merged_dfs
 
 
 def plot_df(df, file_out):
@@ -121,7 +143,7 @@ def plot_df(df, file_out):
             df.sort_values(sort_by, inplace=True)
     for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
         if optimizer_index % split_figs == 0:
-            fig = make_subplots(cols=1, rows=1, shared_xaxes=False)
+            fig = make_subplots(cols=1, rows=1, shared_xaxes=False, specs=[[{"secondary_y": add_temperature}]])
             steps = list()
             fig_count += 1
         print(f'Plotting Optimizer number {optimizer_index + 1} in fig number {fig_count}, place {int(optimizer_index % split_figs) + 1}: {optimizer_id = }')
@@ -144,16 +166,21 @@ def plot_df(df, file_out):
             time_is_not_visible = False
             if time_is_not_visible:
                 hover_template = [f'<b>Optimizer HEX ID: {optimizer_id}</b><extra></extra><br><br>', ': %{y}<br>Date: %{x:%Y-%m-%d %H:%M:%S}<br>Time: %{text}']
-                hour = [h.split(' ')[-1] for h in sdf.index]
+                hour = [str(h).split(' ')[-1] for h in sdf.index]
             else:
                 hover_template = [f'<b>Optimizer HEX ID: {optimizer_id}</b><extra></extra><br><br>', ': %{y}<br>Date: %{x:%Y-%m-%d %H:%M:%S}']
                 hour = None
-            marker_color = [int(h.split(' ')[-1][:2]) for h in sdf.index]
+            marker_color = [int(str(h).split(' ')[-1][:2]) for h in sdf.index]
             line = dict(dash='dot', color='darkturquoise')
             plots = ["RSSI Ratio"]
             for trace in plots:
                 fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=visible, mode='lines+markers', line=line, text=hour,
                                          hovertemplate=hover_template[0] + f'{trace}' + hover_template[1], hoverlabel=hover_label, marker_color=marker_color), col=1, row=1)
+
+        if add_temperature:
+            plots = plot_temperature
+            for trace in plots:
+                fig.add_trace(go.Scatter(x=list(sdf.index), y=sdf[trace], name=f"{optimizer_id} - {trace}", visible=optimizer_index % split_figs == 0), secondary_y=True, col=1, row=1)
 
         if optimizer_index % split_figs == 0:
             figs_per_fig = len(fig.data)
@@ -179,13 +206,18 @@ def summarize(df):
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()
         ssdf["Samples above Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Upper Ratio limit']) if n > l])
         ssdf["Samples below Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Lower Ratio limit']) if n < (1 / l)])
+        if add_temperature:
+            ssdf["AC Production (W)"] = sdf["AC Production (W)"].mean()
+            ssdf["AC Consumption (W)"] = sdf["AC Consumption (W)"].mean()
+            ssdf["Humidity (%)"] = sdf["Humidity (%)"].mean()
+            ssdf["Temperature (C)"] = sdf["Temperature (C)"].mean()
         if len(plot_addresses) > 0:
             ssdf["Optimizer Index"] = plot_addresses[optimizer_id]["Optimizer Index"]
             ssdf["Fig Index"] = plot_addresses[optimizer_id]["Fig Index"]
             ssdf["Plot Index"] = plot_addresses[optimizer_id]["Plot Index"]
         df_full = pd.concat([df_full, ssdf], axis=0)
     if round_df_numbers:
-        df_full = round_numbers(df_full)
+        df_full = round_numbers(df_full, 2)
     return df_full
 
 
@@ -216,7 +248,7 @@ def plot_histogram(main_df, summary_df, file_out):
 
     # fig 02:
     # fig_title = "RSSI change per Day"
-    # main_df.loc[:, "Date"] = main_df.index.map(lambda s: s[date_date_index[0]:date_date_index[1]])
+    # main_df.loc[:, "Date"] = main_df.index.map(lambda s: str(s).split(' ')[-1])
     # fig = make_subplots(rows=1, cols=1)
     # bins = [0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100000]
     # bins_labels = [f'{bins[i]}-{bins[i+1]}' for i in range(len(bins) - 2)] + [f'{bins[-2]}+']
@@ -260,7 +292,7 @@ def plot_histogram(main_df, summary_df, file_out):
 
     # Fig 03:
     fig_title = "RSSI change per Hour"
-    main_df.loc[:, "Time"] = main_df.index.map(lambda s: s[date_time_index[0]:date_time_index[1]])
+    main_df.loc[:, "Time"] = main_df.index.map(lambda s: str(s).split(' ')[-1][:2])
     fig = make_subplots(rows=1, cols=1)
     bins = sorted([int(t) for t in main_df["Time"].unique()])
     ratios = [[0, 0.4], [0.4, 0.75], [0.75, 1.5], [1.5, 5], [5, 10000]]
@@ -288,21 +320,26 @@ def plot_histogram(main_df, summary_df, file_out):
 
 
 if __name__ == "__main__":
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\RSSI Ratio - Meyer Burger modules\CSVs"
-    file_path_in = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06.csv"
-    file_path_full = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06 - RAW data.csv"
-    file_path_output_1 = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06 - Optimizer RSSI Monitor.html"
-    file_path_output_2 = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06 - Optimizer RSSI Histogram.html"
-    file_path_output_summary = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06 - Summary.csv"
+    file_date = "2024_10_20"
+    folder = r"C:\Users\eddy.a\Downloads\RSSI Ratio - Meyer Burger modules\CSVs"
+    file_path_in = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date}.csv"
+    file_path_full = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - RAW data.csv"
+    file_path_output_1 = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - Optimizer RSSI Monitor.html"
+    file_path_output_2 = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - Optimizer RSSI Histogram.html"
+    file_path_output_summary = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - Summary.csv"
 
     combine_two_RAW_files_together = False
-    file_path_in_1 = f"{folder}\\Ratio_Meyer_Burger_modules_2024_10_06.csv"
+    file_path_in_1 = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date}.csv"
     file_path_in_2 = f"{folder}\\Ratio_Meyer_Burger_modules_2.csv"
 
-    T_read__or__F_write = True
+    T_read__or__F_write = False
     file_path_p141 = f"{folder}\\Optimizer Paired RSSI and Limits.csv"
 
-    print_all_optimizers = False
+    add_temperature = False
+    # plot_temperature = ["AC Production (W)", "AC Consumption (W)", "Humidity (%)", "Temperature (C)"]
+    file_path_add_temperature = f"{folder}\\..\\Monitoring\\Power + Weather.csv"
+
+    print_all_optimizers = True
     print_all_histograms = True
 
     # Process:
@@ -311,14 +348,20 @@ if __name__ == "__main__":
 
     if T_read__or__F_write:
         main_df = pd.read_csv(file_path_full, index_col=0).dropna(how='all', axis='columns')
-        summary_df = pd.read_csv(file_path_output_summary).dropna(how='all', axis='columns')
     else:
         main_df = combine_df_and_p141(file_path_in, file_path_p141, file_path_full)     # Combine the monitoring file with the "static" parameters (like P141)
-        summary_df = summarize(main_df)
-        summary_df.to_csv(file_path_output_summary, index=False)
+        if add_temperature:
+            main_df = combine_main_and_temperature(main_df, pd.read_csv(file_path_add_temperature, index_col=0).dropna(how='all', axis='columns'))
+        main_df.to_csv(file_path_full)
 
     if print_all_optimizers:
         plot_df(main_df, file_path_output_1)
+
+    if T_read__or__F_write:
+        summary_df = pd.read_csv(file_path_output_summary).dropna(how='all', axis='columns')
+    else:
+        summary_df = summarize(main_df)
+        summary_df.to_csv(file_path_output_summary, index=False)
 
     if print_all_histograms:
         plot_histogram(main_df, summary_df, file_path_output_2)
