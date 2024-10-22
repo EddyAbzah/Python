@@ -22,11 +22,39 @@ BoxLayout:
             size_hint_x: 0.5
             spacing: 10
 
+            # Custom Range Slider (Start and Stop Sliders) with Title
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: '48dp'
+                spacing: 10
+
+                MDLabel:
+                    text: "Frequency Range [kHz]: "
+                    size_hint_x: None
+                    width: root.control_text_width
+
+                MDSlider:
+                    id: slider_start
+                    min: 0
+                    max: 100
+                    value: app.start_value
+                    step: 1
+                    on_value: app.update_slider_values_from_slider('start', self.value)
+
+                MDSlider:
+                    id: slider_stop
+                    min: 0
+                    max: 100
+                    value: app.stop_value
+                    step: 1
+                    on_value: app.update_slider_values_from_slider('stop', self.value)
+
             # Input Fields for Start and Stop Values
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '96dp'
+                height: '48dp'
                 spacing: 10
 
                 MDLabel:
@@ -34,31 +62,17 @@ BoxLayout:
                     size_hint_x: None
                     width: root.control_text_width
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    size_hint_y: None
-                    height: '96dp'
-                    spacing: 10
-
-                    MDTextField:
-                        id: start_input
-                        hint_text: "Enter start frequency"
-                        text: str(app.start_value)
-                        input_filter: 'int'
-                        on_text_validate: app.set_start_value(self.text)
-
-                    MDSlider:
-                        id: slider_start
-                        min: 0
-                        max: 100
-                        value: app.start_value
-                        step: 1
-                        on_value: app.update_slider_values_from_slider('start', self.value)
+                MDTextField:
+                    id: start_input
+                    hint_text: "Enter start frequency"
+                    text: str(app.start_value)
+                    input_filter: 'int'
+                    on_text_validate: app.set_start_value(self.text)
 
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '96dp'
+                height: '48dp'
                 spacing: 10
 
                 MDLabel:
@@ -66,26 +80,29 @@ BoxLayout:
                     size_hint_x: None
                     width: root.control_text_width
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    size_hint_y: None
-                    height: '96dp'
-                    spacing: 10
+                MDTextField:
+                    id: stop_input
+                    hint_text: "Enter stop frequency"
+                    text: str(app.stop_value)
+                    input_filter: 'int'
+                    on_text_validate: app.set_stop_value(self.text)
 
-                    MDTextField:
-                        id: stop_input
-                        hint_text: "Enter stop frequency"
-                        text: str(app.stop_value)
-                        input_filter: 'int'
-                        on_text_validate: app.set_stop_value(self.text)
+            # Traces Dropdown Menu
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: '48dp'
+                spacing: 10
 
-                    MDSlider:
-                        id: slider_stop
-                        min: 0
-                        max: 100
-                        value: app.stop_value
-                        step: 1
-                        on_value: app.update_slider_values_from_slider('stop', self.value)
+                MDLabel:
+                    text: "Traces: "
+                    size_hint_x: None
+                    width: root.control_text_width
+
+                MDDropDownItem:
+                    id: traces_dropdown
+                    text: "Average"  # Set default value
+                    on_release: app.menu_traces.open()
 
             BoxLayout:
                 orientation: 'horizontal'
@@ -139,23 +156,6 @@ BoxLayout:
             size_hint_x: 0.5
             padding: 10
             spacing: 10
-
-            # Traces Dropdown Menu
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-
-                MDLabel:
-                    text: "Traces: "
-                    size_hint_x: None
-                    width: root.control_text_width
-
-                MDDropDownItem:
-                    id: traces_dropdown
-                    text: "Average"  # Set default value
-                    on_release: app.menu_traces.open()
 
             # Impedance Input at the top
             BoxLayout:

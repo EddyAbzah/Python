@@ -5,6 +5,8 @@ from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
 
 Window.size = (1200, 800)
+image_refresh_rate_ms = 1000
+
 
 class InstrumentControlGUI(MDApp):
     start_value = NumericProperty(20)
