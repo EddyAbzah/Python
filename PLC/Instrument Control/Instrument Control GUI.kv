@@ -14,22 +14,53 @@
 <MDTextField>:
     font_size: sp(16)  # Apply to all MDTextFields
 
+<IPDialogContent>:
+    orientation: 'vertical'
+    MDTextField:
+        id: ip_input
+        hint_text: "Enter IP address (xx.x.x.xx)"
+        size_hint_x: 0.5
+        pos_hint: {"center_x": 0.5, "center_y": 0}
+    MDLabel:
+        id: error_label
+        text: ""
+        color: 1, 0, 0, 1  # Red color for error message
+        halign: "center"
+
+
 # Main window to fit vertically: Spectrum screen, labels, and buttons
 BoxLayout:
     orientation: 'vertical'
 
-    MDLabel:
-        halign: "left"
-        size_hint_y: 0.06
-        padding: 10
-        font_size: 15
-        text: "Disconnected"
+    # Top window to fit the connection label, and Spectrum screen
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: 0.5
 
+        # Connection label
+        MDCard:
+            id: connection_card
+            size_hint: 0.2, None
+            size: "300dp", "50dp"
+            pos_hint: {"center_x": 0.1, "center_y": 0.9}
+            elevation: 4  # Shadow depth
+            radius: [5, ]  # Rounded corners if needed
+            padding: '10dp'
+            md_bg_color: app.color_red
+            opacity: 1
+            orientation: 'vertical'
 
-    # Spectrum screen
-    Image:
-        size_hint_y: 0.45  # Top half of the window
-        source: 'Temp pic.png'  # Use your image here
+            MDLabel:
+                id: connection_label
+                halign: "center"
+                padding: 10
+                font_size: 15
+                text: "Disconnected"
+
+        # Spectrum screen
+        Image:
+            size_hint_x: 0.8
+            source: 'Temp pic.png'
 
     # Two columns of labels
     BoxLayout:
@@ -289,21 +320,27 @@ BoxLayout:
         pos_hint: {"center_x": 0.5, "center_y": 0}  # Center horizontally at the bottom
 
         MDRaisedButton:
+            id: connection_button
+            text: "Connect"
+            size_hint_x: 0.2
+            on_release: app.spectrum_connection()
+
+        MDRaisedButton:
             text: "Config"
-            size_hint_x: 0.25
+            size_hint_x: 0.2
             on_release: app.config_spectrum()
 
         MDRaisedButton:
             text: "Reset"
-            size_hint_x: 0.25
+            size_hint_x: 0.2
             on_release: app.reset_spectrum()
 
         MDRaisedButton:
             text: "Run"
-            size_hint_x: 0.25
+            size_hint_x: 0.2
             on_release: app.run_traces()
 
         MDRaisedButton:
             text: "Stop"
-            size_hint_x: 0.25
+            size_hint_x: 0.2
             on_release: app.stop_traces()

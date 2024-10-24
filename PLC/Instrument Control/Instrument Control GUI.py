@@ -1,11 +1,11 @@
 from kivymd.uix.button import MDFlatButton
+from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
 from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.label import MDLabel
 import re
 
 Window.size = (1200, 800)
@@ -13,10 +13,15 @@ image_refresh_rate_ms = 1000
 test_types = ["Full range", "LF-PLC", "HF-PLC"]
 
 
+class IPDialogContent(BoxLayout):
+    pass
+
+
 class InstrumentControlGUI(MDApp):
     start_value = NumericProperty(20)
     stop_value = NumericProperty(80)
-    ip_address = ""
+    color_red = [0.7, 0.1, 0.1, 0.7]
+    color_green = [0.1, 0.5, 0.1, 0.7]
 
     def build(self):
         return Builder.load_file('Instrument Control GUI.kv')
@@ -72,21 +77,7 @@ class InstrumentControlGUI(MDApp):
         self.dialog = MDDialog(
             title="Enter IP",
             type="custom",
-            content_cls=Builder.load_string('''
-BoxLayout:
-    orientation: 'vertical'
-    MDTextField:
-        id: ip_input
-        hint_text: "Enter IP address (xx.xx.xx.xx)"
-        size_hint_x: 0.5
-        pos_hint: {"center_x": 0.5, "center_y": 0} 
-    MDLabel:
-        id: error_label
-        text: ""
-        color: 1, 0, 0, 1  # Red color for error message
-        halign: "center"
-        
-    '''),
+            content_cls=IPDialogContent(),
             buttons=[
                 MDFlatButton(text="Cancel", on_release=self.close_dialog),
                 MDFlatButton(text="OK", on_release=self.check_ip_validity),
@@ -94,23 +85,38 @@ BoxLayout:
         )
         self.dialog.open()
 
-    def close_dialog(self, *args):
+    def close_dialog(self, *_):
         """Close the popup dialog."""
         self.dialog.dismiss()
 
-    def check_ip_validity(self, *args):
+    def check_ip_validity(self, *_):
         """Check if the entered IP address is valid."""
-        connection_label = self.
         error_label = self.dialog.content_cls.ids.error_label
         ip_input = self.dialog.content_cls.ids.ip_input.text
-        pattern = re.compile(r'^(?:[0-9]{2}\.){3}[0-9]{1,2}$')
+        pattern = re.compile(r'^[0-9]{2}\.[0-9]\.[0-9]\.[0-9]{1,3}$')      # = xx.x.x.x or xx.x.x.xx    original = (r'^(?:[0-9]{2}\.){3}[0-9]{1,2}$')
         if pattern.match(ip_input) is not None:
             error_label.text = ""
-            self.ip_address = ip_input
+            self.spectrum_connect(ip_input)
             self.close_dialog()
         else:
             error_label.text = "Invalid IP address. Please enter a valid one."
             print("Invalid IP address. Please enter a valid one.")
+
+    def spectrum_connection(self):
+        if self.root.ids.connection_button.text == "Disconnect":
+            self.spectrum_disconnect()
+        else:
+            self.show_ip_popup()
+
+    def spectrum_disconnect(self):
+        self.root.ids.connection_label.text = "Disconnected"
+        self.root.ids.connection_card.md_bg_color = self.color_red
+        self.root.ids.connection_button.text = "Connect"
+
+    def spectrum_connect(self, ip_input):
+        self.root.ids.connection_label.text = f"Connected to {ip_input}"
+        self.root.ids.connection_card.md_bg_color = self.color_green
+        self.root.ids.connection_button.text = "Disconnect"
 
     def set_test_type_item(self, item):
         """Set the selected item in the Test type dropdown."""
