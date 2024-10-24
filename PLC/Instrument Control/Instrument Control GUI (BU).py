@@ -4,254 +4,26 @@ from kivymd.app import MDApp
 from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
 
-Window.size = (800, 600)
+Window.size = (1200, 800)
+image_refresh_rate_ms = 1000
+test_types = ["Full range", "LF-PLC", "HF-PLC"]
 
-KV = '''
-BoxLayout:
-    orientation: 'vertical'
 
-    # Image taking top half of the window
-    Image:
-        size_hint_y: 0.5  # Top half of the window
-        source: 'Temp pic.png'  # Use your image here
-
-    # Main Content Area
-    BoxLayout:
-        orientation: 'horizontal'
-        size_hint_y: 0.5  # Bottom half of the window
-        padding: 10
-
-        # Left Side with Range Slider and Number Inputs
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint_x: 0.5
-            spacing: 10
-
-            # Custom Range Slider (Start and Stop Sliders) with Title
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-
-                MDLabel:
-                    text: "Frequency Range [kHz]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDSlider:
-                    id: slider_start
-                    min: 0
-                    max: 100
-                    value: app.start_value
-                    step: 1
-                    on_value: app.update_slider_values_from_slider('start', self.value)
-
-                MDSlider:
-                    id: slider_stop
-                    min: 0
-                    max: 100
-                    value: app.stop_value
-                    step: 1
-                    on_value: app.update_slider_values_from_slider('stop', self.value)
-
-            # Input Fields for Start and Stop Values
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-
-                MDLabel:
-                    text: "Start Frequency [kHz]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDTextField:
-                    id: start_input
-                    hint_text: "Enter start frequency"
-                    text: str(app.start_value)
-                    input_filter: 'int'
-                    on_text_validate: app.set_start_value(self.text)
-
-                MDLabel:
-                    text: "Stop Frequency [kHz]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDTextField:
-                    id: stop_input
-                    hint_text: "Enter stop frequency"
-                    text: str(app.stop_value)
-                    input_filter: 'int'
-                    on_text_validate: app.set_stop_value(self.text)
-
-            # Number Inputs (RBW, VBW, Test type, and Impedance)
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '220dp'
-                spacing: 10
-
-                BoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: None
-                    height: '48dp'
-                    spacing: 10
-
-                    MDLabel:
-                        text: "RBW [kHz]: "
-                        size_hint_x: None
-                        width: 150
-
-                    MDTextField:
-                        hint_text: "Enter RBW"
-                        input_filter: 'float'
-
-                BoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: None
-                    height: '48dp'
-                    spacing: 10
-
-                    MDLabel:
-                        text: "VBW [kHz]: "
-                        size_hint_x: None
-                        width: 150
-
-                    MDTextField:
-                        hint_text: "Enter VBW"
-                        input_filter: 'float'
-
-                # Test type Dropdown Menu
-                BoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: None
-                    height: '48dp'
-
-                    MDLabel:
-                        text: "Test type: "
-                        size_hint_x: None
-                        width: 150
-
-                    MDDropDownItem:
-                        id: test_type_dropdown
-                        text: "Full range"  # Set default value
-                        on_release: app.menu_test_type.open()
-
-                BoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: None
-                    height: '48dp'
-                    spacing: 10
-
-                    MDLabel:
-                        text: "Impedance [ohm]: "
-                        size_hint_x: None
-                        width: 150
-
-                    MDTextField:
-                        hint_text: "Enter Impedance"
-                        input_filter: 'float'
-
-        # Right Side with Dropdown Menus and Additional Inputs
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint_x: 0.5
-            padding: 10
-            spacing: 10
-
-            # Coupling Dropdown Menu
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-
-                MDLabel:
-                    text: "Coupling: "
-                    size_hint_x: None
-                    width: 150
-
-                MDDropDownItem:
-                    id: coupling_dropdown
-                    text: "AC"  # Set default value
-                    on_release: app.menu_coupling.open()
-
-            # Average Type Dropdown Menu
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-
-                MDLabel:
-                    text: "Average type: "
-                    size_hint_x: None
-                    width: 150
-
-                MDDropDownItem:
-                    id: avg_type_dropdown
-                    text: "Log"  # Set default value
-                    on_release: app.menu_avg_type.open()
-
-            # Number Inputs
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-
-                MDLabel:
-                    text: "Attenuation [dB]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDTextField:
-                    hint_text: "Enter Attenuation"
-                    input_filter: 'float'
-
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-
-                MDLabel:
-                    text: "Reference Level [dBm]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDTextField:
-                    hint_text: "Enter Reference Level"
-                    input_filter: 'float'
-
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: '48dp'
-
-                MDLabel:
-                    text: "Y Reference Level [dBm]: "
-                    size_hint_x: None
-                    width: 150
-
-                MDTextField:
-                    hint_text: "Enter Y Reference Level"
-                    input_filter: 'float'
-'''
-
-class MyApp(MDApp):
+class InstrumentControlGUI(MDApp):
     start_value = NumericProperty(20)
     stop_value = NumericProperty(80)
 
     def build(self):
-        return Builder.load_string(KV)
+        return Builder.load_file('Instrument Control GUI.kv')
 
     def on_start(self):
         # Initialize the Test type dropdown
         self.menu_test_type = MDDropdownMenu(
             caller=self.root.ids.test_type_dropdown,
             items=[
-                {"text": "Full range", "viewclass": "OneLineListItem", "on_release": lambda x="Full range": self.set_test_type_item("Full range")},
-                {"text": "LF-PLC", "viewclass": "OneLineListItem", "on_release": lambda x="LF-PLC": self.set_test_type_item("LF-PLC")},
-                {"text": "HF-PLC", "viewclass": "OneLineListItem", "on_release": lambda x="HF-PLC": self.set_test_type_item("HF-PLC")}
+                {"text": test_types[0], "viewclass": "OneLineListItem", "on_release": lambda x="Full range": self.set_test_type_item("Full range")},
+                {"text": test_types[1], "viewclass": "OneLineListItem", "on_release": lambda x="LF-PLC": self.set_test_type_item("LF-PLC")},
+                {"text": test_types[2], "viewclass": "OneLineListItem", "on_release": lambda x="HF-PLC": self.set_test_type_item("HF-PLC")}
             ],
             width_mult=3,
         )
@@ -277,29 +49,75 @@ class MyApp(MDApp):
             width_mult=3,
         )
 
-    def set_test_type_item(self, text_item):
-        # Set the selected item in the Test type dropdown
-        self.root.ids.test_type_dropdown.set_item(text_item)
+        # Initialize the Traces dropdown
+        self.menu_traces = MDDropdownMenu(
+            caller=self.root.ids.traces_dropdown,
+            items=[
+                {"text": "Average", "viewclass": "OneLineListItem", "on_release": lambda x="Average": self.set_traces_item("Average")},
+                {"text": "MaxHold", "viewclass": "OneLineListItem", "on_release": lambda x="MaxHold": self.set_traces_item("MaxHold")},
+                {"text": "AVG_MH", "viewclass": "OneLineListItem", "on_release": lambda x="AVG_MH": self.set_traces_item("AVG_MH")}
+            ],
+            width_mult=3,
+        )
+
+    def set_test_type_item(self, item):
+        """Set the selected item in the Test type dropdown."""
+        self.root.ids.test_type_dropdown.text = item
+        if item == test_types[1]:
+            self.set_start_value(10)
+            self.set_stop_value(90)
+        elif item == test_types[2]:
+            self.set_start_value(20)
+            self.set_stop_value(80)
+        else:
+            self.set_start_value(0)
+            self.set_stop_value(100)
         self.menu_test_type.dismiss()
 
-    def set_coupling_item(self, text_item):
-        # Set the selected item in the Coupling dropdown
-        self.root.ids.coupling_dropdown.set_item(text_item)
+    def set_coupling_item(self, item):
+        """Set the selected item in the Coupling dropdown."""
+        self.root.ids.coupling_dropdown.text = item
         self.menu_coupling.dismiss()
 
-    def set_avg_type_item(self, text_item):
-        # Set the selected item in the Average type dropdown
-        self.root.ids.avg_type_dropdown.set_item(text_item)
+    def set_avg_type_item(self, item):
+        """Set the selected item in the Average type dropdown."""
+        self.root.ids.avg_type_dropdown.text = item
         self.menu_avg_type.dismiss()
 
-    def update_slider_values_from_slider(self, slider_type, value):
-        """Update input fields based on slider value changes."""
-        if slider_type == 'start':
-            self.start_value = value
-            self.root.ids.start_input.text = str(value)
-        elif slider_type == 'stop':
-            self.stop_value = value
-            self.root.ids.stop_input.text = str(value)
+    def set_traces_item(self, item):
+        """Set the selected item in the Traces dropdown."""
+        self.root.ids.traces_dropdown.text = item
+        self.menu_traces.dismiss()
+
+    def config_spectrum(self):
+        """Placeholder for config spectrum method."""
+        print("Config spectrum method called.")
+
+    def reset_spectrum(self):
+        """Placeholder for reset spectrum method."""
+        print("Reset spectrum method called.")
+
+    def run_traces(self):
+        """Placeholder for run traces method."""
+        print("Run traces method called.")
+
+    def stop_traces(self):
+        """Placeholder for stop traces method."""
+        print("Stop traces method called.")
+
+    def update_start_slider(self, value):
+        """Update start slider value changes."""
+        self.start_value = value
+        self.root.ids.start_input.text = str(value)
+        if value > self.stop_value:
+            self.update_stop_slider(value)
+
+    def update_stop_slider(self, value):
+        """Update stop slider value changes."""
+        self.stop_value = value
+        self.root.ids.stop_input.text = str(value)
+        if value < self.start_value:
+            self.update_start_slider(value)
 
     def set_start_value(self, text):
         """Set slider start value based on input field."""
@@ -313,4 +131,4 @@ class MyApp(MDApp):
 
 
 if __name__ == '__main__':
-    MyApp().run()
+    InstrumentControlGUI().run()

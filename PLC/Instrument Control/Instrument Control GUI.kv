@@ -1,33 +1,54 @@
 <BoxLayout>:
     control_text_width: 200
+    element_height_1: '40dp'
+    element_height_2: '80dp'
+    element_height_rbw: '60dp'
+    element_spacing: 10
 
+<MDRaisedButton>:
+    font_size: sp(16)  # Apply to all MDRaisedButtons
 
+<MDLabel>:
+    font_size: sp(16)  # Apply to all MDLabels
+
+<MDTextField>:
+    font_size: sp(16)  # Apply to all MDTextFields
+
+# Main window to fit vertically: Spectrum screen, labels, and buttons
 BoxLayout:
     orientation: 'vertical'
 
-    # Image taking top half of the window
+    MDLabel:
+        halign: "left"
+        size_hint_y: 0.06
+        padding: 10
+        font_size: 15
+        text: "Disconnected"
+
+
+    # Spectrum screen
     Image:
         size_hint_y: 0.45  # Top half of the window
         source: 'Temp pic.png'  # Use your image here
 
-    # Main Content Area
+    # Two columns of labels
     BoxLayout:
         orientation: 'horizontal'
         size_hint_y: 0.5  # Bottom half of the window
         padding: 10
 
-        # Left Side with Range Slider and Number Inputs
+        # Left Side labels
         BoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.5
-            spacing: 10
+            spacing: root.element_spacing
 
-            # Input Fields for Start and Stop Values
+            # Start Frequency
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '96dp'
-                spacing: 10
+                height: root.element_height_2
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Start Frequency [kHz]: "
@@ -37,8 +58,8 @@ BoxLayout:
                 BoxLayout:
                     orientation: 'vertical'
                     size_hint_y: None
-                    height: '96dp'
-                    spacing: 10
+                    height: root.element_height_2
+                    spacing: root.element_spacing
 
                     MDTextField:
                         id: start_input
@@ -53,13 +74,14 @@ BoxLayout:
                         max: 100
                         value: app.start_value
                         step: 1
-                        on_value: app.update_slider_values_from_slider('start', self.value)
+                        on_value: app.update_start_slider(self.value)
 
+            # Stop Frequency
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '96dp'
-                spacing: 10
+                height: root.element_height_2
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Stop Frequency [kHz]: "
@@ -69,8 +91,8 @@ BoxLayout:
                 BoxLayout:
                     orientation: 'vertical'
                     size_hint_y: None
-                    height: '96dp'
-                    spacing: 10
+                    height: root.element_height_2
+                    spacing: root.element_spacing
 
                     MDTextField:
                         id: stop_input
@@ -85,13 +107,14 @@ BoxLayout:
                         max: 100
                         value: app.stop_value
                         step: 1
-                        on_value: app.update_slider_values_from_slider('stop', self.value)
+                        on_value: app.update_stop_slider(self.value)
 
+            # RBW
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_rbw
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "RBW [kHz]: "
@@ -102,11 +125,12 @@ BoxLayout:
                     hint_text: "Enter RBW"
                     input_filter: 'float'
 
+            # VBW
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "VBW [kHz]: "
@@ -117,11 +141,11 @@ BoxLayout:
                     hint_text: "Enter VBW"
                     input_filter: 'float'
 
-            # Test type Dropdown Menu
+            # Dropdown - Test type (frequency selector)
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
+                height: root.element_height_1
 
                 MDLabel:
                     text: "Test type: "
@@ -133,19 +157,19 @@ BoxLayout:
                     text: "Full range"  # Set default value
                     on_release: app.menu_test_type.open()
 
-        # Right Side with Coupling and Average type dropdowns and Number Inputs
+        # Right Side labels
         BoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.5
             padding: 10
-            spacing: 10
+            spacing: root.element_spacing
 
-            # Traces Dropdown Menu
+            # Dropdown - Traces (Avg and MH)
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Traces: "
@@ -157,12 +181,12 @@ BoxLayout:
                     text: "Average"  # Set default value
                     on_release: app.menu_traces.open()
 
-            # Impedance Input at the top
+            # Impedance
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Impedance [ohm]: "
@@ -173,11 +197,11 @@ BoxLayout:
                     hint_text: "Enter impedance"
                     input_filter: 'int'
 
-            # Coupling Dropdown
+            # Dropdown - Coupling (AC and DC)
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
+                height: root.element_height_1
 
                 MDLabel:
                     text: "Coupling: "
@@ -189,11 +213,11 @@ BoxLayout:
                     text: "AC"  # Set default value
                     on_release: app.menu_coupling.open()
 
-            # Average Type Dropdown
+            # Dropdown - Average Type (Log and RMS)
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
+                height: root.element_height_1
 
                 MDLabel:
                     text: "Average type: "
@@ -205,12 +229,12 @@ BoxLayout:
                     text: "Log"  # Set default value
                     on_release: app.menu_avg_type.open()
 
-            # Number inputs for Attenuation, Reference Level, and Y Reference Level
+            # Attenuation
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Attenuation [dB]: "
@@ -221,11 +245,12 @@ BoxLayout:
                     hint_text: "Enter attenuation"
                     input_filter: 'float'
 
+            # Reference Level
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Reference Level [dBm]: "
@@ -236,11 +261,12 @@ BoxLayout:
                     hint_text: "Enter reference level"
                     input_filter: 'float'
 
+            # Y Reference Level
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 10
+                height: root.element_height_1
+                spacing: root.element_spacing
 
                 MDLabel:
                     text: "Y Reference Level [dBm]: "
@@ -250,7 +276,6 @@ BoxLayout:
                 MDTextField:
                     hint_text: "Enter Y reference level"
                     input_filter: 'float'
-
 
     # Buttons centered at the bottom
     BoxLayout:
