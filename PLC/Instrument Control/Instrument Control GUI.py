@@ -7,10 +7,13 @@ from kivymd.uix.dialog import MDDialog
 from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
 import re
+import SpectrumN9010B
+
 
 Window.size = (1200, 800)
 image_refresh_rate_ms = 1000
 test_types = ["Full range", "LF-PLC", "HF-PLC"]
+regex_ip_pattern = r'^(?:[0-9]{1,2}\.){3}[0-9]{1,3}$'      # = xx.x.x.x or xx.x.x.xx    original = (r'^(?:[0-9]{2}\.){3}[0-9]{1,2}$')
 
 
 class IPDialogContent(BoxLayout):
@@ -18,6 +21,7 @@ class IPDialogContent(BoxLayout):
 
 
 class InstrumentControlGUI(MDApp):
+    spectrum = SpectrumN9010B.KeysightN9010B()
     spectrum_range_start = 0
     spectrum_range_stop = 300
     color_red = [0.7, 0.1, 0.1, 0.7]
@@ -31,6 +35,7 @@ class InstrumentControlGUI(MDApp):
     attenuation = 10
     reference_level = 10
     y_reference_level = 0
+    ip_address = "10.20.30.32"      # set to ""
 
     def build(self):
         return Builder.load_file('Instrument Control GUI.kv')
@@ -102,14 +107,17 @@ class InstrumentControlGUI(MDApp):
         """Check if the entered IP address is valid."""
         error_label = self.dialog.content_cls.ids.error_label
         ip_input = self.dialog.content_cls.ids.ip_input.text
-        pattern = re.compile(r'^[0-9]{2}\.[0-9]\.[0-9]\.[0-9]{1,3}$')      # = xx.x.x.x or xx.x.x.xx    original = (r'^(?:[0-9]{2}\.){3}[0-9]{1,2}$')
+        pattern = re.compile(regex_ip_pattern)
         if pattern.match(ip_input) is not None:
-            error_label.text = ""
-            self.spectrum_connect(ip_input)
-            self.close_dialog()
+            connection_error = self.spectrum.connect(ip_input)
+            if connection_error:
+                error_label.text = connection_error
+            else:
+                error_label.text = ""
+                self.spectrum_connect(ip_input)
+                self.close_dialog()
         else:
             error_label.text = "Invalid IP address. Please enter a valid one."
-            print("Invalid IP address. Please enter a valid one.")
 
     def spectrum_connection(self):
         if self.root.ids.connection_button.text == "Disconnect":
@@ -118,6 +126,7 @@ class InstrumentControlGUI(MDApp):
             self.show_ip_popup()
 
     def spectrum_disconnect(self):
+        self.spectrum.disconnect()
         self.root.ids.connection_label.text = "Disconnected"
         self.root.ids.connection_card.md_bg_color = self.color_red
         self.root.ids.connection_button.text = "Connect"

@@ -2,21 +2,21 @@ import pyvisa
 
 
 class KeysightN9010B:
-    def __init__(self, ip_address):
-        self.ip_address = ip_address
+    def __init__(self):
         self.rm = pyvisa.ResourceManager()
         self.instrument = None
 
-    def connect(self):
+    def connect(self, ip_address):
         """Connect to the spectrum analyzer."""
-        resource_string = f'TCPIP0::{self.ip_address}::INSTR'
+        resource_string = f'TCPIP0::{ip_address}::INSTR'
         try:
             self.instrument = self.rm.open_resource(resource_string)
             idn = self.instrument.query('*IDN?')
             print(f'Connected to: {idn}')
+            return False        # No error
         except pyvisa.VisaIOError as e:
             print(f'Connection error: {e}')
-            raise
+            return f'Connection error: {str(e).split(':')[0]}'
 
     def disconnect(self):
         """Disconnect from the spectrum analyzer."""
@@ -65,11 +65,9 @@ class KeysightN9010B:
 
 
 if __name__ == '__main__':
-    analyzer = KeysightN9010B("10.20.30.32")
-    try:
-        analyzer.connect()
-        analyzer.get_settings()
-        analyzer.get_levels()
-        analyzer.get_frequencies()
-    finally:
-        analyzer.disconnect()
+    spectrum = KeysightN9010B()
+    if spectrum.connect("10.20.30.32"):
+        spectrum.get_settings()
+        spectrum.get_levels()
+        spectrum.get_frequencies()
+        spectrum.disconnect()
