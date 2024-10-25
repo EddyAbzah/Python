@@ -18,10 +18,19 @@ class IPDialogContent(BoxLayout):
 
 
 class InstrumentControlGUI(MDApp):
-    start_value = NumericProperty(20)
-    stop_value = NumericProperty(80)
+    spectrum_range_start = 0
+    spectrum_range_stop = 300
     color_red = [0.7, 0.1, 0.1, 0.7]
     color_green = [0.1, 0.5, 0.1, 0.7]
+    # NumericProperty binds any changes to the GUI
+    start_frequency = NumericProperty(1.0)
+    stop_frequency = NumericProperty(300.0)
+    rbw = 1.0
+    vbw = 1.0
+    impedance = 50
+    attenuation = 10
+    reference_level = 10
+    y_reference_level = 0
 
     def build(self):
         return Builder.load_file('Instrument Control GUI.kv')
@@ -122,14 +131,14 @@ class InstrumentControlGUI(MDApp):
         """Set the selected item in the Test type dropdown."""
         self.root.ids.test_type_dropdown.text = item
         if item == test_types[1]:
-            self.set_start_value(10)
-            self.set_stop_value(90)
+            self.set_start_frequency(10)
+            self.set_stop_frequency(90)
         elif item == test_types[2]:
-            self.set_start_value(20)
-            self.set_stop_value(80)
+            self.set_start_frequency(20)
+            self.set_stop_frequency(80)
         else:
-            self.set_start_value(0)
-            self.set_stop_value(100)
+            self.set_start_frequency(0)
+            self.set_stop_frequency(100)
         self.menu_test_type.dismiss()
 
     def set_coupling_item(self, item):
@@ -165,27 +174,27 @@ class InstrumentControlGUI(MDApp):
 
     def update_start_slider(self, value):
         """Update start slider value changes."""
-        self.start_value = value
-        self.root.ids.start_input.text = str(value)
-        if value > self.stop_value:
+        self.start_frequency = value
+        # self.root.ids.start_input.text = str(value)
+        if value > self.stop_frequency:
             self.update_stop_slider(value)
 
     def update_stop_slider(self, value):
         """Update stop slider value changes."""
-        self.stop_value = value
-        self.root.ids.stop_input.text = str(value)
-        if value < self.start_value:
+        self.stop_frequency = value
+        # self.root.ids.stop_input.text = str(value)
+        if value < self.start_frequency:
             self.update_start_slider(value)
 
-    def set_start_value(self, text):
+    def set_start_frequency(self, text):
         """Set slider start value based on input field."""
-        self.start_value = int(text)
-        self.root.ids.slider_start.value = self.start_value
+        self.start_frequency = float(text)
+        # self.root.ids.slider_start.value = self.start_frequency
 
-    def set_stop_value(self, text):
+    def set_stop_frequency(self, text):
         """Set slider stop value based on input field."""
-        self.stop_value = int(text)
-        self.root.ids.slider_stop.value = self.stop_value
+        self.stop_frequency = float(text)
+        # self.root.ids.slider_stop.value = self.stop_frequency
 
 
 if __name__ == '__main__':

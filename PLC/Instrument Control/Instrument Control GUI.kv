@@ -13,6 +13,7 @@
 
 <MDTextField>:
     font_size: sp(16)  # Apply to all MDTextFields
+    text_color_normal: 0, 0, 0, 1
 
 <IPDialogContent>:
     orientation: 'vertical'
@@ -95,15 +96,15 @@ BoxLayout:
                     MDTextField:
                         id: start_input
                         hint_text: "Enter start frequency"
-                        text: str(app.start_value)
-                        input_filter: 'int'
-                        on_text_validate: app.set_start_value(self.text)
+                        text: str(app.start_frequency)
+                        input_filter: 'float'
+                        on_text_validate: app.set_start_frequency(self.text)
 
                     MDSlider:
                         id: slider_start
-                        min: 0
-                        max: 100
-                        value: app.start_value
+                        min: app.spectrum_range_start
+                        max: app.spectrum_range_stop
+                        value: app.start_frequency
                         step: 1
                         on_value: app.update_start_slider(self.value)
 
@@ -128,15 +129,15 @@ BoxLayout:
                     MDTextField:
                         id: stop_input
                         hint_text: "Enter stop frequency"
-                        text: str(app.stop_value)
-                        input_filter: 'int'
-                        on_text_validate: app.set_stop_value(self.text)
+                        text: str(app.stop_frequency)
+                        input_filter: 'float'
+                        on_text_validate: app.set_stop_frequency(self.text)
 
                     MDSlider:
                         id: slider_stop
-                        min: 0
-                        max: 100
-                        value: app.stop_value
+                        min: app.spectrum_range_start
+                        max: app.spectrum_range_stop
+                        value: app.stop_frequency
                         step: 1
                         on_value: app.update_stop_slider(self.value)
 
@@ -153,6 +154,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.rbw)
                     hint_text: "Enter RBW"
                     input_filter: 'float'
 
@@ -169,6 +171,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.vbw)
                     hint_text: "Enter VBW"
                     input_filter: 'float'
 
@@ -225,6 +228,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.impedance)
                     hint_text: "Enter impedance"
                     input_filter: 'int'
 
@@ -273,6 +277,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.attenuation)
                     hint_text: "Enter attenuation"
                     input_filter: 'float'
 
@@ -289,6 +294,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.reference_level)
                     hint_text: "Enter reference level"
                     input_filter: 'float'
 
@@ -305,6 +311,7 @@ BoxLayout:
                     width: root.control_text_width
 
                 MDTextField:
+					text: str(app.y_reference_level)
                     hint_text: "Enter Y reference level"
                     input_filter: 'float'
 
