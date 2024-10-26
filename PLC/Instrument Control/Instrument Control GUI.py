@@ -13,7 +13,7 @@ import SpectrumN9010B
 Window.size = (1200, 800)
 image_refresh_rate_ms = 1000
 test_types = ["Full range", "LF-PLC", "HF-PLC"]
-regex_ip_pattern = r'^(?:[0-9]{1,2}\.){3}[0-9]{1,3}$'      # = xx.x.x.x or xx.x.x.xx    original = (r'^(?:[0-9]{2}\.){3}[0-9]{1,2}$')
+regex_ip_pattern = r'^(?:[0-9]{1,2}\.){3}[0-9]{1,3}$'      # pass from xx.xx.xx.xxx to x.x.x.x
 
 
 class IPDialogContent(BoxLayout):
@@ -21,9 +21,14 @@ class IPDialogContent(BoxLayout):
 
 
 class InstrumentControlGUI(MDApp):
+    # Initialize new spectrum instance from "SpectrumN9010B.py"
     spectrum = SpectrumN9010B.KeysightN9010B()
+    # Disable terminal prints
+    spectrum.use_prints = False
+    # The slider range
     spectrum_range_start = 0
     spectrum_range_stop = 300
+    # Colors for the "connection status" in the top left
     color_red = [0.7, 0.1, 0.1, 0.7]
     color_green = [0.1, 0.5, 0.1, 0.7]
     # NumericProperty binds any changes to the GUI
@@ -35,7 +40,8 @@ class InstrumentControlGUI(MDApp):
     attenuation = 10
     reference_level = 10
     y_reference_level = 0
-    ip_address = "10.20.30.32"      # set to ""
+    # default IP address for the Spectrum
+    ip_address = "10.20.30.32"
 
     def build(self):
         return Builder.load_file('Instrument Control GUI.kv')
