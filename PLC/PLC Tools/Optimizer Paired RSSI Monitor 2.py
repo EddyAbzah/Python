@@ -1,6 +1,6 @@
-import math
 import os
 import plotly
+import statistics
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -198,12 +198,15 @@ def plot_df(df, file_out):
 def summarize(df):
     global plot_addresses
     df_full = pd.DataFrame()
+    if add_temperature and print_correlation:
+        df_correlation = pd.DataFrame()
     for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
         print(f'Summarizing Optimizer number {optimizer_index + 1}: {optimizer_id = }')
         sdf = df[df["Optimizer ID"] == optimizer_id]
         ssdf = sdf.iloc[-1:].rename(columns={'RSSI Ratio': 'Last Ratio'})
         ssdf["RSSI Average"] = sdf["Last RSSI"].mean()
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()
+        ssdf["Ratio Standard Deviation"] = statistics.stdev(sdf["RSSI Ratio"])
         ssdf["Samples above Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Upper Ratio limit']) if n > l])
         ssdf["Samples below Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Lower Ratio limit']) if n < (1 / l)])
         if add_temperature:
@@ -215,9 +218,27 @@ def summarize(df):
             ssdf["Optimizer Index"] = plot_addresses[optimizer_id]["Optimizer Index"]
             ssdf["Fig Index"] = plot_addresses[optimizer_id]["Fig Index"]
             ssdf["Plot Index"] = plot_addresses[optimizer_id]["Plot Index"]
+        if add_temperature and print_correlation:
+            correlation_matrix = sdf[["Last RSSI", "Last SNR", "RSSI Ratio", "AC Production (W)", "AC Consumption (W)", "Humidity (%)", "Temperature (C)"]].corr(correlation_method)
+            main_data = ["Last RSSI", "Last SNR", "RSSI Ratio"]
+            temp_df1 = pd.DataFrame()
+            for data in main_data:
+                temp_df2 = correlation_matrix[data].drop(main_data)
+                temp_df2 = temp_df2.add_prefix(f"{data} - ")
+                temp_df2 = temp_df2.to_frame().T
+                temp_df2.reset_index(drop=True, inplace=True)
+                temp_df1 = pd.concat([temp_df1, temp_df2], axis=1)
+            temp_df1["Optimizer ID"] = optimizer_id
+            df_correlation = pd.concat([df_correlation, temp_df1], axis=0)
         df_full = pd.concat([df_full, ssdf], axis=0)
     if round_df_numbers:
         df_full = round_numbers(df_full, 2)
+        if add_temperature and print_correlation:
+            df_correlation[df_correlation.select_dtypes(include='number').columns] *= 100
+            df_correlation = df_correlation.round(2)
+            df_correlation.fillna(0, inplace=True)
+            df_correlation = df_correlation.set_index("Optimizer ID")
+            df_correlation.to_csv(file_path_correlation)
     return df_full
 
 
@@ -321,7 +342,7 @@ def plot_histogram(main_df, summary_df, file_out):
 
 if __name__ == "__main__":
     file_date = "2024_10_20"
-    folder = r"C:\Users\eddy.a\Downloads\RSSI Ratio - Meyer Burger modules\CSVs"
+    folder = r"C:\Users\eddy.a\Downloads\RSSI Ratio - Meyer Burger modules"
     file_path_in = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date}.csv"
     file_path_full = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - RAW data.csv"
     file_path_output_1 = f"{folder}\\Ratio_Meyer_Burger_modules_{file_date} - Optimizer RSSI Monitor.html"
@@ -335,11 +356,15 @@ if __name__ == "__main__":
     T_read__or__F_write = False
     file_path_p141 = f"{folder}\\Optimizer Paired RSSI and Limits.csv"
 
-    add_temperature = False
-    # plot_temperature = ["AC Production (W)", "AC Consumption (W)", "Humidity (%)", "Temperature (C)"]
-    file_path_add_temperature = f"{folder}\\..\\Monitoring\\Power + Weather.csv"
+    add_temperature = True
+    plot_temperature = ["AC Production (W)", "AC Consumption (W)", "Humidity (%)", "Temperature (C)"]
+    file_path_add_temperature = f"{folder}\\Power + Weather.csv"
 
-    print_all_optimizers = True
+    print_correlation = True
+    correlation_method = "pearson"      # pearson = standard correlation coefficient ;   kendall = Kendall Tau ;   spearman = Spearman rank
+    file_path_correlation = f"{folder}\\Correlation Matrix.csv"
+
+    print_all_optimizers = False
     print_all_histograms = True
 
     # Process:
