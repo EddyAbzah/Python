@@ -11,3 +11,16 @@ scpi_commands = {
     "n9010b_resolution_bandwidth": ":BAND:RES",
     "n9010b_video_bandwidth": ":BAND:VID",
 }
+
+scpi_syntax = {
+    "impedance": "Impedance [ohm]",
+    "coupling": "Coupling [AC / DC]",
+    "avg_type": "Average Type [Log / RMS]",
+    "attenuation": "Attenuation [dB]",
+    "ref_level": "Reference Level [dBm]",
+    "y_ref_level": "Y-axis Reference Level [dBm]",
+    "freq_start": "Start Frequency [kHz]",
+    "freq_stop": "Stop Frequency [kHz]",
+    "resolution_bandwidth": "Resolution Bandwidth [kHz]",
+    "video_bandwidth": "Video Bandwidth [kHz]",
+}

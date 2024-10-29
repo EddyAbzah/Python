@@ -1,5 +1,6 @@
+# install PyVISA-py or use Keysight IO Library
 import pyvisa
-from SCPIcommands import scpi_commands
+from SCPIcommands import scpi_commands, scpi_syntax
 
 
 class KeysightN9010B:
@@ -15,7 +16,7 @@ class KeysightN9010B:
             self.instrument = self.rm.open_resource(resource_string)
             idn = self.instrument.query('*IDN?')
             if self.use_prints:
-                print(f'Connected to: {idn}')
+                print(f'Connected to: {idn.replace(",", ", ")}')
             return False        # No error
         except Exception as e:
             if self.use_prints:
@@ -54,21 +55,25 @@ class KeysightN9010B:
     def get_set_value(self, measurement, set_value):
         if set_value is not None:
             self.instrument.write(f'{scpi_commands["n9010b_" + measurement]} {set_value}')
-        get_value = self.instrument.query(f'{scpi_commands["n9010b_" + measurement]}?')
+        get_value = self.instrument.query(f'{scpi_commands["n9010b_" + measurement]}?').strip()
+        try:
+            get_value = float(get_value)
+        except ValueError:
+            pass
         if set_value is not None and get_value != set_value:
             if self.use_prints:
                 print(f'Mismatch in the get / set values!!! {get_value} != {set_value}')
             else:
                 return f'Mismatch in the get / set values!!! {get_value} != {set_value}'
         if self.use_prints:
-            print(f'Impedance [ohm] = {get_value}')
+            print(f'{scpi_syntax[measurement]} = {get_value}')
         else:
             return get_value
 
 
 if __name__ == '__main__':
     spectrum = KeysightN9010B()
-    if spectrum.connect("10.20.30.32"):
+    if not spectrum.connect("10.20.30.32"):
         spectrum.get_set_value("impedance", set_value=None)
         spectrum.get_set_value("coupling", set_value=None)
         spectrum.get_set_value("avg_type", set_value=None)
