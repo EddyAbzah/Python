@@ -19,7 +19,7 @@
     orientation: 'vertical'
     MDTextField:
         id: ip_input
-        hint_text: "Enter IP address (xx.x.x.xx)"
+        hint_text: "Enter IP address (xx.xx.xx.xx)"
         text: app.ip_address
         size_hint_x: 0.5
         pos_hint: {"center_x": 0.5, "center_y": 0}
@@ -96,7 +96,7 @@ BoxLayout:
 
                     MDTextField:
                         id: start_input
-                        hint_text: "Enter start frequency"
+                        hint_text: "Enter start frequency" if app.enable_hint_text else ""
                         text: str(app.start_frequency)
                         input_filter: 'float'
                         on_text_validate: app.set_start_frequency(self.text)
@@ -129,7 +129,7 @@ BoxLayout:
 
                     MDTextField:
                         id: stop_input
-                        hint_text: "Enter stop frequency"
+                        hint_text: "Enter stop frequency" if app.enable_hint_text else ""
                         text: str(app.stop_frequency)
                         input_filter: 'float'
                         on_text_validate: app.set_stop_frequency(self.text)
@@ -156,7 +156,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.rbw)
-                    hint_text: "Enter RBW"
+                    hint_text: "Enter RBW" if app.enable_hint_text else ""
                     input_filter: 'float'
 
             # VBW
@@ -173,7 +173,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.vbw)
-                    hint_text: "Enter VBW"
+                    hint_text: "Enter VBW" if app.enable_hint_text else ""
                     input_filter: 'float'
 
             # Dropdown - Test type (frequency selector)
@@ -189,7 +189,7 @@ BoxLayout:
 
                 MDDropDownItem:
                     id: test_type_dropdown
-                    text: "Full range"  # Set default value
+                    text: app.test_type_default
                     on_release: app.menu_test_type.open()
 
         # Right Side labels
@@ -213,7 +213,7 @@ BoxLayout:
 
                 MDDropDownItem:
                     id: traces_dropdown
-                    text: "Average"  # Set default value
+                    text: app.trace_type_default
                     on_release: app.menu_traces.open()
 
             # Impedance
@@ -230,7 +230,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.impedance)
-                    hint_text: "Enter impedance"
+                    hint_text: "Enter impedance" if app.enable_hint_text else ""
                     input_filter: 'int'
 
             # Dropdown - Coupling (AC and DC)
@@ -246,7 +246,7 @@ BoxLayout:
 
                 MDDropDownItem:
                     id: coupling_dropdown
-                    text: "AC"  # Set default value
+                    text: app.coupling_type_default
                     on_release: app.menu_coupling.open()
 
             # Dropdown - Average Type (Log and RMS)
@@ -262,7 +262,7 @@ BoxLayout:
 
                 MDDropDownItem:
                     id: avg_type_dropdown
-                    text: "Log"  # Set default value
+                    text: app.average_type_default
                     on_release: app.menu_avg_type.open()
 
             # Attenuation
@@ -279,7 +279,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.attenuation)
-                    hint_text: "Enter attenuation"
+                    hint_text: "Enter attenuation" if app.enable_hint_text else ""
                     input_filter: 'float'
 
             # Reference Level
@@ -296,7 +296,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.reference_level)
-                    hint_text: "Enter reference level"
+                    hint_text: "Enter reference level" if app.enable_hint_text else "default = 0dBm. 100Ω = 10dBm. 500Ω = 20dBm."
                     input_filter: 'float'
 
             # Y Reference Level
@@ -313,7 +313,7 @@ BoxLayout:
 
                 MDTextField:
 					text: str(app.y_reference_level)
-                    hint_text: "Enter Y reference level"
+                    hint_text: "Enter Y reference level" if app.enable_hint_text else ""
                     input_filter: 'float'
 
     # Buttons centered at the bottom
