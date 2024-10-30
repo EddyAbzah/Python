@@ -60,7 +60,7 @@ def rssi_ratio_algorithm(sdf, data):
     data = list(sdf[data][:-1])
     index = 0
     while index < len(data):
-        if data[index] == 0 or lower[index] < data[index] < upper[index] or any([lower[index] < data[i] < upper[index] for i in range(index, min(index + delay, len(data)))]):
+        if data[index] == 0 or index + delay >= len(data) or any([lower[index] < data[i] < upper[index] for i in range(index, index + delay)]):
             c_ratio.append(c_ratio[index])
             upper.append(upper[index])
             lower.append(lower[index])
