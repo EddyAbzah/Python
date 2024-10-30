@@ -30,6 +30,8 @@ remove_glitches = [False, 1.5, 0.6667]
 split_figs = 60
 plot_addresses = {}
 
+drop_this = [True, '216E9196', '2024-10-04 07:13:00']
+
 
 def round_numbers(df, iteration):
     how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Upper RSSI limit": 0, "Lower RSSI limit": 0, "Last SNR": 2}
@@ -192,7 +194,7 @@ def plot_df(df, file_out):
         if (optimizer_index + 1) % split_figs == 0 or optimizer_index == df["Optimizer ID"].nunique() - 1:
             fig.update_layout(title=fig_title, title_font_color="#2589BB", title_font_size=40, legend_title="Traces:", legend_title_font_color="#2589BB")
             fig.update_layout(sliders=[dict(active=0, pad={"t": 50}, steps=steps, currentvalue={"prefix": "Plot number "})])
-            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - (optimizer_index % split_figs) + 1} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html)
+            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - (optimizer_index % split_figs) + 1} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html, config={'scrollZoom': True, 'editable': True})
 
 
 def summarize(df):
@@ -203,6 +205,8 @@ def summarize(df):
     for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
         print(f'Summarizing Optimizer number {optimizer_index + 1}: {optimizer_id = }')
         sdf = df[df["Optimizer ID"] == optimizer_id]
+        if drop_this[0] and str(optimizer_id) == drop_this[1]:
+            sdf.drop(drop_this[2])
         ssdf = sdf.iloc[-1:].rename(columns={'RSSI Ratio': 'Last Ratio'})
         ssdf["RSSI Average"] = sdf["Last RSSI"].mean()
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()

@@ -1,5 +1,6 @@
-import math
 import os
+import math
+import statistics
 import plotly
 import numpy as np
 import pandas as pd
@@ -13,6 +14,7 @@ if os.getlogin() == "eddy.a":
 
 # ## ### True ### ## # ## ### False ### ## #
 # ## DataFrame:
+auto_open_html = False
 round_df_numbers = True
 replace_nans_and_infs = [True, -1, 666666]
 sorting_order_main = [True, ['Optimizer ID', 'Portia ID', 'Date']]      # for the main DF only!
@@ -34,7 +36,7 @@ plot_addresses = {}
 
 def round_numbers(df):
     how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Old Upper Ratio limit": 2, "Last RSSI Diff": 0,
-                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "RSSI Ratio Diff": 2, "New vs Old Ratio": 2}
+                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "Ratio Standard Deviation": 2, "RSSI Ratio Diff": 2, "New vs Old Ratio": 2}
     df = df.round(how_to_round)
     for data_set, round_number in how_to_round.items():
         if round_number == 0:
@@ -58,7 +60,7 @@ def rssi_ratio_algorithm(sdf, data):
     data = list(sdf[data][:-1])
     index = 0
     while index < len(data):
-        if lower[index] < data[index] < upper[index] or any([lower[index] < data[i] < upper[index] for i in range(index, min(index + delay, len(data)))]):
+        if data[index] == 0 or lower[index] < data[index] < upper[index] or any([lower[index] < data[i] < upper[index] for i in range(index, min(index + delay, len(data)))]):
             c_ratio.append(c_ratio[index])
             upper.append(upper[index])
             lower.append(lower[index])
@@ -73,30 +75,14 @@ def rssi_ratio_algorithm(sdf, data):
     return pd.concat([sdf, pd.DataFrame({"New Upper Ratio limit": upper, "New Lower Ratio limit": lower, "New C Ratio": c_ratio, "Ratio Adjustments": ka_timeouts}, index=sdf.index)], axis=1)
 
 
-def concat_dfs(file_in_1, file_in_2, file_out):
-    df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')
-    df2 = pd.read_csv(file_in_2).dropna(how='all', axis='columns')
-    df = pd.concat([df1, df2])
-    df.drop_duplicates(keep='last', inplace=True)
+def concat_dfs(files_in, file_out, remove_duplicates):
+    dfs = []
+    for file in files_in:
+        dfs.append(pd.read_csv(file).dropna(how='all', axis='columns'))
+    df = pd.concat(dfs)
+    if remove_duplicates:
+        df.drop_duplicates(keep='last', inplace=True)
     df.to_csv(file_out, index=False)
-
-
-def mana_temp(df):
-    rssi = []
-    ratio = []
-    for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
-        print(f'sex {optimizer_index + 1}')
-        temp_df = df[df["Optimizer ID"] == optimizer_id]
-        length = len(temp_df)
-        jump = int(len(temp_df) / 4)
-        rssi.append([df.iloc[i:i + jump]["Last RSSI"].mean() for i in range(0, length - jump, jump)])
-        ratio.append([df.iloc[i:i + jump]["RSSI Ratio"].mean() for i in range(0, length - jump, jump)])
-    for optimizer_id in df["Optimizer ID"].unique():
-        print(optimizer_id)
-    for sex in rssi:
-        print('\t'.join([str(s) for s in sex]))
-    for sex in ratio:
-        print('\t'.join([str(s) for s in sex]))
 
 
 def combine_df_and_p141(file_in_1, file_in_2, file_out):
@@ -174,9 +160,9 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
         return df_full
 
 
-def plot_df(df, file_out, auto_open_html=True):
+def plot_df(df, file_out):
     global plot_addresses
-    print(f'plot_df(): {file_out = }, {split_figs = }, {auto_open_html = }')
+    print(f'plot_df(): {file_out = }, {split_figs = }')
     fig_count = 0
     print(f'{df["Optimizer ID"].nunique() = }')
     if sorting_order_plots[0]:
@@ -247,7 +233,7 @@ def plot_df(df, file_out, auto_open_html=True):
         if (optimizer_index + 1) % split_figs == 0 or optimizer_index == df["Optimizer ID"].nunique() - 1:
             fig.update_layout(title=fig_title, title_font_color="#2589BB", title_font_size=40, legend_title="Traces:", legend_title_font_color="#2589BB")
             fig.update_layout(sliders=[dict(active=0, pad={"t": 50}, steps=steps, currentvalue={"prefix": "Plot number "})])
-            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - (optimizer_index % split_figs) + 1} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html)
+            fig.write_html(f"{file_out[:-5]} {fig_count:02} - Optimizers {optimizer_index - (optimizer_index % split_figs) + 1} to {optimizer_index + 1}.{file_out[-4:]}", auto_open=auto_open_html, config={'scrollZoom': True, 'editable': True})
 
 
 def summarize(df):
@@ -260,6 +246,7 @@ def summarize(df):
         ssdf = sdf.iloc[-1:].rename(columns={'RSSI Ratio': 'Last Ratio'})
         ssdf["RSSI Average"] = sdf["Last RSSI"].mean()
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()
+        ssdf["Ratio Standard Deviation"] = statistics.stdev(sdf["RSSI Ratio"])
         ssdf["Samples above Old Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Old Upper Ratio limit']) if n > l])
         ssdf["Samples below Old Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Old Lower Ratio limit']) if n < l])
         ssdf["Samples above New Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['New Upper Ratio limit']) if n > l])
@@ -279,8 +266,8 @@ def summarize(df):
     return df_full
 
 
-def plot_histogram(main_df, summary_df, file_out, auto_open_html=True):
-    print(f'plot_histogram(): {file_out = }, {auto_open_html = }')
+def plot_histogram(main_df, summary_df, file_out):
+    print(f'plot_histogram(): {file_out = }')
 
     # ## fig 01:
     fig_title = "Samples above or below Old and New Ratios"
@@ -399,28 +386,33 @@ def plot_histogram(main_df, summary_df, file_out, auto_open_html=True):
 
 
 if __name__ == "__main__":
-    T_read__or__F_write = True
+    T_read__or__F_write = False
     combine_two_RAW_files_together = False
-    folder = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\236 Day Analysis"
+    folder = r"C:\Users\eddy.a\Downloads\Solution Procedure\New Analysis"
     sub_folder = "Optimizer plots\\"
-    file_path = "236 days"
-    file_path_output_csv = f"{folder}\\{file_path} - analysis with {rssi_ratio_algorithm_enable[1]} Sample Delay.csv"
+    file_path_output_csv = f"{folder}\\Analysis with {rssi_ratio_algorithm_enable[1]} Sample Delay.csv"
 
     # ## pre-RAW analysis:
     if combine_two_RAW_files_together:
-        concat_dfs(f"{folder}\\RSSI_Issue_-_P129_no_duplicates_2023_10_09.csv", f"{folder}\\RSSI_Issue_-_P129_no_duplicates_2024_02_22.csv", f"{folder}\\{file_path} - RAW data.csv")
+        concat_dfs([r"C:\Users\eddy.a\Downloads\Solution Procedure\236 Day Analysis\236 days - RAW data.csv",
+                    r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\New data 14-10-2024\01.02.2024 - 30.04.2024.csv",
+                    r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\New data 14-10-2024\01.05.2024 - 31.07.2024.csv",
+                    r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Raw Data\New data 14-10-2024\01.08.2024 - 15.10.2024.csv"],
+                   file_out=f"{folder}\\RAW data.csv", remove_duplicates=True)
 
     # ## RAW analysis:
     if T_read__or__F_write:
         main_df = pd.read_csv(file_path_output_csv, index_col=0).dropna(how='all', axis='columns')
     else:
-        main_df = combine_df_and_p141(f"{folder}\\{file_path} - RAW data.csv", f"{folder}\\P141.csv", file_path_output_csv)
-    plot_df(main_df, file_out=f"{folder}\\{sub_folder}Optimizer RSSI Monitor.html", auto_open_html=False)
+        main_df = combine_df_and_p141(f"{folder}\\RAW data.csv", f"{folder}\\P141.csv", file_path_output_csv)
+    if not os.path.exists(f"{folder}\\{sub_folder}"):
+        os.makedirs(f"{folder}\\{sub_folder}")
+    plot_df(main_df, file_out=f"{folder}\\{sub_folder}Optimizer RSSI Monitor.html")
 
     # ## Summary:
     if T_read__or__F_write:
-        summary_df = pd.read_csv(f"{folder}\\{file_path} - Summary.csv").dropna(how='all', axis='columns')
+        summary_df = pd.read_csv(f"{folder}\\Summary.csv").dropna(how='all', axis='columns')
     else:
         summary_df = summarize(main_df)
-        summary_df.to_csv(f"{folder}\\{file_path} - Summary.csv", index=False)
-    plot_histogram(main_df, summary_df, file_out=f"{folder}\\Optimizer RSSI Histogram.html", auto_open_html=True)
+        summary_df.to_csv(f"{folder}\\Summary.csv", index=False)
+    plot_histogram(main_df, summary_df, file_out=f"{folder}\\Optimizer RSSI Histogram.html")
