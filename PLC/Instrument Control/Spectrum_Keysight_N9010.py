@@ -1,5 +1,5 @@
 """
-Script to control the Keysight N9010B. Commands:
+Script to control the Keysight N9010A or N9010B. Commands:
 Impedance: choose between 50ohm or 75ohm.
 Coupling: choose AC or DC.
 Average Type: 3 options: LogPwr (LOG), RMS, Voltage (SCAL).
@@ -15,7 +15,7 @@ Video Bandwidth: enter number in kHz.
 
 # install PyVISA-py or use Keysight IO Library
 import pyvisa
-from SCPIcommands import scpi_commands, scpi_syntax
+from SCPI_Commands import scpi_commands, scpi_syntax
 
 
 class KeysightN9010B:
@@ -25,27 +25,27 @@ class KeysightN9010B:
         self.use_prints = True
 
     def connect(self, ip_address):
-        """Connect to the spectrum analyzer. Return False is there is no error; otherwise, return the error."""
+        """Connect to the spectrum analyzer. Return True is there is no error; otherwise, return the error."""
         resource_string = f'TCPIP0::{ip_address}::INSTR'
         try:
             self.instrument = self.rm.open_resource(resource_string)
             idn = self.instrument.query('*IDN?')
             if self.use_prints:
                 print(f'Connected to: {idn.replace(",", ", ")}')
-            return False        # No error
+            return True        # No error
         except Exception as e:
             if self.use_prints:
                 print(f'Connection error: {e}')
             return f'Connection error: {str(e).split(':')[0]}.'
 
     def disconnect(self):
-        """Disconnect from the spectrum analyzer. Return False is there is no error; otherwise, return the error."""
+        """Disconnect from the spectrum analyzer. Return True is there is no error; otherwise, return the error."""
         if self.instrument:
             try:
                 self.instrument.close()
                 if self.use_prints:
                     print('Disconnected from the instrument.')
-                return False
+                return True
             except Exception as e:
                 if self.use_prints:
                     print(f'Connection error: {e}')
@@ -68,23 +68,30 @@ class KeysightN9010B:
         return all_commands
 
     def get_set_value(self, measurement, set_value):
-        """Get the SCPI command from the SCPIcommands.py file, and send to the Spectrum."""
+        """Get the SCPI command from the SCPI_Commands.py file, and send to the Spectrum.
+        Return the value as string if set correctly; otherwise, return the error."""
+        # Set value to Spectrum if not None:
         if set_value is not None:
-            self.instrument.write(f'{scpi_commands["n9010b_" + measurement]} {set_value}')
+            if isinstance(set_value, str) and set_value.lower() == "auto":
+                self.instrument.write(f'{scpi_commands["n9010b_" + measurement]}:AUTO ON')
+            else:
+                self.instrument.write(f'{scpi_commands["n9010b_" + measurement]} {set_value}')
+
+        # Get the value and convert to float if applicable:
         get_value = self.instrument.query(f'{scpi_commands["n9010b_" + measurement]}?').strip()
-        try:
+        if not isinstance(get_value, str):
             get_value = float(get_value)
-        except ValueError:
-            pass        # this is OK... get_value is string
+
+        # Compare the get and the set:
         if set_value is not None and get_value != set_value:
             if self.use_prints:
                 print(f'Mismatch in the get / set values!!! {get_value} != {set_value}')
-            else:
-                return f'Mismatch in the get / set values!!! {get_value} != {set_value}'
+            return f'Mismatch in the get / set values!!! {get_value} != {set_value}'
+
+        # Print and return:
         if self.use_prints:
             print(f'{scpi_syntax[measurement]} = {get_value}')
-        else:
-            return get_value
+        return print(f'{scpi_syntax[measurement]} = {get_value}')
 
     def traces_set(self, measurement, set_value):
         """Set the trace type(s): Average, MaxHold, or both."""
@@ -100,9 +107,9 @@ class KeysightN9010B:
 
 
 if __name__ == '__main__':
-    get_only = True
+    get_only = False
     spectrum = KeysightN9010B()
-    if not spectrum.connect("10.20.30.32"):
+    if spectrum.connect("10.20.30.49") is True:
         if get_only:
             spectrum.get_set_value("impedance", set_value=None)
             spectrum.get_set_value("coupling", set_value=None)
@@ -123,6 +130,8 @@ if __name__ == '__main__':
             spectrum.get_set_value("y_ref_level", set_value=0)
             spectrum.get_set_value("freq_start", set_value=10e3)
             spectrum.get_set_value("freq_stop", set_value=300e3)
-            spectrum.get_set_value("resolution_bandwidth", set_value=500)
-            spectrum.get_set_value("video_bandwidth", set_value=5000)
+            # spectrum.get_set_value("resolution_bandwidth", set_value="AUTO")
+            # spectrum.get_set_value("video_bandwidth", set_value="AUTO")
+            spectrum.get_set_value("resolution_bandwidth", set_value=510)
+            spectrum.get_set_value("video_bandwidth", set_value=5100)
         spectrum.disconnect()

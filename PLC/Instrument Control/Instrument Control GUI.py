@@ -7,7 +7,7 @@ from kivymd.uix.dialog import MDDialog
 from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
 import re
-import SpectrumN9010B
+import Spectrum_Keysight_N9010
 
 
 Window.size = (1200, 800)
@@ -20,10 +20,10 @@ class IPDialogContent(BoxLayout):
 
 
 class InstrumentControlGUI(MDApp):
-    spectrum = SpectrumN9010B.KeysightN9010B()      # Initialize new spectrum instance from "SpectrumN9010B.py"
-    ip_address = "10.20.30.32"                      # default IP address for the Spectrum
-    spectrum.use_prints = False                     # Enable terminal prints
-    enable_hint_text = False                        # Enable grey text hints in the GUI's text inputs
+    spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
+    ip_address = "10.20.30.32"                                  # default IP address for the Spectrum
+    spectrum.use_prints = False                                 # Enable terminal prints
+    enable_hint_text = False                                    # Enable grey text hints in the GUI's text inputs
 
     # Colors for the "connection status" in the top left:
     color_red = [0.7, 0.1, 0.1, 0.7]
