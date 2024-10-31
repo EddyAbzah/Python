@@ -1,5 +1,8 @@
 """
-Script to control the Keysight N9010A or N9010B. Commands:
+Script to control the Keysight N9010A or N9010B.
+If you don't have "Keysight IO Library" installed, install via pip "PyVISA-py".
+
+Commands:
 Impedance: choose between 50ohm or 75ohm.
 Coupling: choose AC or DC.
 Average Type: 3 options: LogPwr (LOG), RMS, Voltage (SCAL).
@@ -13,7 +16,7 @@ Video Bandwidth: enter number in kHz.
 """
 
 
-# install PyVISA-py or use Keysight IO Library
+# install PyVISA-py via pip
 import pyvisa
 from SCPI_Commands import scpi_commands, scpi_syntax
 
@@ -67,7 +70,7 @@ class KeysightN9010B:
             print(f"All spectrum commands:\n{all_commands}")
         return all_commands
 
-    def get_set_value(self, measurement, set_value):
+    def get_set_value(self, measurement, set_value=None):
         """Get the SCPI command from the SCPI_Commands.py file, and send to the Spectrum.
         Return the value as string if set correctly; otherwise, return the error."""
         # Set value to Spectrum if not None:
@@ -79,9 +82,10 @@ class KeysightN9010B:
 
         # Get the value and convert to float if applicable:
         get_value = self.instrument.query(f'{scpi_commands["n9010b_" + measurement]}?').strip()
-        if not isinstance(get_value, str):
+        try:
             get_value = float(get_value)
-
+        except ValueError:
+            pass  # this is OK... get_value is string
         # Compare the get and the set:
         if set_value is not None and get_value != set_value:
             if self.use_prints:
@@ -111,16 +115,16 @@ if __name__ == '__main__':
     spectrum = KeysightN9010B()
     if spectrum.connect("10.20.30.49") is True:
         if get_only:
-            spectrum.get_set_value("impedance", set_value=None)
-            spectrum.get_set_value("coupling", set_value=None)
-            spectrum.get_set_value("avg_type", set_value=None)
-            spectrum.get_set_value("attenuation", set_value=None)
-            spectrum.get_set_value("ref_level", set_value=None)
-            spectrum.get_set_value("y_ref_level", set_value=None)
-            spectrum.get_set_value("freq_start", set_value=None)
-            spectrum.get_set_value("freq_stop", set_value=None)
-            spectrum.get_set_value("resolution_bandwidth", set_value=None)
-            spectrum.get_set_value("video_bandwidth", set_value=None)
+            spectrum.get_set_value("impedance")
+            spectrum.get_set_value("coupling")
+            spectrum.get_set_value("avg_type")
+            spectrum.get_set_value("attenuation")
+            spectrum.get_set_value("ref_level")
+            spectrum.get_set_value("y_ref_level")
+            spectrum.get_set_value("freq_start")
+            spectrum.get_set_value("freq_stop")
+            spectrum.get_set_value("resolution_bandwidth")
+            spectrum.get_set_value("video_bandwidth")
         else:
             spectrum.get_set_value("impedance", set_value=50)
             spectrum.get_set_value("coupling", set_value="DC")

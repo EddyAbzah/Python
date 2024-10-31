@@ -21,7 +21,7 @@ class IPDialogContent(BoxLayout):
 
 class InstrumentControlGUI(MDApp):
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
-    ip_address = "10.20.30.32"                                  # default IP address for the Spectrum
+    ip_address = "10.20.30.49"                                  # default IP address for the Spectrum
     spectrum.use_prints = False                                 # Enable terminal prints
     enable_hint_text = False                                    # Enable grey text hints in the GUI's text inputs
 
@@ -40,12 +40,12 @@ class InstrumentControlGUI(MDApp):
     trace_type_default = trace_types[2]
 
     # Default values:
-    spectrum_range_start = 0
-    spectrum_range_stop = 300
+    spectrum_range_start = NumericProperty(0)
+    spectrum_range_stop = NumericProperty(10000 if test_type_default == "Default" else 300)
     start_frequency = NumericProperty(1.0)      # NumericProperty binds any changes to the GUI
     stop_frequency = NumericProperty(300.0)     # NumericProperty binds any changes to the GUI
-    rbw = 1.0
-    vbw = 1.0
+    rbw = 5.1
+    vbw = 5.1
     impedance = 50
     attenuation = 10
     reference_level = 10
@@ -128,12 +128,12 @@ class InstrumentControlGUI(MDApp):
         pattern = re.compile(regex_ip_pattern)
         if pattern.match(ip_input) is not None:
             connection_error = self.spectrum.connect(ip_input)
-            if connection_error:
-                error_label.text = connection_error
-            else:
+            if connection_error is True:
                 error_label.text = ""
                 self.spectrum_connect(ip_input)
                 self.close_dialog()
+            else:
+                error_label.text = connection_error
         else:
             error_label.text = "Invalid IP address. Please enter a valid one."
 
@@ -156,32 +156,43 @@ class InstrumentControlGUI(MDApp):
 
     def set_test_type_item(self, item_number):
         """Set the selected item in the Test type dropdown. Should be: "Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", and "HF-PLC RX"""
-
-        # TX:
-        # BW LF = 0.51
-        # BW HF = 5.1
-
-        # RX:
-        # BW LF = 0.68
-        # BW HF = 6.8
-
         self.root.ids.test_type_dropdown.text = self.test_types[item_number]
         match item_number:
             case 0:         # Default
                 self.set_start_frequency(1)
                 self.set_stop_frequency(10e3)
+                self.spectrum_range_start = 0
+                self.spectrum_range_stop = 10000
+                self.rbw = "AUTO"
+                self.vbw = "AUTO"
             case 1:         # LF-PLC TX
                 self.set_start_frequency(50)
                 self.set_stop_frequency(70)
+                self.spectrum_range_start = 0
+                self.spectrum_range_stop = 300
+                self.rbw = 0.51
+                self.vbw = 0.51
             case 2:         # LF-PLC RX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(300)
+                self.spectrum_range_start = 0
+                self.spectrum_range_stop = 300
+                self.rbw = 5.1
+                self.vbw = 5.1
             case 3:         # HF-PLC TX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(150)
+                self.spectrum_range_start = 0
+                self.spectrum_range_stop = 300
+                self.rbw = 0.68
+                self.vbw = 0.68
             case _:         # HF-PLC RX
                 self.set_start_frequency(10)
                 self.set_stop_frequency(5e3)
+                self.spectrum_range_start = 0
+                self.spectrum_range_stop = 10000
+                self.rbw = 6.8
+                self.vbw = 6.8
         self.menu_test_type.dismiss()
 
     def set_coupling_item(self, item):
