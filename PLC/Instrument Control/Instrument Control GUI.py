@@ -21,27 +21,28 @@ class IPDialogContent(BoxLayout):
 
 class InstrumentControlGUI(MDApp):
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
+    is_connected = False                                        # True if the Spectrum is connected
     ip_address = "10.20.30.49"                                  # default IP address for the Spectrum
     spectrum.use_prints = False                                 # Enable terminal prints
-    enable_hint_text = False                                    # Enable grey text hints in the GUI's text inputs
+    enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
 
     # Colors for the "connection status" in the top left:
     color_red = [0.7, 0.1, 0.1, 0.7]
     color_green = [0.1, 0.5, 0.1, 0.7]
 
-    # Scrollbars and their default values:
+    # Scrollbars values:
     test_types = ["Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", "HF-PLC RX"]
-    test_type_default = test_types[2]
     coupling_types = ["AC", "DC"]
-    coupling_type_default = coupling_types[1]
     average_types = {"LogPwr": "LOG", "RMS": "RMS", "Voltage": "SCAL"}
-    average_type_default = list(average_types)[1]
     trace_types = ["Average", "MaxHold", "AVG_MH"]
-    trace_type_default = trace_types[2]
 
     # Default values:
+    test_type = test_types[2]
+    coupling = coupling_types[1]
+    average_type = list(average_types)[1]
+    trace_type = trace_types[2]
     spectrum_range_start = NumericProperty(0)
-    spectrum_range_stop = NumericProperty(10000 if test_type_default == "Default" else 300)
+    spectrum_range_stop = NumericProperty(10000 if test_type == "Default" else 300)
     start_frequency = NumericProperty(1.0)      # NumericProperty binds any changes to the GUI
     stop_frequency = NumericProperty(300.0)     # NumericProperty binds any changes to the GUI
     rbw = 5.1
@@ -148,11 +149,69 @@ class InstrumentControlGUI(MDApp):
         self.root.ids.connection_label.text = "Disconnected"
         self.root.ids.connection_card.md_bg_color = self.color_red
         self.root.ids.connection_button.text = "Connect"
+        self.is_connected = False
 
     def spectrum_connect(self, ip_input):
         self.root.ids.connection_label.text = f"Connected to {ip_input}"
         self.root.ids.connection_card.md_bg_color = self.color_green
         self.root.ids.connection_button.text = "Disconnect"
+        self.is_connected = True
+
+    def check_if_bw_is_0(self, value, caller):
+        try:
+            value = float(value)
+            if value == 0:
+                if caller == "rbw":
+                    self.root.ids.rbw.text = "AUTO"
+                else:
+                    self.root.ids.vbw.text = "AUTO"
+                return "AUTO"
+        except:
+            if caller == "rbw":
+                self.root.ids.rbw.text = "AUTO"
+            else:
+                self.root.ids.vbw.text = "AUTO"
+            return "AUTO"
+        return value
+
+
+    def check_value_within_limits(self, value, min_value, max_value, text):
+        """Check if GUI value is within the allowed limits; if not, return text."""
+        try:
+            value = float(value)
+            if min_value is not None and value < min_value:
+                value = text
+            if max_value is not None and value > max_value:
+                value = text
+            else:
+                return value
+        except:
+            return value
+
+    def get_gui_values(self):
+        self.rbw = self.check_value_within_limits(self.root.ids.rbw.text, 1, None, "AUTO")
+        self.rbw = self.check_if_bw_is_0(self.rbw, "rbw")
+        self.vbw = self.check_value_within_limits(self.root.ids.vbw.text, 1, None, "AUTO")
+        self.vbw = self.check_if_bw_is_0(self.vbw, "vbw")
+        self.impedance = self.root.ids.impedance.text
+        self.attenuation = self.root.ids.attenuation.text
+        self.reference_level = self.root.ids.reference_level.text
+        self.y_reference_level = self.root.ids.y_reference_level.text
+        self.coupling = self.root.ids.coupling_dropdown.text
+        self.average_type = self.root.ids.avg_type_dropdown.text
+        self.trace_type = self.root.ids.traces_dropdown.text
+        if self.spectrum.use_prints:
+            print(f'{self.start_frequency = }, {type(self.start_frequency) = }')
+            print(f'{self.stop_frequency = }, {type(self.stop_frequency) = }')
+            print(f'{self.rbw = }, {type(self.rbw) = }')
+            print(f'{self.vbw = }, {type(self.vbw) = }')
+            print(f'{self.impedance = }, {type(self.impedance) = }')
+            print(f'{self.attenuation = }, {type(self.attenuation) = }')
+            print(f'{self.reference_level = }, {type(self.reference_level) = }')
+            print(f'{self.y_reference_level = }, {type(self.y_reference_level) = }')
+            print(f'{self.coupling = }, {type(self.coupling) = }')
+            print(f'{self.average_type = }, {type(self.average_type) = }')
+            print(f'{self.trace_type = }, {type(self.trace_type) = }')
 
     def set_test_type_item(self, item_number):
         """Set the selected item in the Test type dropdown. Should be: "Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", and "HF-PLC RX"""
@@ -212,12 +271,23 @@ class InstrumentControlGUI(MDApp):
         self.menu_traces.dismiss()
 
     def config_spectrum(self):
-        """Placeholder for config spectrum method."""
-        print("Config spectrum method called.")
+        """Get the values from the GUI and set to Spectrum"""
+        self.get_gui_values()
+        if self.is_connected:
+            self.spectrum.get_set_value("impedance", set_value=self.impedance)
+            self.spectrum.get_set_value("coupling", set_value=self.coupling)
+            self.spectrum.get_set_value("avg_type", set_value=self.average_type)
+            self.spectrum.get_set_value("attenuation", set_value=self.attenuation)
+            self.spectrum.get_set_value("ref_level", set_value=self.reference_level)
+            self.spectrum.get_set_value("y_ref_level", set_value=self.y_reference_level)
+            self.spectrum.get_set_value("freq_start", set_value=self.start_frequency)
+            self.spectrum.get_set_value("freq_stop", set_value=self.stop_frequency)
+            self.spectrum.get_set_value("resolution_bandwidth", set_value=self.rbw)
+            self.spectrum.get_set_value("video_bandwidth", set_value=self.vbw)
 
     def reset_spectrum(self):
         """Placeholder for reset spectrum method."""
-        print("Reset spectrum method called.")
+        self.spectrum.reset()
 
     def run_traces(self):
         """Placeholder for run traces method."""
