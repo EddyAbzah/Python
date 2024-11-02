@@ -19,11 +19,15 @@ class IPDialogContent(BoxLayout):
     pass
 
 
+class MismatchDialogContent(BoxLayout):
+    pass
+
+
 class InstrumentControlGUI(MDApp):
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
     is_connected = False                                        # True if the Spectrum is connected
     ip_address = "10.20.30.49"                                  # default IP address for the Spectrum
-    spectrum.use_prints = False                                 # Enable terminal prints
+    spectrum.use_prints = True                                  # Enable terminal prints
     enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
 
     # Colors for the "connection status" in the top left:
@@ -118,25 +122,36 @@ class InstrumentControlGUI(MDApp):
         )
         self.dialog.open()
 
+    def show_mismatch_popup(self):
+        """Show a popup if the get and set values are mismatched."""
+        self.mismatch_dialog = MDDialog(
+            title="Set values",
+            type="custom",
+            content_cls=MismatchDialogContent(),
+            buttons=[MDFlatButton(text="OK", on_release=lambda x: self.mismatch_dialog.dismiss()),],
+        )
+        self.mismatch_dialog.md_bg_color = [1, 1, 1, 1]  # RGBa for white
+        self.mismatch_dialog.open()
+
     def close_dialog(self, *_):
         """Close the popup dialog."""
         self.dialog.dismiss()
 
     def check_ip_validity(self, *_):
         """Check if the entered IP address is valid."""
-        error_label = self.dialog.content_cls.ids.error_label
+        ip_error_label = self.dialog.content_cls.ids.ip_error_label
         ip_input = self.dialog.content_cls.ids.ip_input.text
         pattern = re.compile(regex_ip_pattern)
         if pattern.match(ip_input) is not None:
             connection_error = self.spectrum.connect(ip_input)
             if connection_error is True:
-                error_label.text = ""
+                ip_error_label.text = ""
                 self.spectrum_connect(ip_input)
                 self.close_dialog()
             else:
-                error_label.text = connection_error
+                ip_error_label.text = connection_error
         else:
-            error_label.text = "Invalid IP address. Please enter a valid one."
+            ip_error_label.text = "Invalid IP address. Please enter a valid one."
 
     def spectrum_connection(self):
         if self.root.ids.connection_button.text == "Disconnect":
@@ -166,7 +181,7 @@ class InstrumentControlGUI(MDApp):
                 else:
                     self.root.ids.vbw.text = "AUTO"
                 return "AUTO"
-        except:
+        except ValueError:
             if caller == "rbw":
                 self.root.ids.rbw.text = "AUTO"
             else:
@@ -174,8 +189,8 @@ class InstrumentControlGUI(MDApp):
             return "AUTO"
         return value
 
-
-    def check_value_within_limits(self, value, min_value, max_value, text):
+    @staticmethod
+    def check_value_within_limits(value, min_value, max_value, text):
         """Check if GUI value is within the allowed limits; if not, return text."""
         try:
             value = float(value)
@@ -185,7 +200,7 @@ class InstrumentControlGUI(MDApp):
                 value = text
             else:
                 return value
-        except:
+        except ValueError:
             return value
 
     def get_gui_values(self):
@@ -273,17 +288,25 @@ class InstrumentControlGUI(MDApp):
     def config_spectrum(self):
         """Get the values from the GUI and set to Spectrum"""
         self.get_gui_values()
+        messages = []
         if self.is_connected:
-            self.spectrum.get_set_value("impedance", set_value=self.impedance)
-            self.spectrum.get_set_value("coupling", set_value=self.coupling)
-            self.spectrum.get_set_value("avg_type", set_value=self.average_type)
-            self.spectrum.get_set_value("attenuation", set_value=self.attenuation)
-            self.spectrum.get_set_value("ref_level", set_value=self.reference_level)
-            self.spectrum.get_set_value("y_ref_level", set_value=self.y_reference_level)
-            self.spectrum.get_set_value("freq_start", set_value=self.start_frequency)
-            self.spectrum.get_set_value("freq_stop", set_value=self.stop_frequency)
-            self.spectrum.get_set_value("resolution_bandwidth", set_value=self.rbw)
-            self.spectrum.get_set_value("video_bandwidth", set_value=self.vbw)
+            messages.append(self.spectrum.get_set_value("impedance", set_value=self.impedance))
+            messages.append(self.spectrum.get_set_value("coupling", set_value=self.coupling))
+            messages.append(self.spectrum.get_set_value("avg_type", set_value=self.average_type))
+            messages.append(self.spectrum.get_set_value("freq_start", set_value=self.start_frequency))
+            messages.append(self.spectrum.get_set_value("freq_stop", set_value=self.stop_frequency))
+            messages.append(self.spectrum.get_set_value("resolution_bandwidth", set_value=self.rbw))
+            messages.append(self.spectrum.get_set_value("video_bandwidth", set_value=self.vbw))
+            messages.append(self.spectrum.get_set_value("attenuation", set_value=self.attenuation))
+            messages.append(self.spectrum.get_set_value("ref_level", set_value=self.reference_level))
+            messages.append(self.spectrum.get_set_value("y_ref_level", set_value=self.y_reference_level))
+
+            # Color mismatches in red:
+            for i in range(len(messages)):
+                if "mismatch" in messages[i].lower():
+                    messages[i] = f"[color=ff0000]{messages[i]}[/color]"
+            self.show_mismatch_popup()
+            self.mismatch_dialog.content_cls.ids.mismatch_label.text = "\n".join(messages)
 
     def reset_spectrum(self):
         """Placeholder for reset spectrum method."""

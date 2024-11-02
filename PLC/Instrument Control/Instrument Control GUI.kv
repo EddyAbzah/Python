@@ -1,3 +1,35 @@
+#####   Popup dialogs   #####
+
+<IPDialogContent>:
+    orientation: 'vertical'
+    MDTextField:
+        id: ip_input
+        hint_text: "Enter IP address (xx.xx.xx.xx)" if app.enable_hint_text else ""
+        text: app.ip_address
+        size_hint_x: 0.5
+        pos_hint: {"center_x": 0.5, "center_y": 0}
+    MDLabel:
+        id: ip_error_label
+        text: ""
+        color: 1, 0, 0, 1  # Red color for error message
+        halign: "center"
+
+<MismatchDialogContent>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: 200
+
+    MDLabel:
+        id: mismatch_label
+        text: ""
+        markup: True
+        color: 0, 0, 0, 1  # Red color for error message
+        halign: "center"
+
+
+
+#####   Global variables   #####
+
 <BoxLayout>:
     control_text_width: 200
     element_height_1: '40dp'
@@ -15,22 +47,10 @@
     font_size: sp(16)  # Apply to all MDTextFields
     text_color_normal: 0, 0, 0, 1
 
-<IPDialogContent>:
-    orientation: 'vertical'
-    MDTextField:
-        id: ip_input
-        hint_text: "Enter IP address (xx.xx.xx.xx)" if app.enable_hint_text else ""
-        text: app.ip_address
-        size_hint_x: 0.5
-        pos_hint: {"center_x": 0.5, "center_y": 0}
-    MDLabel:
-        id: error_label
-        text: ""
-        color: 1, 0, 0, 1  # Red color for error message
-        halign: "center"
 
 
-# Main window to fit vertically: Spectrum screen, labels, and buttons
+#####   Main window to fit vertically: Spectrum screen, labels, and buttons   #####
+
 BoxLayout:
     orientation: 'vertical'
 
@@ -70,7 +90,10 @@ BoxLayout:
         size_hint_y: 0.5  # Bottom half of the window
         padding: 10
 
-        # Left Side labels
+
+
+#####   Left Side labels   #####
+
         BoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.5
@@ -196,7 +219,10 @@ BoxLayout:
                     text: app.test_type
                     on_release: app.menu_test_type.open()
 
-        # Right Side labels
+
+
+#####   Right Side labels   #####
+
         BoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.5

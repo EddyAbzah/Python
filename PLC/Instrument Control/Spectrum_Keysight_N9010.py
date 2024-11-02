@@ -74,28 +74,45 @@ class KeysightN9010B:
         """Get the SCPI command from the SCPI_Commands.py file, and send to the Spectrum.
         Return the value as string if set correctly; otherwise, return the error."""
         # Set value to Spectrum if not None:
+        auto = isinstance(set_value, str) and set_value.lower() == "auto"
         if set_value is not None:
-            if isinstance(set_value, str) and set_value.lower() == "auto":
+            if auto:
                 self.instrument.write(f'{scpi_commands["n9010b_" + measurement]}:AUTO ON')
             else:
+                if "freq" in measurement or "bandwidth" in measurement:
+                    set_value *= 1000
                 self.instrument.write(f'{scpi_commands["n9010b_" + measurement]} {set_value}')
 
         # Get the value and convert to float if applicable:
         get_value = self.instrument.query(f'{scpi_commands["n9010b_" + measurement]}?').strip()
+
         try:
-            get_value = float(get_value)
+            set_value = float(set_value)
+            if "freq" in measurement or "bandwidth" in measurement:
+                set_value /= 1000
         except ValueError:
             pass  # this is OK... get_value is string
+        try:
+            get_value = float(get_value)
+            if "freq" in measurement or "bandwidth" in measurement:
+                get_value /= 1000
+        except ValueError:
+            pass  # this is OK... get_value is string
+
         # Compare the get and the set:
-        if set_value is not None and get_value != set_value:
+        if set_value is not None and get_value != set_value and not auto:
+            message = f'Mismatch in the get / set values!!! {get_value} != {set_value}'
             if self.use_prints:
-                print(f'Mismatch in the get / set values!!! {get_value} != {set_value}')
-            return f'Mismatch in the get / set values!!! {get_value} != {set_value}'
+                print(message)
+            return message
 
         # Print and return:
+        message = f'{scpi_syntax[measurement]} = {get_value}'
+        if auto:
+            message = message + " (automatically set)"
         if self.use_prints:
-            print(f'{scpi_syntax[measurement]} = {get_value}')
-        return print(f'{scpi_syntax[measurement]} = {get_value}')
+            print(message)
+        return message
 
     def traces_set(self, measurement, set_value):
         """Set the trace type(s): Average, MaxHold, or both."""
