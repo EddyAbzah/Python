@@ -1,4 +1,5 @@
 import os
+import sys
 import math
 import statistics
 import plotly
@@ -17,7 +18,7 @@ if os.getlogin() == "eddy.a":
 auto_open_html = False
 round_df_numbers = True
 replace_nans_and_infs = [True, -1, 666666]
-sorting_order_main = [True, ['Optimizer ID', 'Portia ID', 'Date']]      # for the main DF only!
+sorting_order_main = [True, ['Optimizer ID', 'Portia ID', 'Date']]  # for the main DF only!
 rename_df_columns = {"deviceid": "Portia ID", "managerid": "Manager ID", "time": "Date", "OPT ID": "Optimizer ID",
                      "param_129": "Last RSSI", "param_141": "Paired RSSI", "param_157": "Upper RSSI limit", "param_142": "Lower RSSI limit"}
 
@@ -27,19 +28,23 @@ rssi_original_ratio = [2.51188643150958, 0.3981071705534972, 1]
 
 # ## Plotting:
 rssi_true__or__ratio_false = False
-sorting_order_plots = [True, ['Optimizer ID', 'Portia ID'], 'Date']      # This will make the plotting VERY SLOW!
+sorting_order_plots = [True, ['Optimizer ID', 'Portia ID'], 'Date']  # This will make the plotting VERY SLOW!
 plot_old_limits = False
 remove_glitches = [False, 1.5, 0.6667]
 split_figs = 100
 plot_addresses = {}
 
+# ## Terminal output:
+output_text = True
+output_text_path = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Analysis from 30-08-2023 to 15-10-2024\Python log.txt"
+
 
 def round_numbers(df):
-    how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Old Upper Ratio limit": 2, "Last RSSI Diff": 0,
-                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "Ratio Standard Deviation": 2, "RSSI Ratio Diff": 2, "New vs Old Ratio": 2}
+    how_to_round = {"Last RSSI": 0, "Paired RSSI": 0, "RSSI Ratio": 2, "Upper Ratio limit": 2, "Lower Ratio limit": 2, "Old Upper Ratio limit": 2, "Last RSSI Diff": 0, "RSSI Ratio Diff": 2,
+                    "Old Lower Ratio limit": 2, "New Upper Ratio limit": 2, "New Lower Ratio limit": 2, "New C Ratio": 2, "Ratio Average": 2, "RSSI Standard Deviation": 0, "Ratio Standard Deviation": 2, "New vs Old Ratio": 2}
     df = df.round(how_to_round)
     for data_set, round_number in how_to_round.items():
-        if round_number == 0:
+        if round_number == 0 and data_set in df:
             df[data_set] = df[data_set].apply(int)
     return df
 
@@ -68,8 +73,8 @@ def rssi_ratio_algorithm(sdf, data):
         else:
             c = (data[index] + rssi_original_ratio[2]) / 2
             c_ratio.append(c)
-            upper.append(rssi_original_ratio[0] * c)    # bug = upper.append(upper[index] * c)
-            lower.append(rssi_original_ratio[1] * c)    # bug = lower.append(lower[index] * c)
+            upper.append(rssi_original_ratio[0] * c)  # bug = upper.append(upper[index] * c)
+            lower.append(rssi_original_ratio[1] * c)  # bug = lower.append(lower[index] * c)
             ka_timeouts.append(ka_timeouts[index] + 1)
         index += 1
     return pd.concat([sdf, pd.DataFrame({"New Upper Ratio limit": upper, "New Lower Ratio limit": lower, "New C Ratio": c_ratio, "Ratio Adjustments": ka_timeouts}, index=sdf.index)], axis=1)
@@ -87,8 +92,8 @@ def concat_dfs(files_in, file_out, remove_duplicates):
 
 def combine_df_and_p141(file_in_1, file_in_2, file_out):
     print(f'\nReading df1 ({file_in_1})')
-    df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')       # converters={'optimizerid_hex': partial(int, base=16)}
-    df1['Optimizer ID'] = df1['optimizerid'].apply(lambda n: f'{n:X}')      # df['optimizerid'].apply(hex)
+    df1 = pd.read_csv(file_in_1).dropna(how='all', axis='columns')  # converters={'optimizerid_hex': partial(int, base=16)}
+    df1['Optimizer ID'] = df1['optimizerid'].apply(lambda n: f'{n:X}')  # df['optimizerid'].apply(hex)
     df1['time'] = pd.to_datetime(df1['time']).dt.strftime('%Y-%m-%d %H:%M:%S')
     df1 = df1.rename(columns=rename_df_columns)
     df1.drop(columns=[col for col in df1 if col not in rename_df_columns.values()], inplace=True)
@@ -96,7 +101,7 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
     print(f'{df1.shape = }')
 
     print(f'\nReading df2 ({file_in_2})')
-    df2 = pd.read_csv(file_in_2).dropna(how='all', axis='columns')       # converters={'optimizerid_hex': partial(int, base=16)}
+    df2 = pd.read_csv(file_in_2).dropna(how='all', axis='columns')  # converters={'optimizerid_hex': partial(int, base=16)}
     df2 = df2.rename(columns=rename_df_columns)
     print(f'{list(df2.columns) = }')
     print(f'{df2.shape = }')
@@ -106,7 +111,10 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
     print(f'{list(df3.columns) = }')
     print(f'{df3.shape = }\n')
 
-    if any((df3['Manager ID'].sort_values() - df3['Portia ID'].sort_values()).diff()[1:] != 0):
+    if len(df3) < len(df1):
+        print(f'ERROR! {len(df3) = } is smaller than {len(df1) = }... EXIT!!!')
+        exit()
+    elif any((df3['Manager ID'].sort_values() - df3['Portia ID'].sort_values()).diff()[1:] != 0):
         print('ERROR! There is a mismatch in Inverter IDs dec vs. hex')
         print(f'{df3['Manager ID'].nunique() = }')
         print(f'{df3['Portia ID'].nunique() = }')
@@ -131,7 +139,7 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
             df_full = pd.DataFrame()
             for optimizer_index, optimizer_id in enumerate(df3["Optimizer ID"].unique()):
                 print(f'rssi_ratio_algorithm() for Optimizer number {optimizer_index + 1}: {optimizer_id = }: change ratio after {rssi_ratio_algorithm_enable[1]} KA timeouts)')
-                temp_df = df3[df3["Optimizer ID"] == optimizer_id]
+                temp_df = df3[df3["Optimizer ID"] == optimizer_id].sort_values("Date")
                 if remove_glitches[0]:
                     temp_df.loc[:, "RSSI Ratio"] = remove_glitches_algorithm(temp_df)
                     temp_df = temp_df.dropna(axis=0)
@@ -178,7 +186,7 @@ def plot_df(df, file_out):
         if sorting_order_plots[0]:
             df.sort_values(sorting_order_plots[2], inplace=True)
         plot_addresses.update({optimizer_id: {"Optimizer Index": optimizer_index + 1, "Fig Index": fig_count, "Plot Index": int(optimizer_index % split_figs) + 1}})
-        sdf = df[df["Optimizer ID"] == optimizer_id]
+        sdf = df[df["Optimizer ID"] == optimizer_id].sort_values("Date")
         plot_title = f'Optimizer {optimizer_id} (Inverter {sdf["Portia ID"].iloc[0]} / {sdf["Manager ID"].iloc[0]}): Ratio Adjustments = {sdf["Ratio Adjustments"].iloc[-1]}'
         if optimizer_index % split_figs == 0:
             fig_title = plot_title
@@ -242,10 +250,11 @@ def summarize(df):
     df.drop(columns=['Old C Ratio'], inplace=True)
     for optimizer_index, optimizer_id in enumerate(df["Optimizer ID"].unique()):
         print(f'Summarizing Optimizer number {optimizer_index + 1}: {optimizer_id = }')
-        sdf = df[df["Optimizer ID"] == optimizer_id]
+        sdf = df[df["Optimizer ID"] == optimizer_id].sort_values("Date")
         ssdf = sdf.iloc[-1:].rename(columns={'RSSI Ratio': 'Last Ratio'})
         ssdf["RSSI Average"] = sdf["Last RSSI"].mean()
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()
+        ssdf["RSSI Standard Deviation"] = statistics.stdev(sdf["Last RSSI"])
         ssdf["Ratio Standard Deviation"] = statistics.stdev(sdf["RSSI Ratio"])
         ssdf["Samples above Old Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Old Upper Ratio limit']) if n > l])
         ssdf["Samples below Old Ratio"] = sum([1 for n, l in zip(sdf['RSSI Ratio'], sdf['Old Lower Ratio limit']) if n < l])
@@ -314,11 +323,11 @@ def plot_histogram(main_df, summary_df, file_out):
     fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
     plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 02 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
 
-    # fig 03:
+    # ## fig 03:
     fig_title = "RSSI change per Day"
     fig = make_subplots(rows=1, cols=1)
     bins = [0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100000]
-    bins_labels = [f'{bins[i]}-{bins[i+1]}' for i in range(len(bins) - 2)] + [f'{bins[-2]}+']
+    bins_labels = [f'{bins[i]}-{bins[i + 1]}' for i in range(len(bins) - 2)] + [f'{bins[-2]}+']
     value_types = ["Absolute", "Percentage"]
     vals = {value_types[0]: [], value_types[1]: []}
     main_df.loc[:, "Time"] = main_df.index.map(lambda s: s[11:13])
@@ -326,15 +335,12 @@ def plot_histogram(main_df, summary_df, file_out):
     rssi_change_per_year = list()
     rssi_change_per_day = list()
     for optimizer_index, optimizer_id in enumerate(main_df["Optimizer ID"].unique()):
-        try:
-            temp_df = main_df[main_df["Optimizer ID"] == optimizer_id]
-            date = temp_df["Date"].unique()[10]
-            rssi_change_per_year.append(10 * math.log10(max(temp_df["Last RSSI"]) / min(temp_df["Last RSSI"])))
-            temp_df = temp_df[temp_df["Date"] == date]
-            rssi_change_per_day.append(10 * math.log10(max(temp_df["Last RSSI"]) / min(temp_df["Last RSSI"])))
-            print(f'Fig 03 Optimizer number {optimizer_index + 1}, {optimizer_id = }, {date = }')
-        except:
-            print(f'ERROR! Fig 03 Optimizer number {optimizer_index + 1}, {optimizer_id = }, {date = }: min() = 0')
+        temp_df = main_df[main_df["Optimizer ID"] == optimizer_id].sort_values("Date")
+        rssi_change_per_year.append(10 * math.log10(temp_df["Last RSSI"].max() / temp_df["Last RSSI"][temp_df["Last RSSI"] != 0].min()))
+        date = temp_df["Date"].unique()[1]  # pick the second day or use np.random.choice(temp_df["Date"].unique())
+        temp_df = temp_df[temp_df["Date"] == date]
+        rssi_change_per_day.append(10 * math.log10(temp_df["Last RSSI"].max() / temp_df["Last RSSI"][temp_df["Last RSSI"] != 0].min()))
+        print(f'Fig 03 Optimizer number {optimizer_index + 1}, {optimizer_id = }, {date = }')
     for index, value_type in enumerate(value_types):
         hist, bins = np.histogram(rssi_change_per_year, bins=bins)
         if index == 1:
@@ -355,11 +361,10 @@ def plot_histogram(main_df, summary_df, file_out):
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
     fig.update_layout(title=fig_title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", xaxis_title="Ratio", yaxis_title="Events or Percentage")
     fig.update_traces(marker_line_color='black', marker_line_width=0.5)
-    fig.update_layout(updatemenus=[
-        dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
+    fig.update_layout(updatemenus=[dict(buttons=[dict(label=f'Show {vt}', method='restyle', args=['y', [d for d in vals[vt]]]) for vt in value_types], direction="right", pad={"r": 10, "t": 50}, showactive=True, x=0.11, xanchor="right", y=1.12, yanchor="top"), ])
     plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=f'{file_out[:-5]} 03 - {fig_title}{file_out[-5:]}', auto_open=auto_open_html)
 
-    # fig 04:
+    # ## fig 04:
     fig_title = "RSSI change per Hour"
     fig = make_subplots(rows=1, cols=1)
     bins = [0, 0.025, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 2.5, 3, 4, 5, 10, 100000]
@@ -386,9 +391,16 @@ def plot_histogram(main_df, summary_df, file_out):
 
 
 if __name__ == "__main__":
-    T_read__or__F_write = False
+    if output_text:
+        default_stdout = sys.stdout
+        sys.stdout = open(output_text_path, 'w')
+
+    T_read__or__F_write = True
     combine_two_RAW_files_together = False
-    folder = r"C:\Users\eddy.a\Downloads\Solution Procedure\New Analysis"
+    folder = r"M:\Users\ShacharB\Projects\PLC Leakage - RSSI Ratio Issue\RSSI Ratio Issue Gen4 - 12.2022\Solution Procedure\Analysis from 30-08-2023 to 15-10-2024"
+    # folder = r"C:\Users\eddy.a\Downloads\Solution Procedure"
+    # folder = r"C:\Users\eddy.a\Downloads\Analysis from 30-08-2023 to 15-10-2024"
+
     sub_folder = "Optimizer plots\\"
     file_path_output_csv = f"{folder}\\Analysis with {rssi_ratio_algorithm_enable[1]} Sample Delay.csv"
 
@@ -416,3 +428,7 @@ if __name__ == "__main__":
         summary_df = summarize(main_df)
         summary_df.to_csv(f"{folder}\\Summary.csv", index=False)
     plot_histogram(main_df, summary_df, file_out=f"{folder}\\Optimizer RSSI Histogram.html")
+
+    if output_text:
+        sys.stdout.close()
+        sys.stdout = default_stdout
