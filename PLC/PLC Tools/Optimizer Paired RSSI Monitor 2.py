@@ -29,7 +29,7 @@ sorting_order_plots = [True, ['Optimizer ID', 'Portia ID'], 'Date']      # This 
 remove_glitches = [False, 1.5, 0.6667]
 split_figs = 81
 plot_addresses = {}
-drop_this = [True, '216E9196', '2024-10-04 07:13:00']
+drop_this = [True, '216E9196', '2024-10-04 07:13']
 
 # ## Terminal output:
 output_text = False
@@ -240,7 +240,8 @@ def summarize(df):
         print(f'Summarizing Optimizer number {optimizer_index + 1}: {optimizer_id = }')
         sdf = df[df["Optimizer ID"] == optimizer_id].sort_values("Date")
         if drop_this[0] and str(optimizer_id) == drop_this[1]:
-            sdf.drop(drop_this[2])
+            sdf = sdf.drop(drop_this[2])
+            print(f'Sample is dropped: {drop_this[2] = } @ {drop_this[1] = }')
         ssdf = sdf.iloc[-1:].rename(columns={'RSSI Ratio': 'Last Ratio'})
         ssdf["RSSI Average"] = sdf["Last RSSI"].mean()
         ssdf["Ratio Average"] = sdf["RSSI Ratio"].mean()

@@ -120,52 +120,51 @@ def combine_df_and_p141(file_in_1, file_in_2, file_out):
         print(f'{df3['Portia ID'].nunique() = }')
         return None
     elif df3.isnull().values.any():
-        print('ERROR! There are some Nones in the data frame')
-        print(f'{df3.isnull() = }')
-        return None
+        print(f'ERROR! There are some Nones in the data frame - converting them to 0')
+        print(f'{df3.isnull().sum() = }')
+        df3 = df3.fillna(0)
+    df3["Portia ID"] = df3["Portia ID"].apply(lambda n: f'{n:X}')
+    df3["Manager ID"] = df3["Manager ID"].apply(lambda n: f'{n:X}')
+    df3["RSSI Ratio"] = df3["Last RSSI"] / df3["Paired RSSI"]
+    df3["Old Upper Ratio limit"] = rssi_original_ratio[0]
+    df3["Old Lower Ratio limit"] = rssi_original_ratio[1]
+    df3["Old C Ratio"] = rssi_original_ratio[2]
+    if not rssi_ratio_algorithm_enable[0]:
+        df3["New Upper Ratio limit"] = rssi_original_ratio[0]
+        df3["New Lower Ratio limit"] = rssi_original_ratio[1]
+        df3["New C Ratio"] = rssi_original_ratio[2]
+        df_full = df3
     else:
-        df3["Portia ID"] = df3["Portia ID"].apply(lambda n: f'{n:X}')
-        df3["Manager ID"] = df3["Manager ID"].apply(lambda n: f'{n:X}')
-        df3["RSSI Ratio"] = df3["Last RSSI"] / df3["Paired RSSI"]
-        df3["Old Upper Ratio limit"] = rssi_original_ratio[0]
-        df3["Old Lower Ratio limit"] = rssi_original_ratio[1]
-        df3["Old C Ratio"] = rssi_original_ratio[2]
-        if not rssi_ratio_algorithm_enable[0]:
-            df3["New Upper Ratio limit"] = rssi_original_ratio[0]
-            df3["New Lower Ratio limit"] = rssi_original_ratio[1]
-            df3["New C Ratio"] = rssi_original_ratio[2]
-            df_full = df3
-        else:
-            df_full = pd.DataFrame()
-            for optimizer_index, optimizer_id in enumerate(df3["Optimizer ID"].unique()):
-                print(f'rssi_ratio_algorithm() for Optimizer number {optimizer_index + 1}: {optimizer_id = }: change ratio after {rssi_ratio_algorithm_enable[1]} KA timeouts)')
-                temp_df = df3[df3["Optimizer ID"] == optimizer_id].sort_values("Date")
-                if remove_glitches[0]:
-                    temp_df.loc[:, "RSSI Ratio"] = remove_glitches_algorithm(temp_df)
-                    temp_df = temp_df.dropna(axis=0)
-                temp_df = rssi_ratio_algorithm(temp_df, "RSSI Ratio")
-                temp_df["Last RSSI Diff"] = temp_df["Last RSSI"] - temp_df["Last RSSI"].mean()
-                temp_df["RSSI Ratio Diff"] = temp_df["RSSI Ratio"] - temp_df["RSSI Ratio"].mean()
-                df_full = pd.concat([df_full, temp_df], axis=0)
+        df_full = pd.DataFrame()
+        for optimizer_index, optimizer_id in enumerate(df3["Optimizer ID"].unique()):
+            print(f'rssi_ratio_algorithm() for Optimizer number {optimizer_index + 1}: {optimizer_id = }: change ratio after {rssi_ratio_algorithm_enable[1]} KA timeouts)')
+            temp_df = df3[df3["Optimizer ID"] == optimizer_id].sort_values("Date")
+            if remove_glitches[0]:
+                temp_df.loc[:, "RSSI Ratio"] = remove_glitches_algorithm(temp_df)
+                temp_df = temp_df.dropna(axis=0)
+            temp_df = rssi_ratio_algorithm(temp_df, "RSSI Ratio")
+            temp_df["Last RSSI Diff"] = temp_df["Last RSSI"] - temp_df["Last RSSI"].mean()
+            temp_df["RSSI Ratio Diff"] = temp_df["RSSI Ratio"] - temp_df["RSSI Ratio"].mean()
+            df_full = pd.concat([df_full, temp_df], axis=0)
 
-        del df1
-        del df2
-        del df3
-        if round_df_numbers:
-            df_full = round_numbers(df_full)
-        for col in df_full.columns:
-            print(f'df_full[{col}].nunique() = {df_full[col].nunique()}')
-        if sorting_order_main[0]:
-            print(f'\nSorting values by {sorting_order_main[1]} before export')
-            for sort_by in sorting_order_main[1]:
-                df_full.sort_values(sort_by, inplace=True)
+    del df1
+    del df2
+    del df3
+    if round_df_numbers:
+        df_full = round_numbers(df_full)
+    for col in df_full.columns:
+        print(f'df_full[{col}].nunique() = {df_full[col].nunique()}')
+    if sorting_order_main[0]:
+        print(f'\nSorting values by {sorting_order_main[1]} before export')
+        for sort_by in sorting_order_main[1]:
+            df_full.sort_values(sort_by, inplace=True)
 
-        print(f'\nFinal df = df_full')
-        print(f'{list(df_full.columns) = }')
-        print(f'{df_full.shape = }')
-        df_full.set_index('Date', inplace=True)
-        df_full.to_csv(file_out)
-        return df_full
+    print(f'\nFinal df = df_full')
+    print(f'{list(df_full.columns) = }')
+    print(f'{df_full.shape = }')
+    df_full.set_index('Date', inplace=True)
+    df_full.to_csv(file_out)
+    return df_full
 
 
 def plot_df(df, file_out):
