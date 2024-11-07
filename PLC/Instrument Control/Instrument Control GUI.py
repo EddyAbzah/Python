@@ -1,3 +1,5 @@
+import re
+from tabulate import tabulate
 from kivymd.uix.button import MDFlatButton
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
@@ -6,7 +8,6 @@ from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
 from kivy.properties import NumericProperty
 from kivymd.uix.menu import MDDropdownMenu
-import re
 import Spectrum_Keysight_N9010
 
 
@@ -216,17 +217,20 @@ class InstrumentControlGUI(MDApp):
         self.average_type = self.root.ids.avg_type_dropdown.text
         self.trace_type = self.root.ids.traces_dropdown.text
         if self.spectrum.use_prints:
-            print(f'{self.start_frequency = }, {type(self.start_frequency) = }')
-            print(f'{self.stop_frequency = }, {type(self.stop_frequency) = }')
-            print(f'{self.rbw = }, {type(self.rbw) = }')
-            print(f'{self.vbw = }, {type(self.vbw) = }')
-            print(f'{self.impedance = }, {type(self.impedance) = }')
-            print(f'{self.attenuation = }, {type(self.attenuation) = }')
-            print(f'{self.reference_level = }, {type(self.reference_level) = }')
-            print(f'{self.y_reference_level = }, {type(self.y_reference_level) = }')
-            print(f'{self.coupling = }, {type(self.coupling) = }')
-            print(f'{self.average_type = }, {type(self.average_type) = }')
-            print(f'{self.trace_type = }, {type(self.trace_type) = }')
+            table_to_print = [
+                ['start_frequency', self.start_frequency, type(self.start_frequency)],
+                ['stop_frequency', self.stop_frequency, type(self.stop_frequency)],
+                ['rbw', self.rbw, type(self.rbw)],
+                ['vbw', self.vbw, type(self.vbw)],
+                ['impedance', self.impedance, type(self.impedance)],
+                ['attenuation', self.attenuation, type(self.attenuation)],
+                ['reference_level', self.reference_level, type(self.reference_level)],
+                ['y_reference_level', self.y_reference_level, type(self.y_reference_level)],
+                ['coupling', self.coupling, type(self.coupling)],
+                ['average_type', self.average_type, type(self.average_type)],
+                ['trace_type', self.trace_type, type(self.trace_type)]
+            ]
+            print(tabulate(table_to_print, headers=['Parameter', 'Value', 'Type'], tablefmt="fancy_grid"))
 
     def set_test_type_item(self, item_number):
         """Set the selected item in the Test type dropdown. Should be: "Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", and "HF-PLC RX"""

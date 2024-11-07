@@ -122,7 +122,8 @@ BoxLayout:
                         hint_text: "Enter start frequency" if app.enable_hint_text else ""
                         text: str(app.start_frequency)
                         input_filter: 'float'
-                        on_text_validate: app.set_start_frequency(self.text)
+                        on_focus: if not self.focus: app.set_start_frequency(self.text)
+
 
                     MDSlider:
                         id: slider_start
@@ -155,7 +156,7 @@ BoxLayout:
                         hint_text: "Enter stop frequency" if app.enable_hint_text else ""
                         text: str(app.stop_frequency)
                         input_filter: 'float'
-                        on_text_validate: app.set_stop_frequency(self.text)
+                        on_focus: if not self.focus: app.set_stop_frequency(self.text)
 
                     MDSlider:
                         id: slider_stop
@@ -182,7 +183,7 @@ BoxLayout:
 					text: str(app.rbw)
                     hint_text: "Enter 0 to set to AUTO" if app.enable_hint_text else ""
                     input_filter: 'float'
-                    on_text_validate: app.check_if_bw_is_0(self.text, "rbw")
+                    on_focus: if not self.focus: app.check_if_bw_is_0(self.text, "rbw")
 
             # VBW
             BoxLayout:
@@ -201,7 +202,7 @@ BoxLayout:
 					text: str(app.vbw)
                     hint_text: "Enter 0 to set to AUTO" if app.enable_hint_text else ""
                     input_filter: 'float'
-                    on_text_validate: app.check_if_bw_is_0(self.text, "vbw")
+                    on_focus: if not self.focus: app.check_if_bw_is_0(self.text, "vbw")
 
             # Dropdown - Test type (frequency selector)
             BoxLayout:
