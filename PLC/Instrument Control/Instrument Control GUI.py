@@ -1,17 +1,41 @@
 import re
 from tabulate import tabulate
+from kivy.utils import platform
 from kivymd.uix.button import MDFlatButton
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
-from kivy.properties import NumericProperty
+from kivy.properties import NumericProperty, BooleanProperty
 from kivymd.uix.menu import MDDropdownMenu
 import Spectrum_Keysight_N9010
 
 
-Window.size = (1200, 800)
+set_window = [True,                 # to set, or not to set
+              1,                    # Refactor screen
+              [[1080, 2176, 409],   # 0 = Xiaomi Redmi Note 11S - Portrait
+               [2176, 986, 409],    # 1 = Xiaomi Redmi Note 11S - Landscape
+               [1080, 2268, 398],   # 2 = Xiaomi Mi Note 10 Pro - Portrait
+               [2268, 1080, 398],   # 3 = Xiaomi Mi Note 10 Pro - Landscape
+               [1008, 2076, 489],   # 4 = Google Pixel 8 Pro - Portrait
+               [2130, 890, 489],    # 5 = Google Pixel 8 Pro - Landscape
+               [600, 800, 200],     # 6 = Custom 01
+               [1200, 800, 100]]    # 7 = PC
+              [7]]                  # pick from the phones above
+
+
+if platform == "android":
+    from jnius import autoclass
+    PythonActivity = autoclass("org.kivy.android.PythonActivity")
+    ActivityInfo = autoclass("android.content.pm.ActivityInfo")
+    activity = PythonActivity.mActivity
+    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER)
+elif set_window[0]:
+    Window.size = int(set_window[2][0] / set_window[1]), int(set_window[2][1] / set_window[1])
+    Window.dpi = int(set_window[2][2] / set_window[1])
+
+
 image_refresh_rate_ms = 1000
 regex_ip_pattern = r'^(?:[0-9]{1,2}\.){3}[0-9]{1,3}$'      # pass from xx.xx.xx.xxx to x.x.x.x
 
@@ -30,6 +54,7 @@ class InstrumentControlGUI(MDApp):
     ip_address = "10.20.30.49"                                  # default IP address for the Spectrum
     spectrum.use_prints = True                                  # Enable terminal prints
     enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
+    is_scrollable = BooleanProperty(False)                      # if is_scrollable = True, the lables will be split to two columns
 
     # Colors for the "connection status" in the top left:
     color_red = [0.7, 0.1, 0.1, 0.7]
@@ -58,7 +83,12 @@ class InstrumentControlGUI(MDApp):
     y_reference_level = 0
 
     def build(self):
+        Window.bind(size=self.on_window_size)
         return Builder.load_file('Instrument Control GUI.kv')
+
+    def on_window_size(self, window, size):
+        width, height = size
+        self.is_scrollable = (width > 800 and height < 750) or (width <= 800 and height < 1000)
 
     def on_start(self):
         self.show_ip_popup()  # Show IP popup at the start
