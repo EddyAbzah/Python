@@ -22,6 +22,8 @@ from SCPI_Commands import scpi_commands, scpi_syntax
 
 
 class KeysightN9010B:
+    ip_address = "10.20.30.49"      # default IP address for the Spectrum
+
     def __init__(self):
         self.rm = pyvisa.ResourceManager()
         self.instrument = None
@@ -130,7 +132,7 @@ class KeysightN9010B:
 if __name__ == '__main__':
     get_only = False
     spectrum = KeysightN9010B()
-    if spectrum.connect("10.20.30.49") is True:
+    if spectrum.connect(spectrum.ip_address) is True:
         if get_only:
             spectrum.get_set_value("impedance")
             spectrum.get_set_value("coupling")

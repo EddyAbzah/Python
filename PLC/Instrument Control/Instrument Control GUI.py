@@ -1,3 +1,9 @@
+"""
+This is only a GUI for the Spectrum Control.
+The script that does the controlling is "Spectrum_Keysight_N9010.py"
+"""
+
+
 import re
 from tabulate import tabulate
 from kivy.utils import platform
@@ -21,7 +27,7 @@ set_window = [True,                 # to set, or not to set
                [1008, 2076, 489],   # 4 = Google Pixel 8 Pro - Portrait
                [2130, 890, 489],    # 5 = Google Pixel 8 Pro - Landscape
                [600, 800, 200],     # 6 = Custom 01
-               [1200, 800, 100]]    # 7 = PC
+               [1200, 750, 100]]    # 7 = PC
               [7]]                  # pick from the phones above
 
 
@@ -51,7 +57,7 @@ class MismatchDialogContent(BoxLayout):
 class InstrumentControlGUI(MDApp):
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
     is_connected = False                                        # True if the Spectrum is connected
-    ip_address = "10.20.30.49"                                  # default IP address for the Spectrum
+    ip_address = "10.20.30.28"                                  # default IP address for the Spectrum
     spectrum.use_prints = True                                  # Enable terminal prints
     enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
     is_scrollable = BooleanProperty(False)                      # if is_scrollable = True, the lables will be split to two columns
@@ -88,9 +94,10 @@ class InstrumentControlGUI(MDApp):
 
     def on_window_size(self, window, size):
         width, height = size
-        self.is_scrollable = (width > 800 and height < 750) or (width <= 800 and height < 1000)
+        self.is_scrollable = width < 700 or height < 700
 
     def on_start(self):
+        """Builtin keyword in Kivy (like "on_stop")"""
         self.show_ip_popup()  # Show IP popup at the start
 
         # Initialize the Test type dropdown
@@ -185,12 +192,14 @@ class InstrumentControlGUI(MDApp):
             ip_error_label.text = "Invalid IP address. Please enter a valid one."
 
     def spectrum_connection(self):
+        """Connect or disconnect the Spectrum."""
         if self.root.ids.connection_button.text == "Disconnect":
             self.spectrum_disconnect()
         else:
             self.show_ip_popup()
 
     def spectrum_disconnect(self):
+        """Disconnect the Spectrum."""
         self.spectrum.disconnect()
         self.root.ids.connection_label.text = "Disconnected"
         self.root.ids.connection_card.md_bg_color = self.color_red
@@ -198,12 +207,14 @@ class InstrumentControlGUI(MDApp):
         self.is_connected = False
 
     def spectrum_connect(self, ip_input):
+        """Connect the Spectrum."""
         self.root.ids.connection_label.text = f"Connected to {ip_input}"
         self.root.ids.connection_card.md_bg_color = self.color_green
         self.root.ids.connection_button.text = "Disconnect"
         self.is_connected = True
 
     def check_if_bw_is_0(self, value, caller):
+        """If RBW or VBW is set to 0, use AUTO setting of the Spectrum instead of using the value."""
         try:
             value = float(value)
             if value == 0:
@@ -235,6 +246,7 @@ class InstrumentControlGUI(MDApp):
             return value
 
     def get_gui_values(self):
+        """Get all GUI values before configuring the Spectrum."""
         self.rbw = self.check_value_within_limits(self.root.ids.rbw.text, 1, None, "AUTO")
         self.rbw = self.check_if_bw_is_0(self.rbw, "rbw")
         self.vbw = self.check_value_within_limits(self.root.ids.vbw.text, 1, None, "AUTO")
@@ -263,7 +275,7 @@ class InstrumentControlGUI(MDApp):
             print(tabulate(table_to_print, headers=['Parameter', 'Value', 'Type'], tablefmt="fancy_grid"))
 
     def set_test_type_item(self, item_number):
-        """Set the selected item in the Test type dropdown. Should be: "Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", and "HF-PLC RX"""
+        """Set the selected item in the Test type dropdown. Should be: "Default", "LF-PLC TX", "LF-PLC RX", "HF-PLC TX", and "HF-PLC RX"."""
         self.root.ids.test_type_dropdown.text = self.test_types[item_number]
         match item_number:
             case 0:         # Default
@@ -320,10 +332,10 @@ class InstrumentControlGUI(MDApp):
         self.menu_traces.dismiss()
 
     def config_spectrum(self):
-        """Get the values from the GUI and set to Spectrum"""
+        """Get the values from the GUI and set to Spectrum."""
         self.get_gui_values()
-        messages = []
         if self.is_connected:
+            messages = []
             messages.append(self.spectrum.get_set_value("impedance", set_value=self.impedance))
             messages.append(self.spectrum.get_set_value("coupling", set_value=self.coupling))
             messages.append(self.spectrum.get_set_value("avg_type", set_value=self.average_type))
@@ -343,16 +355,26 @@ class InstrumentControlGUI(MDApp):
             self.mismatch_dialog.content_cls.ids.mismatch_label.text = "\n".join(messages)
 
     def reset_spectrum(self):
-        """Placeholder for reset spectrum method."""
-        self.spectrum.reset()
+        """Reset the spectrum analyzer."""
+        if self.is_connected:
+            self.spectrum.reset()
+        elif self.spectrum.use_prints:
+            print("def reset_spectrum(self): Spectrum is not connected")
 
-    def run_traces(self):
-        """Placeholder for run traces method."""
-        print("Run traces method called.")
+    def traces_run(self):
+        """Set the trace type(s): Average, MaxHold, or both; and/or refresh the traces."""
+        if self.is_connected:
+            self.spectrum.traces_set()
+            self.spectrum.traces_run()
+        elif self.spectrum.use_prints:
+            print("def traces_run(self): Spectrum is not connected")
 
-    def stop_traces(self):
-        """Placeholder for stop traces method."""
-        print("Stop traces method called.")
+    def traces_stop(self):
+        """Stop the traces."""
+        if self.is_connected:
+            self.spectrum.traces_stop()
+        elif self.spectrum.use_prints:
+            print("def traces_stop(self): Spectrum is not connected")
 
     def update_start_slider(self, value):
         """Update start slider value changes."""
