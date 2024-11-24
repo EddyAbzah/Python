@@ -57,10 +57,10 @@ class MismatchDialogContent(BoxLayout):
 class InstrumentControlGUI(MDApp):
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
     is_connected = False                                        # True if the Spectrum is connected
-    ip_address = "10.20.30.28"                                  # default IP address for the Spectrum
-    spectrum.use_prints = True                                  # Enable terminal prints
+    ip_address = ""                                             # default IP address for the Spectrum
+    spectrum.use_prints = False                                 # Enable terminal prints
     enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
-    is_scrollable = BooleanProperty(False)                      # if is_scrollable = True, the lables will be split to two columns
+    is_scrollable = BooleanProperty(False)                      # if is_scrollable = True, the labels will be split to two columns
 
     # Colors for the "connection status" in the top left:
     color_red = [0.7, 0.1, 0.1, 0.7]
@@ -73,9 +73,9 @@ class InstrumentControlGUI(MDApp):
     trace_types = ["Average", "MaxHold", "AVG_MH"]
 
     # Default values:
-    test_type = test_types[2]
-    coupling = coupling_types[1]
-    average_type = list(average_types)[1]
+    test_type = test_types[0]
+    coupling = coupling_types[0] if test_type == "Default" else coupling_types[1]
+    average_type = list(average_types)[0] if test_type == "Default" else list(average_types)[1]
     trace_type = trace_types[2]
     spectrum_range_start = NumericProperty(0)
     spectrum_range_stop = NumericProperty(10000 if test_type == "Default" else 300)
@@ -85,7 +85,7 @@ class InstrumentControlGUI(MDApp):
     vbw = 5.1
     impedance = 50
     attenuation = 10
-    reference_level = 10
+    reference_level = 0 if test_type == "Default" else 10
     y_reference_level = 0
 
     def build(self):
@@ -217,12 +217,8 @@ class InstrumentControlGUI(MDApp):
         """If RBW or VBW is set to 0, use AUTO setting of the Spectrum instead of using the value."""
         try:
             value = float(value)
-            if value == 0:
-                if caller == "rbw":
-                    self.root.ids.rbw.text = "AUTO"
-                else:
-                    self.root.ids.vbw.text = "AUTO"
-                return "AUTO"
+            if value <= 0:
+                raise ValueError
         except ValueError:
             if caller == "rbw":
                 self.root.ids.rbw.text = "AUTO"
@@ -231,25 +227,9 @@ class InstrumentControlGUI(MDApp):
             return "AUTO"
         return value
 
-    @staticmethod
-    def check_value_within_limits(value, min_value, max_value, text):
-        """Check if GUI value is within the allowed limits; if not, return text."""
-        try:
-            value = float(value)
-            if min_value is not None and value < min_value:
-                value = text
-            if max_value is not None and value > max_value:
-                value = text
-            else:
-                return value
-        except ValueError:
-            return value
-
     def get_gui_values(self):
         """Get all GUI values before configuring the Spectrum."""
-        self.rbw = self.check_value_within_limits(self.root.ids.rbw.text, 1, None, "AUTO")
         self.rbw = self.check_if_bw_is_0(self.rbw, "rbw")
-        self.vbw = self.check_value_within_limits(self.root.ids.vbw.text, 1, None, "AUTO")
         self.vbw = self.check_if_bw_is_0(self.vbw, "vbw")
         self.impedance = self.root.ids.impedance.text
         self.attenuation = self.root.ids.attenuation.text
@@ -283,36 +263,47 @@ class InstrumentControlGUI(MDApp):
                 self.set_stop_frequency(10e3)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 10000
-                self.rbw = "AUTO"
-                self.vbw = "AUTO"
+                self.root.ids.rbw.text = "AUTO"
+                self.root.ids.vbw.text = "AUTO"
             case 1:         # LF-PLC TX
                 self.set_start_frequency(50)
                 self.set_stop_frequency(70)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.rbw = 0.51
-                self.vbw = 0.51
+                self.root.ids.rbw.text = "0.51"
+                self.root.ids.vbw.text = "0.51"
             case 2:         # LF-PLC RX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(300)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.rbw = 5.1
-                self.vbw = 5.1
+                self.root.ids.rbw.text = "5.1"
+                self.root.ids.vbw.text = "5.1"
             case 3:         # HF-PLC TX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(150)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.rbw = 0.68
-                self.vbw = 0.68
+                self.root.ids.rbw.text = "0.68"
+                self.root.ids.vbw.text = "0.68"
             case _:         # HF-PLC RX
                 self.set_start_frequency(10)
                 self.set_stop_frequency(5e3)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 10000
-                self.rbw = 6.8
-                self.vbw = 6.8
+                self.root.ids.rbw.text = "6.8"
+                self.root.ids.vbw.text = "6.8"
+
+        if item_number == 0:        # = "Default"
+            self.root.ids.coupling_dropdown.text = self.coupling_types[0]
+            self.root.ids.avg_type_dropdown.text = list(self.average_types)[0]
+            self.root.ids.attenuation.text = "10"
+            self.root.ids.reference_level.text = "0"
+        else:
+            self.root.ids.coupling_dropdown.text = self.coupling_types[1]
+            self.root.ids.avg_type_dropdown.text = list(self.average_types)[1]
+            self.root.ids.attenuation.text = "10"
+            self.root.ids.reference_level.text = "10"
         self.menu_test_type.dismiss()
 
     def set_coupling_item(self, item):
@@ -333,12 +324,15 @@ class InstrumentControlGUI(MDApp):
 
     def config_spectrum(self):
         """Get the values from the GUI and set to Spectrum."""
-        self.get_gui_values()
+        messages = []
         if self.is_connected:
-            messages = []
+            self.spectrum.clear_errors()
+            self.spectrum.set_basic_parameters()
+            self.get_gui_values()
+
             messages.append(self.spectrum.get_set_value("impedance", set_value=self.impedance))
             messages.append(self.spectrum.get_set_value("coupling", set_value=self.coupling))
-            messages.append(self.spectrum.get_set_value("avg_type", set_value=self.average_type))
+            messages.append(self.spectrum.get_set_value("avg_type", set_value=self.average_types[self.average_type]))
             messages.append(self.spectrum.get_set_value("freq_start", set_value=self.start_frequency))
             messages.append(self.spectrum.get_set_value("freq_stop", set_value=self.stop_frequency))
             messages.append(self.spectrum.get_set_value("resolution_bandwidth", set_value=self.rbw))
@@ -347,6 +341,7 @@ class InstrumentControlGUI(MDApp):
             messages.append(self.spectrum.get_set_value("ref_level", set_value=self.reference_level))
             messages.append(self.spectrum.get_set_value("y_ref_level", set_value=self.y_reference_level))
 
+            self.traces_run()
             # Color mismatches in red:
             for i in range(len(messages)):
                 if "mismatch" in messages[i].lower():
@@ -364,15 +359,28 @@ class InstrumentControlGUI(MDApp):
     def traces_run(self):
         """Set the trace type(s): Average, MaxHold, or both; and/or refresh the traces."""
         if self.is_connected:
-            self.spectrum.traces_set()
-            self.spectrum.traces_run()
+            trace_type = self.root.ids.traces_dropdown.text
+            match trace_type:
+                case "Average":
+                    self.spectrum.traces_set(1, "AVER")
+                case "MaxHold":
+                    self.spectrum.traces_set(1, "MAXH")
+                case _:
+                    self.spectrum.traces_set([1, 2], ["AVER", "MAXH"])
+            # traces_set() will also run traces_run() at the end
+            # self.spectrum.traces_run()
         elif self.spectrum.use_prints:
             print("def traces_run(self): Spectrum is not connected")
 
     def traces_stop(self):
         """Stop the traces."""
         if self.is_connected:
-            self.spectrum.traces_stop()
+            trace_type = self.root.ids.traces_dropdown.text
+            if trace_type == "AVG_MH":
+                traces = [1, 2]
+            else:
+                traces = [1]
+            self.spectrum.traces_stop(traces)
         elif self.spectrum.use_prints:
             print("def traces_stop(self): Spectrum is not connected")
 

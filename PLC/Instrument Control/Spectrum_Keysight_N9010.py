@@ -21,8 +21,31 @@ import pyvisa
 from SCPI_Commands import scpi_commands, scpi_syntax
 
 
+default_avg_count = 100
+enable_annotation = True
+full_screen = True
+
+
+# public virtual Image Screenshot()
+# {
+#     Image image;
+#     WebRequest request;
+#     Stream stream;
+#     WebResponse response;
+# 
+#     //Taking picture from the browser server - more reliable:
+#     request = _isNewImagePath ? WebRequest.Create("http://" + (IO as SocketAdapter).IP + "/WebInstrumentAspx/ScreenImageHandler.ashx") : WebRequest.Create("http://" + (IO as SocketAdapter).IP + "/Agilent.SA.WebInstrument/Screen.png");
+# 
+#     response = request.GetResponse();
+#     stream = response.GetResponseStream();
+#     image = Image.FromStream(stream);
+# 
+#     return image;
+# }
+
+
 class KeysightN9010B:
-    ip_address = "10.20.30.49"      # default IP address for the Spectrum
+    ip_address = ""      # default IP address for the Spectrum
 
     def __init__(self):
         self.rm = pyvisa.ResourceManager()
@@ -65,6 +88,22 @@ class KeysightN9010B:
             print('Spectrum is reset.')
         return True
 
+    def clear_errors(self):
+        """Reset the spectrum analyzer. Return True is reset is completed."""
+        self.instrument.write('*CLS')
+        if self.use_prints:
+            print('Spectrum has been cleared.')
+        return True
+
+    def set_basic_parameters(self):
+        """Set basic parameters like annotations or full screen mode; the parameters are at the top of the code"""
+        self.instrument.write(f':DISP:FSCR {"ON" if full_screen else "OFF"}')
+        self.instrument.write(f':DISP:ANN:TRAC {"ON" if enable_annotation else "OFF"}')
+        if self.use_prints:
+            print(f'Spectrum full screen is set to {full_screen = }.')
+            print(f'Spectrum annotations is set to {enable_annotation = }.')
+        return True
+
     def print_all_commands(self):
         """Prints all available SCPI commands."""
         all_commands = self.instrument.query(':SYST:HELP:HEAD?')
@@ -92,8 +131,8 @@ class KeysightN9010B:
             set_value = float(set_value)
             if "freq" in measurement or "bandwidth" in measurement:
                 set_value /= 1000
-        except ValueError:
-            pass  # this is OK... get_value is string
+        except (ValueError, TypeError):
+            pass  # this is OK... get_value is either string (ValueError) or None (TypeError)
         try:
             get_value = float(get_value)
             if "freq" in measurement or "bandwidth" in measurement:
@@ -116,23 +155,67 @@ class KeysightN9010B:
             print(message)
         return message
 
-    def traces_set(self, measurement, set_value):
-        """Set the trace type(s): Average, MaxHold, or both."""
-        pass
+    def traces_set(self, indexes, modes):
+        """Set the trace type, label, and display
+        Parameters:
+            indexes: int or list(int) - Trace number to configure (1 to 6).
+            modes: str or list(str) - Trace mode ("WRITE", "AVER", "MAXHOLD", "MINHOLD")."""
+        if not isinstance(indexes, list):
+            indexes = [indexes]
+        if not isinstance(modes, list):
+            modes = [modes]
 
-    def traces_run(self, measurement, set_value):
+        if "AVER" in modes:
+            self.instrument.write(f"SENS:AVER:STATE OFF")
+            self.instrument.write(f"SENS:AVER:STATE ON")
+            self.instrument.write(f"SENS:AVER:COUNT {default_avg_count}")
+
+        for index, mode in zip(indexes, modes):
+            if mode != "AVER":
+                # Glitch in Spectrum = changing mode doesn't change the label, so in the next iteration the mode doesn't change:
+                current_mode = self.instrument.query(f":TRACE{index}:MODE?").strip()
+                if mode == current_mode:
+                    temp_mode = mode.replace("MAXH", "TEMP").replace("MINH", "MAXH").replace("TEMP", "MINH")
+                    self.instrument.write(f":TRACE{index}:MODE {temp_mode}")
+                # End of Glitch handle
+                self.instrument.write(f":TRACE{index}:MODE {mode}")
+            if self.use_prints:
+                print(f"Trace {index} is set to mode {mode}")
+        self.traces_run(indexes)
+
+    def traces_run(self, indexes):
         """Run (refresh) the traces."""
-        pass
+        self.instrument.write(f"INIT:CONT ON")
+        if not isinstance(indexes, list):
+            indexes = [indexes]
+        for index in indexes:
+            self.instrument.write(f"TRAC{index}:UPD ON")
+            self.instrument.write(f"TRAC{index}:DISP ON")
 
-    def traces_stop(self, measurement, set_value):
+    def traces_stop(self, indexes):
         """Stop the traces."""
-        pass
+        if not isinstance(indexes, list):
+            indexes = [indexes]
+        for index in indexes:
+            self.instrument.write(f"TRAC{index}:UPD OFF")
 
 
 if __name__ == '__main__':
-    get_only = False
+    get_only = True
+    traces_run = False
+    traces_stop = False
     spectrum = KeysightN9010B()
     if spectrum.connect(spectrum.ip_address) is True:
+
+        spectrum.clear_errors()
+        spectrum.set_basic_parameters()
+
+        if traces_run:
+            spectrum.traces_set([1, 2], ["AVER", "MAXH"])
+            spectrum.traces_run([1, 2])
+        elif traces_stop:
+            spectrum.traces_stop([1, 2])
+
         if get_only:
             spectrum.get_set_value("impedance")
             spectrum.get_set_value("coupling")
@@ -153,8 +236,6 @@ if __name__ == '__main__':
             spectrum.get_set_value("y_ref_level", set_value=0)
             spectrum.get_set_value("freq_start", set_value=10e3)
             spectrum.get_set_value("freq_stop", set_value=300e3)
-            # spectrum.get_set_value("resolution_bandwidth", set_value="AUTO")
-            # spectrum.get_set_value("video_bandwidth", set_value="AUTO")
-            spectrum.get_set_value("resolution_bandwidth", set_value=510)
-            spectrum.get_set_value("video_bandwidth", set_value=5100)
+            spectrum.get_set_value("resolution_bandwidth", set_value=510)   # or "AUTO"
+            spectrum.get_set_value("video_bandwidth", set_value=5100)       # or "AUTO"
         spectrum.disconnect()
