@@ -1,151 +1,104 @@
-import matplotlib.pyplot as plt
-import pandas as pd
+import os
 import numpy as np
-from scipy.interpolate import interp1d
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+if os.getlogin() == "eddy.a":
+    from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
+    import Plot_Graphs_with_Sliders as _G
+    import my_tools
 
-# Specify the input and output file paths
-file_in = r""
-file_out = r""
-df_round = 2
-noise_level = 0.005  # 1 = 100%
-noise_level = 0
+
+number_of_harmonics = 1
+dc_cut = True
+plot_each_fft = False
 
 
-class InteractivePlot:
-    def __init__(self, ax, x_data, noise_level=0.0):
-        self.ax = ax
-        self.fig = ax.figure
-        self.x_data = x_data  # x-values from the CSV data
-        self.noise_level = noise_level  # Noise level to add to the data
-        # Initialize an empty line
-        self.line, = ax.plot([], [], 'r-', label='Your Drawing')
-        # Lists to store x and y data points
-        self.xs = []
-        self.ys = []
-        self.is_pressed = False
-        self.user_y_values = None  # To store interpolated y-values at x_data
+def analyze_fft(df, filename):
+    """
+    Gets a pd.df of a Scope measurements, and return the amplitudes of the first 5 harmonics.
+    Needs "Time" column to work.
+    Frequency in [Hz], and Amplitude in [V].
+    """
+    summary_data = []
 
-        # Connect the event handlers
-        self.cid_press = self.fig.canvas.mpl_connect('button_press_event', self.on_press)
-        self.cid_release = self.fig.canvas.mpl_connect('button_release_event', self.on_release)
-        self.cid_motion = self.fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
+    if 'Time' not in df.columns:
+        print(f"Column 'Time' not found in {filename}. Skipping.")
+        return summary_data
+    elif len(df) == 0:
+        print(f"DataFrame {filename} is empty. Filling all with 'N/A'.")
+        for column_name in df.columns:
+            if column_name == 'Time':
+                continue
+            summary_row = [filename, column_name, "N/A"]
+            for _ in range(0, number_of_harmonics):
+                summary_row.extend(["N/A", "N/A"])
+            summary_data.append(summary_row)
+        return summary_data
 
-    def on_press(self, event):
-        """Handle mouse button press events."""
-        if event.inaxes != self.ax:
-            return
-        self.is_pressed = True
-        self.xs = [event.xdata]
-        self.ys = [event.ydata]
-        self.line.set_data(self.xs, self.ys)
-        self.fig.canvas.draw()
+    time = df['Time'].values
+    sampling_rate = 1 / np.mean(np.diff(time))
+    for column_name in df.columns:
+        if column_name == 'Time':
+            continue
+        signal = df[column_name].values
 
-    def on_release(self, event):
-        """Handle mouse button release events."""
-        if not self.is_pressed:
-            return
-        self.is_pressed = False
-        # Interpolate the drawn line to the x_data points
-        if len(self.xs) >= 2:
-            # Sort the drawn data by x-values
-            sorted_indices = np.argsort(self.xs)
-            xs_sorted = np.array(self.xs)[sorted_indices]
-            ys_sorted = np.array(self.ys)[sorted_indices]
-            # Remove duplicate x-values
-            xs_unique, indices = np.unique(xs_sorted, return_index=True)
-            ys_unique = ys_sorted[indices]
-            # Create interpolation function
-            interp_func = interp1d(
-                xs_unique, ys_unique, kind='linear', bounds_error=False, fill_value="extrapolate"
-            )
-            # Get y-values at the x_data points
-            self.user_y_values = interp_func(self.x_data)
-            # Add noise to the user-drawn data
-            if self.noise_level > 0:
-                max_abs_y = np.max(np.abs(self.user_y_values))
-                noise = np.random.normal(
-                    0, self.noise_level * max_abs_y, size=self.user_y_values.shape
-                )
-                self.user_y_values += noise
-            # Update the line data to the interpolated values
-            self.line.set_data(self.x_data, self.user_y_values)
-            self.fig.canvas.draw()
+        # Compute FFT
+        n = len(signal)
+        fft_values = fft(signal)
+        fft_amplitudes = 2 / n * np.abs(fft_values[:n // 2])
+        frequencies = fftfreq(n, d=1 / sampling_rate)[:n // 2]
+
+        if plot_each_fft:
+            plt.figure()
+            plt.plot(frequencies, fft_amplitudes)
+            plt.title(f"FFT of {column_name} in {filename}")
+            plt.xlabel("Frequency (Hz)")
+            plt.ylabel("Amplitude")
+            plt.grid()
+            plt.show()
+
+        # Extract the fundamental frequency and first 5 harmonics (including)
+        if dc_cut:
+            fundamental_index = np.argmax(fft_amplitudes[1:]) + 1
         else:
-            print("Please draw a complete line with at least two points.")
+            fundamental_index = np.argmax(fft_amplitudes)
+        fundamental_freq = frequencies[fundamental_index]
+        fundamental_amp = fft_amplitudes[fundamental_index]
+        harmonics = [(fundamental_freq, fundamental_amp)]
+        for i in range(2, 1 + number_of_harmonics):  # Start from the 2nd harmonic
+            harmonic_index = np.argmin(np.abs(frequencies - i * fundamental_freq))
+            harmonics.append((frequencies[harmonic_index], fft_amplitudes[harmonic_index]))
 
-    def on_motion(self, event):
-        """Handle mouse movement events."""
-        if not self.is_pressed or event.inaxes != self.ax:
-            return
-        self.xs.append(event.xdata)
-        self.ys.append(event.ydata)
-        self.line.set_data(self.xs, self.ys)
-        self.fig.canvas.draw()
+        # Append results to the summary table
+        summary_row = [filename, column_name, np.sqrt(np.mean(signal**2))]      #File name, Measurement, Vrms
+        for freq, amp in harmonics:
+            summary_row.extend([freq, amp])
+        summary_data.append(summary_row)
 
-
-if file_in == "":
-    file_in = input("Enter the input file:\n")
-    file_in = file_in.replace('"', '')
-if file_out == "":
-    file_out = input("Enter the output file:\n")
-    file_out = file_out.replace('"', '')
-
-# Load data from CSV using the first column as the index
-df = pd.read_csv(file_in, index_col=0)
-x_data = df.index.values  # x_data from the index
-
-# Display available traces to the user
-print("Available traces:")
-for i, col in enumerate(df.columns):
-    print(f"{i}: {col}")
-
-# Prompt the user to select traces
-selected_input = input("Enter the indices of the traces you want to select (comma-separated), or 'all' to select all traces:\n")
-if selected_input.strip().lower()[:1] == 'a':
-    selected_indices = list(range(len(df.columns)))
-else:
-    selected_indices = [int(idx.strip()) for idx in selected_input.split(',')]
-
-# Copy the original DataFrame to include unedited traces
-user_df = df.copy()
-user_df.index.name = df.index.name
-
-for idx in selected_indices:
-    col_name = df.columns[idx]
-    y_data = df[col_name].values
-
-    # Create a figure and axis
-    fig, ax = plt.subplots()
-    ax.set_title(f'Draw Over the Data for {col_name}')
-    ax.plot(x_data, y_data, 'b-', label=f'Original Data - {col_name}')
-
-    # Optionally, set axis labels
-    ax.set_xlabel(user_df.index.name)
-    ax.set_ylabel(col_name)
-
-    # Initialize the interactive plot with x_data from CSV and noise_level
-    interactive_plot = InteractivePlot(ax, x_data, noise_level=noise_level)
-
-    # Display the plot with a legend
-    plt.legend()
-    plt.show()
-
-    # After the plot window is closed, access the user's y-values at x_data points
-    user_y_values = interactive_plot.user_y_values
-    if user_y_values is not None:
-        # Add the user-drawn y-values to the user_df DataFrame
-        user_df[col_name] = user_y_values
-        print(f'User-drawn data for "{col_name}" captured.')
-    else:
-        print(f'No data was drawn for "{col_name}".')
+    return summary_data
 
 
-# Apply rounding if specified
-if df_round == 0:
-    user_df = user_df.apply(int)
-elif df_round > 0:
-    user_df = user_df.round(df_round)
+if __name__ == '__main__':
+    path = r"M:\Users\HW Infrastructure\PLC team\INVs\Venus4\Tests Results\V4 RevC RX Test - Eddy 11.2024\RX Tests\Transfer Function 01 - PreMixer LF"
+    filter_extensions = ".csv"
+    filter_files = "Data"
+    csv_out = "_Scope Measurements.csv"
 
-# Save the user-drawn data to the specified output file, including the index and its name
-user_df.to_csv(file_out, index=True)
-print(f"User-drawn data saved to {file_out}")
+    summary_data = []
+    for file_index, filename in enumerate(os.listdir(path)):
+        if filename.endswith(filter_extensions) and (filter_files is None or filter_files in filename):
+            try:
+                df = pd.read_csv(os.path.join(path, filename))
+                df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+                summary_data.extend(analyze_fft(df, filename))
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+
+    columns = ['File Name', 'Trace Name', 'Vrms']
+    for i in range(1, number_of_harmonics + 1):
+        columns.extend([f'Harmonic {i} Frequency', f'Harmonic {i} Amplitude'])
+    summary = pd.DataFrame(summary_data, columns=columns)
+    if csv_out != "":
+        summary.to_csv(os.path.join(path, csv_out), index=False)
+    print(summary.to_string())
