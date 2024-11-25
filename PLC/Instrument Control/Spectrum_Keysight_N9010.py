@@ -77,7 +77,7 @@ class KeysightN9010B:
             except Exception as e:
                 if self.use_prints:
                     print(f'Connection error: {e}')
-                return f'Connection error: {str(e).split(':')[0]}.'
+                return f'Connection error: {str(e).split(":")[0]}.'
         else:
             return f'There is no instrument connected.'
 
