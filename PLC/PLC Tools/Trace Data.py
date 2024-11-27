@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from fnmatch import fnmatch
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 if os.getlogin() == "eddy.a":
@@ -9,12 +10,12 @@ if os.getlogin() == "eddy.a":
     import my_tools
 
 
-number_of_harmonics = 1
+number_of_harmonics = 5
 dc_cut = True
 plot_each_fft = False
 
 
-def analyze_fft(df, filename):
+def analyze_fft(df, folder, filename):
     """
     Gets a pd.df of a Scope measurements, and return the amplitudes of the first 5 harmonics.
     Needs "Time" column to work.
@@ -30,7 +31,7 @@ def analyze_fft(df, filename):
         for column_name in df.columns:
             if column_name == 'Time':
                 continue
-            summary_row = [filename, column_name, "N/A"]
+            summary_row = [folder, filename, column_name, "N/A"]
             for _ in range(0, number_of_harmonics):
                 summary_row.extend(["N/A", "N/A"])
             summary_data.append(summary_row)
@@ -71,7 +72,7 @@ def analyze_fft(df, filename):
             harmonics.append((frequencies[harmonic_index], fft_amplitudes[harmonic_index]))
 
         # Append results to the summary table
-        summary_row = [filename, column_name, np.sqrt(np.mean(signal**2))]      #File name, Measurement, Vrms
+        summary_row = [folder, filename, column_name, np.sqrt(np.mean(signal**2))]      #File name, Measurement, Vrms
         for freq, amp in harmonics:
             summary_row.extend([freq, amp])
         summary_data.append(summary_row)
@@ -80,25 +81,38 @@ def analyze_fft(df, filename):
 
 
 if __name__ == '__main__':
-    path = r"M:\Users\HW Infrastructure\PLC team\INVs\Venus4\Tests Results\V4 RevC RX Test - Eddy 11.2024\RX Tests\Transfer Function 01 - PreMixer LF"
-    filter_extensions = ".csv"
-    filter_files = "Data"
+    path = r"M:\Users\HW Infrastructure\PLC team\INVs\Venus4\Tests Results\V4 RevC RX Test - Eddy 11.2024\RX Tests"
+    search_subfolders = True
+    filter_in = ["*scop*data*.csv"]
+    filter_out = ["spectrum"]
     csv_out = "_Scope Measurements.csv"
+    rename = [True, {"Lrx": "01 Lrx", "DiffOut": "02 Diff Out", "BPFPLC": "03 BPF PLC", "BPFArc": "04 BPF Arc",
+                     "LPF1": "05 LPF1", "Mixer1": "06 Mixer1", "Gain1": "07 Gain1",
+                     "LPF2": "08 LPF2", "Mixer2": "09 Mixer2", "Gain2": "10 Gain2",
+                     "LPF3": "11 LPF3", "Mixer3": "12 Mixer3", "Gain3": "13 Gain3",
+                     "LPF4": "14 LPF4", "Mixer4": "15 Mixer4", "Gain4": "16 Gain4"}]
 
     summary_data = []
-    for file_index, filename in enumerate(os.listdir(path)):
-        if filename.endswith(filter_extensions) and (filter_files is None or filter_files in filename):
-            try:
-                df = pd.read_csv(os.path.join(path, filename))
+    file_index = 0
+    for folder, subfolders, file_names in os.walk(path):
+        for filename in file_names:
+            if (filter_in[0] == "" or any(fnmatch(filename, f) for f in filter_in)) and (filter_out[0] == "" or not any(fnmatch(filename, f) for f in filter_out)):
+                file_index += 1
+                print(f'Analyzing file number {file_index:03}: {filename}')
+                df = pd.read_csv(os.path.join(folder, filename))
                 df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-                summary_data.extend(analyze_fft(df, filename))
-            except Exception as e:
-                print(f"Error processing {filename}: {e}")
+                # _P(df.set_index("Frequency"))
+                summary_out = analyze_fft(df, folder, filename)
+                summary_data.extend(summary_out)
+        if not search_subfolders:
+            break
 
-    columns = ['File Name', 'Trace Name', 'Vrms']
+    columns = ['Folder path', 'File Name', 'Trace Name', 'Vrms']
     for i in range(1, number_of_harmonics + 1):
         columns.extend([f'Harmonic {i} Frequency', f'Harmonic {i} Amplitude'])
     summary = pd.DataFrame(summary_data, columns=columns)
+    if rename[0]:
+        summary = summary.replace(rename[1])
     if csv_out != "":
         summary.to_csv(os.path.join(path, csv_out), index=False)
     print(summary.to_string())
