@@ -21,10 +21,6 @@ import pyvisa
 from SCPI_Commands import scpi_commands, scpi_syntax
 
 
-default_avg_count = 100
-enable_annotation = True
-full_screen = True
-
 
 # public virtual Image Screenshot()
 # {
@@ -51,6 +47,9 @@ class KeysightN9010B:
         self.rm = pyvisa.ResourceManager()
         self.instrument = None
         self.use_prints = True
+        self.default_avg_count = 100
+        self.enable_annotation = True
+        self.full_screen = True
 
     def connect(self, ip_address):
         """Connect to the spectrum analyzer. Return True is there is no error; otherwise, return the error."""
@@ -97,11 +96,11 @@ class KeysightN9010B:
 
     def set_basic_parameters(self):
         """Set basic parameters like annotations or full screen mode; the parameters are at the top of the code"""
-        self.instrument.write(f':DISP:FSCR {"ON" if full_screen else "OFF"}')
-        self.instrument.write(f':DISP:ANN:TRAC {"ON" if enable_annotation else "OFF"}')
+        self.instrument.write(f':DISP:FSCR {"ON" if self.full_screen else "OFF"}')
+        self.instrument.write(f':DISP:ANN:TRAC {"ON" if self.enable_annotation else "OFF"}')
         if self.use_prints:
-            print(f'Spectrum full screen is set to {full_screen = }.')
-            print(f'Spectrum annotations is set to {enable_annotation = }.')
+            print(f'Spectrum full screen is set to {self.full_screen = }.')
+            print(f'Spectrum annotations is set to {self.enable_annotation = }.')
         return True
 
     def print_all_commands(self):
@@ -156,7 +155,7 @@ class KeysightN9010B:
         return message
 
     def traces_set(self, indexes, modes):
-        """Set the trace type, label, and display
+        """Set the trace type, and display
         Parameters:
             indexes: int or list(int) - Trace number to configure (1 to 6).
             modes: str or list(str) - Trace mode ("WRITE", "AVER", "MAXHOLD", "MINHOLD")."""
@@ -168,7 +167,7 @@ class KeysightN9010B:
         if "AVER" in modes:
             self.instrument.write(f"SENS:AVER:STATE OFF")
             self.instrument.write(f"SENS:AVER:STATE ON")
-            self.instrument.write(f"SENS:AVER:COUNT {default_avg_count}")
+            self.instrument.write(f"SENS:AVER:COUNT {self.default_avg_count}")
 
         for index, mode in zip(indexes, modes):
             if mode != "AVER":
@@ -201,8 +200,8 @@ class KeysightN9010B:
 
 
 if __name__ == '__main__':
-    get_only = True
-    traces_run = False
+    get_only = False
+    traces_run = True
     traces_stop = False
     spectrum = KeysightN9010B()
     if spectrum.connect(spectrum.ip_address) is True:
@@ -212,7 +211,6 @@ if __name__ == '__main__':
 
         if traces_run:
             spectrum.traces_set([1, 2], ["AVER", "MAXH"])
-            spectrum.traces_run([1, 2])
         elif traces_stop:
             spectrum.traces_stop([1, 2])
 
