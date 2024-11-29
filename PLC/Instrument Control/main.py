@@ -26,7 +26,7 @@ set_window = [True,                 # to set, or not to set
                [2268, 1080, 398],   # 3 = Xiaomi Mi Note 10 Pro - Landscape
                [1008, 2076, 489],   # 4 = Google Pixel 8 Pro - Portrait
                [2130, 890, 489],    # 5 = Google Pixel 8 Pro - Landscape
-               [600, 800, 200],     # 6 = Custom 01
+               [360, 725, 66],      # 6 = Custom 01
                [1200, 750, 100]]    # 7 = PC
               [7]]                  # pick from the phones above
 
@@ -55,12 +55,24 @@ class MismatchDialogContent(BoxLayout):
 
 
 class InstrumentControlGUI(MDApp):
+    if platform == "android":
+        is_android = True
+        widget_height_pixels = 80
+        widget_height_percentage = 1
+        font_size_big = 80
+        font_size_small = "14sp"
+    else:
+        is_android = False
+        widget_height_pixels = 35
+        widget_height_percentage = None
+        font_size_big = 50
+        font_size_small = 20
     spectrum = Spectrum_Keysight_N9010.KeysightN9010B()         # Initialize new spectrum instance from "SpectrumN9010B.py"
     is_connected = False                                        # True if the Spectrum is connected
     ip_address = ""                                             # default IP address for the Spectrum
     spectrum.use_prints = False                                 # Enable terminal prints
     enable_hint_text = True                                     # Enable grey text hints in the GUI's text inputs
-    is_scrollable = BooleanProperty(False)                      # if is_scrollable = True, the labels will be split to two columns
+    is_scrollable = BooleanProperty(is_android)                 # if is_scrollable = True, the labels will be split to two columns
 
     # Colors for the "connection status" in the top left:
     color_red = [0.7, 0.1, 0.1, 0.7]
@@ -93,8 +105,9 @@ class InstrumentControlGUI(MDApp):
         return Builder.load_file('main.kv')
 
     def on_window_size(self, window, size):
-        width, height = size
-        self.is_scrollable = width < 700 or height < 700
+        if not self.is_android:
+            width, height = size
+            self.is_scrollable = width < 700 or height < 700
 
     def on_start(self):
         """Builtin keyword in Kivy (like "on_stop")"""
