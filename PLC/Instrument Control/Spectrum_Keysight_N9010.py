@@ -21,7 +21,6 @@ import pyvisa
 from SCPI_Commands import scpi_commands, scpi_syntax
 
 
-
 # public virtual Image Screenshot()
 # {
 #     Image image;
@@ -200,8 +199,8 @@ class KeysightN9010B:
 
 
 if __name__ == '__main__':
-    get_only = False
-    traces_run = True
+    get_only = True
+    traces_run = False
     traces_stop = False
     spectrum = KeysightN9010B()
     if spectrum.connect(spectrum.ip_address) is True:
@@ -232,8 +231,8 @@ if __name__ == '__main__':
             spectrum.get_set_value("attenuation", set_value=10)
             spectrum.get_set_value("ref_level", set_value=0)
             spectrum.get_set_value("y_ref_level", set_value=0)
-            spectrum.get_set_value("freq_start", set_value=10e3)
-            spectrum.get_set_value("freq_stop", set_value=300e3)
-            spectrum.get_set_value("resolution_bandwidth", set_value=510)   # or "AUTO"
-            spectrum.get_set_value("video_bandwidth", set_value=5100)       # or "AUTO"
+            spectrum.get_set_value("freq_start", set_value=10)      # values in kilo
+            spectrum.get_set_value("freq_stop", set_value=300)      # values in kilo
+            spectrum.get_set_value("resolution_bandwidth", set_value=0.51)  # or "AUTO"
+            spectrum.get_set_value("video_bandwidth", set_value=5.1)        # or "AUTO"
         spectrum.disconnect()
