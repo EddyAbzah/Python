@@ -6,14 +6,15 @@ The script that does the controlling is "Spectrum_Keysight_N9010.py"
 
 import re
 from tabulate import tabulate
-from kivy.utils import platform
-from kivymd.uix.button import MDFlatButton
-from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
+from kivy.utils import platform
 from kivy.core.window import Window
+from kivy.core.image import Image as CoreImage
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import NumericProperty, BooleanProperty
 from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
-from kivy.properties import NumericProperty, BooleanProperty
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 import Spectrum_Keysight_N9010
 
@@ -102,7 +103,7 @@ class InstrumentControlGUI(MDApp):
 
     def build(self):
         Window.bind(size=self.on_window_size)
-        return Builder.load_file('main.kv')
+        return Builder.load_file('Instrument Control GUI.kv')
 
     def on_window_size(self, window, size):
         if not self.is_android:
@@ -224,7 +225,13 @@ class InstrumentControlGUI(MDApp):
         self.root.ids.connection_label.text = f"Connected to {ip_input}"
         self.root.ids.connection_card.md_bg_color = self.color_green
         self.root.ids.connection_button.text = "Disconnect"
+        self.spectrum_print_image()
         self.is_connected = True
+
+    def spectrum_print_image(self):
+        """Print the Spectrum image in the GUI."""
+        core_image = CoreImage(self.spectrum.get_image(print_image=False), ext="png")
+        self.root.ids.spectrum_image.texture = core_image.texture
 
     def check_if_bw_is_0(self, value, caller):
         """If RBW or VBW is set to 0, use AUTO setting of the Spectrum instead of using the value."""
@@ -361,6 +368,7 @@ class InstrumentControlGUI(MDApp):
                     messages[i] = f"[color=ff0000]{messages[i]}[/color]"
             self.show_mismatch_popup()
             self.mismatch_dialog.content_cls.ids.mismatch_label.text = "\n".join(messages)
+            self.spectrum_print_image()
 
     def reset_spectrum(self):
         """Reset the spectrum analyzer."""

@@ -17,30 +17,17 @@ Video Bandwidth: enter number in kHz.
 
 
 # install PyVISA-py via pip
+import re
 import pyvisa
+import requests
+from PIL import Image
+from io import BytesIO
 from SCPI_Commands import scpi_commands, scpi_syntax
 
 
-# public virtual Image Screenshot()
-# {
-#     Image image;
-#     WebRequest request;
-#     Stream stream;
-#     WebResponse response;
-# 
-#     //Taking picture from the browser server - more reliable:
-#     request = _isNewImagePath ? WebRequest.Create("http://" + (IO as SocketAdapter).IP + "/WebInstrumentAspx/ScreenImageHandler.ashx") : WebRequest.Create("http://" + (IO as SocketAdapter).IP + "/Agilent.SA.WebInstrument/Screen.png");
-# 
-#     response = request.GetResponse();
-#     stream = response.GetResponseStream();
-#     image = Image.FromStream(stream);
-# 
-#     return image;
-# }
-
-
 class KeysightN9010B:
-    ip_address = ""      # default IP address for the Spectrum
+    device_type = ""    # N9010A or N9010B
+    ip_address = ""     # default IP address for the Spectrum
 
     def __init__(self):
         self.rm = pyvisa.ResourceManager()
@@ -55,7 +42,14 @@ class KeysightN9010B:
         resource_string = f'TCPIP0::{ip_address}::INSTR'
         try:
             self.instrument = self.rm.open_resource(resource_string)
+            self.ip_address = ip_address
             idn = self.instrument.query('*IDN?')
+            # Regex to check for device_type
+            match = re.search(r'N9010[A-Za-z]', idn)
+            if match:
+                self.device_type = match.group(0)
+            else:
+                self.device_type = "Unknown"
             if self.use_prints:
                 print(f'Connected to: {idn.replace(",", ", ")}')
             return True        # No error
@@ -92,6 +86,20 @@ class KeysightN9010B:
         if self.use_prints:
             print('Spectrum has been cleared.')
         return True
+
+    def get_image(self, print_image=True):
+        if self.device_type == "N9010B":
+            url = f"http://{self.ip_address}/WebInstrumentAspx/ScreenImageHandler.ashx"
+        else:
+            url = f"http://{self.ip_address}/Agilent.SA.WebInstrument/Screen.png"
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for unsuccessful requests
+        if print_image:
+            image = Image.open(BytesIO(response.content))
+            image.show()
+        else:
+            image = BytesIO(response.content)
+        return image
 
     def set_basic_parameters(self):
         """Set basic parameters like annotations or full screen mode; the parameters are at the top of the code"""
@@ -199,20 +207,12 @@ class KeysightN9010B:
 
 
 if __name__ == '__main__':
+    show_image = True
     get_only = True
     traces_run = False
     traces_stop = False
     spectrum = KeysightN9010B()
     if spectrum.connect(spectrum.ip_address) is True:
-
-        spectrum.clear_errors()
-        spectrum.set_basic_parameters()
-
-        if traces_run:
-            spectrum.traces_set([1, 2], ["AVER", "MAXH"])
-        elif traces_stop:
-            spectrum.traces_stop([1, 2])
-
         if get_only:
             spectrum.get_set_value("impedance")
             spectrum.get_set_value("coupling")
@@ -225,6 +225,8 @@ if __name__ == '__main__':
             spectrum.get_set_value("resolution_bandwidth")
             spectrum.get_set_value("video_bandwidth")
         else:
+            spectrum.clear_errors()
+            spectrum.set_basic_parameters()
             spectrum.get_set_value("impedance", set_value=50)
             spectrum.get_set_value("coupling", set_value="DC")
             spectrum.get_set_value("avg_type", set_value="RMS")
@@ -235,4 +237,10 @@ if __name__ == '__main__':
             spectrum.get_set_value("freq_stop", set_value=300)      # values in kilo
             spectrum.get_set_value("resolution_bandwidth", set_value=0.51)  # or "AUTO"
             spectrum.get_set_value("video_bandwidth", set_value=5.1)        # or "AUTO"
+        if traces_run:
+            spectrum.traces_set([1, 2], ["AVER", "MAXH"])
+        elif traces_stop:
+            spectrum.traces_stop([1, 2])
+        if show_image:
+            spectrum.get_image()
         spectrum.disconnect()
