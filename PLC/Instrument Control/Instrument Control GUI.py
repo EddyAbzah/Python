@@ -1,21 +1,34 @@
 """
 This is only a GUI for the Spectrum Control.
 The script that does the controlling is "Spectrum_Keysight_N9010.py"
+
+Use this to convert to EXE:
+pyinstaller --noconfirm --onedir --windowed --contents-directory "Spectrum Control" --icon "Icon.ico" --add-data "Instrument Control GUI.kv;." --add-data "Icon.png;." "Instrument Control GUI.py"
 """
 
 
 import re
 from tabulate import tabulate
+from kivy.config import Config
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.utils import platform
+from kivy.properties import NumericProperty, BooleanProperty
 from kivy.core.window import Window
 from kivy.core.image import Image as CoreImage
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import NumericProperty, BooleanProperty
 from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
+# Imports added for pyInstaller:
+import os
+import sys
+import kivymd.icon_definitions
+from kivy.resources import resource_add_path
+from kivymd.uix.slider.slider import MDSlider
+from kivymd.uix.dropdownitem.dropdownitem import MDDropDownItem
+# Imports of our files:
 import Spectrum_Keysight_N9010
 
 
@@ -41,9 +54,12 @@ if platform == "android":
 elif set_window[0]:
     Window.size = int(set_window[2][0] / set_window[1]), int(set_window[2][1] / set_window[1])
     Window.dpi = int(set_window[2][2] / set_window[1])
+Config.set("input", "mouse", "mouse,disable_multitouch")            # To get rid of the red dot on mouse right-click
+Config.set("kivy", "window_icon", "Icon.png")                       # To set the icon of the window
+Config.set("kivy", "exit_on_escape", 0)                             # So pressing "esc" does not close your program
 
 
-image_refresh_rate_ms = 1000
+image_refresh_enable = [True, 10]        # time in seconds
 regex_ip_pattern = r'^(?:[0-9]{1,2}\.){3}[0-9]{1,3}$'      # pass from xx.xx.xx.xxx to x.x.x.x
 
 
@@ -94,14 +110,15 @@ class InstrumentControlGUI(MDApp):
     spectrum_range_stop = NumericProperty(10000 if test_type == "Default" else 300)
     start_frequency = NumericProperty(1.0)      # NumericProperty binds any changes to the GUI
     stop_frequency = NumericProperty(300.0)     # NumericProperty binds any changes to the GUI
-    rbw = 5.1
-    vbw = 5.1
+    rbw = "AUTO"
+    vbw = "AUTO"
     impedance = 50
     attenuation = 10
     reference_level = 0 if test_type == "Default" else 10
     y_reference_level = 0
 
     def build(self):
+        self.icon = 'Icon.png'
         Window.bind(size=self.on_window_size)
         return Builder.load_file('Instrument Control GUI.kv')
 
@@ -218,6 +235,8 @@ class InstrumentControlGUI(MDApp):
         self.root.ids.connection_label.text = "Disconnected"
         self.root.ids.connection_card.md_bg_color = self.color_red
         self.root.ids.connection_button.text = "Connect"
+        if image_refresh_enable[0]:
+            self.spectrum_print_image_repetitive_enable(False)
         self.is_connected = False
 
     def spectrum_connect(self, ip_input):
@@ -226,12 +245,23 @@ class InstrumentControlGUI(MDApp):
         self.root.ids.connection_card.md_bg_color = self.color_green
         self.root.ids.connection_button.text = "Disconnect"
         self.spectrum_print_image()
+        if image_refresh_enable[0]:
+            self.spectrum_print_image_repetitive_enable(True)
         self.is_connected = True
 
     def spectrum_print_image(self):
         """Print the Spectrum image in the GUI."""
         core_image = CoreImage(self.spectrum.get_image(print_image=False), ext="png")
         self.root.ids.spectrum_image.texture = core_image.texture
+
+    def spectrum_print_image_repetitive(self, _):
+        self.spectrum_print_image()
+
+    def spectrum_print_image_repetitive_enable(self, enable):
+        if enable:
+            Clock.schedule_interval(self.spectrum_print_image_repetitive, image_refresh_enable[1])
+        else:
+            Clock.unschedule(self.spectrum_print_image_repetitive)
 
     def check_if_bw_is_0(self, value, caller):
         """If RBW or VBW is set to 0, use AUTO setting of the Spectrum instead of using the value."""
@@ -285,44 +315,47 @@ class InstrumentControlGUI(MDApp):
                 self.spectrum_range_stop = 10000
                 self.root.ids.rbw.text = "AUTO"
                 self.root.ids.vbw.text = "AUTO"
+                self.root.ids.attenuation.text = "10"
             case 1:         # LF-PLC TX
                 self.set_start_frequency(50)
                 self.set_stop_frequency(70)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.root.ids.rbw.text = "0.51"
-                self.root.ids.vbw.text = "0.51"
+                self.root.ids.rbw.text = "0.22"
+                self.root.ids.vbw.text = "0.22"
+                self.root.ids.attenuation.text = "20"
             case 2:         # LF-PLC RX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(300)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.root.ids.rbw.text = "5.1"
-                self.root.ids.vbw.text = "5.1"
+                self.root.ids.rbw.text = "0.68"
+                self.root.ids.vbw.text = "0.68"
+                self.root.ids.attenuation.text = "10"
             case 3:         # HF-PLC TX
                 self.set_start_frequency(1)
                 self.set_stop_frequency(150)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 300
-                self.root.ids.rbw.text = "0.68"
-                self.root.ids.vbw.text = "0.68"
+                self.root.ids.rbw.text = "0.51"
+                self.root.ids.vbw.text = "0.51"
+                self.root.ids.attenuation.text = "20"
             case _:         # HF-PLC RX
                 self.set_start_frequency(10)
                 self.set_stop_frequency(5e3)
                 self.spectrum_range_start = 0
                 self.spectrum_range_stop = 10000
-                self.root.ids.rbw.text = "6.8"
-                self.root.ids.vbw.text = "6.8"
+                self.root.ids.rbw.text = "5.1"
+                self.root.ids.vbw.text = "5.1"
+                self.root.ids.attenuation.text = "10"
 
         if item_number == 0:        # = "Default"
             self.root.ids.coupling_dropdown.text = self.coupling_types[0]
             self.root.ids.avg_type_dropdown.text = list(self.average_types)[0]
-            self.root.ids.attenuation.text = "10"
             self.root.ids.reference_level.text = "0"
         else:
             self.root.ids.coupling_dropdown.text = self.coupling_types[1]
             self.root.ids.avg_type_dropdown.text = list(self.average_types)[1]
-            self.root.ids.attenuation.text = "10"
             self.root.ids.reference_level.text = "10"
         self.menu_test_type.dismiss()
 
@@ -346,6 +379,8 @@ class InstrumentControlGUI(MDApp):
         """Get the values from the GUI and set to Spectrum."""
         messages = []
         if self.is_connected:
+            if image_refresh_enable[0]:
+                self.spectrum_print_image_repetitive_enable(False)
             self.spectrum.clear_errors()
             self.spectrum.set_basic_parameters()
             self.get_gui_values()
@@ -369,6 +404,9 @@ class InstrumentControlGUI(MDApp):
             self.show_mismatch_popup()
             self.mismatch_dialog.content_cls.ids.mismatch_label.text = "\n".join(messages)
             self.spectrum_print_image()
+            if image_refresh_enable[0]:
+                self.spectrum_print_image_repetitive_enable(True)
+
 
     def reset_spectrum(self):
         """Reset the spectrum analyzer."""
@@ -431,4 +469,7 @@ class InstrumentControlGUI(MDApp):
 
 
 if __name__ == '__main__':
+    # Added for pyInstaller:
+    if hasattr(sys, '_MEIPASS'):
+        resource_add_path(os.path.join(sys._MEIPASS))
     InstrumentControlGUI().run()
