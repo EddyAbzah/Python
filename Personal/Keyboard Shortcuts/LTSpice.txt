@@ -2,8 +2,8 @@ Delete					F5
 Copy					F6
 Move component without wires		F7
 Move component with wires		F8
-Undo					F9							
-Redo					SHIFT + F9	
+Undo					F9
+Redo					SHIFT + F9
 Rotates component (after F7)		CTRL + R
 Mirrors component (after F7)		CTRL + E
 Wires at an angle			CTRL + MLC
