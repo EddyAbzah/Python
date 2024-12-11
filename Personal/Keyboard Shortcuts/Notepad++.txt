@@ -1,0 +1,7 @@
+Move to new Instance			CTRL + SHIFT + =
+Compact find				CTRL + SHIFT + F
+Line copy				CTRL + SHIFT + C
+Line cut				CTRL + SHIFT + X
+Block Comment selection			CTRL + SHIFT + Q
+Un/Comment selection			CTRL + Q
+Collapse				CTRL + ALT + F
