@@ -1,0 +1,44 @@
+Sidebar					CTRL + B
+Terminal				CTRL + ~
+Command pallet				CTRL + P
+Keyboard shortcuts			CTRL + K
+Scroll					CTRL + arrow
+Split view				CTRL + \
+Select all matches			CTRL + SHIFT + L
+Duplicate				SHIFT + ALT + ↓
+IntelliSense				CTRL + SPACE
+Zen mode				CTRL + K + Z
+Run in the Debug Mode			F5
+Run without Debug			CTRL + F5
+Stop Debugging				SHIFT + F5
+Toggle Breakpoint			F9
+Step Over				F10
+Step Into				F11
+Step Out				SHIFT + F11
+Watch Window				CTRL + ALT + W, {Number}
+Autos Window (automatic Watch)		CTRL + ALT + V, A
+Locals Window (smaller Autos)		CTRL + ALT + V, L
+Call Stack (called Methods)		CTRL + ALT + C
+Comment selection			CTRL + K, CTRL + C
+Uncomment selection			CTRL + K, CTRL + U
+Toggle bookmark				CTRL + K, CTRL + K
+Bookmark window				CTRL + K, CTRL + W
+Formats selection			CTRL + K, CTRL + D
+Formats selection			CTRL + K, CTRL + F
+Show suggestions			CTRL + .
+TAB right selection			TAB
+TAB left selection			SHIFT + TAB
+Next tab				CTRL + F6
+Previous tab				CTRL + SHIFT + F6
+Full screen				ALT + SHIFT + Enter
+Toggle visibility			CTRL + M, CTRL + M
+Duplicate line				CTRL + D
+Console.WriteLIne			cw
+Constructor				ctor
+Property				prop
+Property with Getter and Setter		propfull
+"try {} catch {}" block			try
+"for" loop				for
+"foreach" loop				foreach
+"while" block				while
+"do while" block			do

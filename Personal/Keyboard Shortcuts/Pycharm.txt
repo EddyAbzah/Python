@@ -1,0 +1,7 @@
+Find Action				CTRL + SHIFT + A
+Toggle Breakpoint			CTRL + F8
+View all Breakpoints			CTRL + SHIFT + F8
+View edit history			ALT + SHIFT + C
+Recent files				CTRL + E
+Navigate through line history		CTRL + ALT + →   or   + ←
+Navigation Bar				ALT + 1   or   ALT + HOME

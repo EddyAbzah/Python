@@ -1,0 +1,24 @@
+Timeline see all			\
+Full screen				CTRL + `
+Fill screen				`
+Goto source				F click on timeline
+Snap to keyframes / in between		SHIFT + Drag
+Drag to Video panel for option		
+Switch videos				CTRL + ALT + Drag
+Split					CTRL + K
+Delete with Ripple			ALT + BACKSPACE
+Ripple edit tool			B
+Topping					Q
+Tailing					W
+Unripple				Select end + E
+Play / pause				J / K / L
+skip frame				Arrow keys
+skip 5 frames				SHIFT + Arrow keys
+Move video in sequnce			ALT + Arrow keys
+ALT + Choose to pick only video / audio
+Expand / Minimize			SHIFT + +/-
+Toggle In / Out				I / O
+Apply default Transition		CTRL + D
+Scroll timeline				SHIFT + Scroll
+Zoom timeline				ALT + Scroll
+ALT + M on Marker			Split Marker

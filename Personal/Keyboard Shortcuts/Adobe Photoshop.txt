@@ -1,0 +1,3 @@
+Show original				\
+Toggle Zoom				SPACEBAR
+Grid / Noraml / Full screen		D / F / G

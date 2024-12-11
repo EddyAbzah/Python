@@ -1,0 +1,24 @@
+Degree Sign (°)				ALT (hold) + 0176
+Infinity (∞)				ALT (hold) + 236
+Greek letter Pi (π)			ALT (hold) + 227
+Greek letter Sigma (Σ)			ALT (hold) + 228
+Greek letter Mu (µ)			ALT (hold) + 230
+Greek letter Omega (Ω)			ALT (hold) + 234
+Upwards Arrow (↑)			ALT (hold) + 24
+Downwards Arrow (↓)			ALT (hold) + 25
+Rightwards Arrow (→)			ALT (hold) + 26
+Leftwards Arrow (←)			ALT (hold) + 27
+Left-Right Arrow (↔)			ALT (hold) + 29
+Up-Down Arrow (↕)			ALT (hold) + 18
+Right and Left Arrow (↔)		ALT (hold) + 29
+Upwards filled arrow (▲)		ALT (hold) + 30
+Downwards filled arrow (▼)		ALT (hold) + 31
+Rightwards filled arrow (►)		ALT (hold) + 16
+Leftwards filled arrow (◄)		ALT (hold) + 17
+Plus or Minus (±)			ALT (hold) + 241
+Greater than or equal (≥)		ALT (hold) + 242
+Less than or equal (≤)			ALT (hold) + 243
+Approximately equal (≈)			ALT (hold) + 247
+Square Root (√)				ALT (hold) + 251
+Squared (²)				ALT (hold) + 0178
+Em dash (—)				ALT (hold) + 0151

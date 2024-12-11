@@ -1,0 +1,3 @@
+Graphics Driver reset			CTRL + SHIFT + Windows + B
+Deletes whole word			CTRL + Backspace
+Show Clipboard				Windows + V
