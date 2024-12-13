@@ -5,19 +5,22 @@ from fnmatch import fnmatch
 from datetime import datetime
 from functools import partial
 
+
+mouse_click_counter = 0
+
 # Files
-folders_in = [r"C:\Users\eddy.a\Downloads"]
+folders_in = [r""]
 include_subfolders = True
 filter_in = ["*.jpg"]
 filter_out = [""]
-folder_out = ""
-edit_name = "edit 01"
-timestamp = "%Y-%m-%d %H-%M-%S"
+folder_out = r""
+edit_name = ""      # "edit 01"
+timestamp = ""      # "%Y-%m-%d %H-%M-%S"
 
 # Conversion
-Method = ["Gray-world algorithm", "White patch reference"][1]
-open_photo_before_edit = True
-open_photo_after_edit = True
+Method = ["Gray-world algorithm", "White patch reference"][0]
+open_photo_before_edit = False
+open_photo_after_edit = False
 open_photo_type = [cv2.WINDOW_FULLSCREEN, cv2.WINDOW_GUI_EXPANDED][0]
 White_patch = {"x_start": 0.4, "y_start": 0.4, "x_stop": 0.6, "y_stop": 0.6}
 
@@ -103,9 +106,9 @@ def white_patch_reference(image):
 def mouse_click_event(image, window_name, event, x, y, *_):
     if event == cv2.EVENT_LBUTTONDOWN or event == cv2.EVENT_RBUTTONDOWN:
         font = cv2.FONT_HERSHEY_SIMPLEX
-        b = image[y, x, 0]
-        g = image[y, x, 1]
-        r = image[y, x, 2]
+        b = int(image[y, x, 0])
+        g = int(image[y, x, 1])
+        r = int(image[y, x, 2])
         font_color = int(abs(255 - b)), int(abs(255 - g)), int(abs(255 - r))
     # checking for left mouse clicks
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -122,12 +125,12 @@ def mouse_click_event(image, window_name, event, x, y, *_):
             White_patch["y_start"] = White_patch["y_stop"]
             White_patch["x_stop"] = x
             White_patch["y_stop"] = y
-        cv2.putText(image, f'{x=}, {y=}', (x, y), font, 2, font_color, 2)
+        cv2.putText(image, f'{x=}, {y=}', (x, y), font, 2, font_color, 2, cv2.LINE_AA)
         cv2.imshow(window_name, image)
         mouse_click_counter += 1
     # checking for right mouse clicks
     if event == cv2.EVENT_RBUTTONDOWN:
-        cv2.putText(image, f'{r=}, {g=}, {b=}', (x, y), font, 2, font_color, 2)
+        cv2.putText(image, f'{r=}, {g=}, {b=}', (x, y), font, 2, font_color, 2, cv2.LINE_AA)
         cv2.imshow(window_name, image)
 
 
@@ -142,13 +145,13 @@ def show_image(image, window_name, with_mouse_callback=False):
         White_patch["x_stop"] = int(White_patch["x_stop"] * image.shape[1])
         White_patch["y_stop"] = int(White_patch["y_stop"] * image.shape[0])
         cv2.setMouseCallback(window_name, partial(mouse_click_event, image, window_name))
-    cv2.waitKey(0)
-    # Original, but this is slower:
-    # cv2.destroyAllWindows()
+    key = cv2.waitKey(0)
+    if key == 113 or key == 81:  # If 'q' or 'Q' is pressed
+        exit()
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    mouse_click_counter = 0
     files = get_files(folders_in, include_subfolders, filter_in, filter_out)
     if len(files) > 0:
         if folder_out != "":
@@ -158,7 +161,7 @@ if __name__ == "__main__":
             if edit_name != "":
                 file_out = f" ({edit_name}).".join(file.rsplit('.', 1))
             if timestamp != "":
-                file_out = f" _ {timestamp})".join(file_out.rsplit(')', 1))
+                file_out = f" _ {datetime.now().strftime(timestamp)})".join(file_out.rsplit(')', 1))
             if folder_out != "":
                 file_out = folder_out + "\\" + file_out.rsplit('\\', 1)[-1]
             edit_photo(file, file_out)
