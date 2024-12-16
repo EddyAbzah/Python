@@ -1,4 +1,12 @@
 """
+This app provides a straightforward GUI for controlling Keysight spectrum analyzers,
+designed to make parameter adjustments easier and more accessible.
+Using the app, you can set key parameters such as Impedance, Coupling, Average Type, Attenuation, Reference Levels, Frequency Range, and Bandwidth.
+Additionally, it allows you to manage trace settings, including selecting trace types and enabling or disabling them as needed.
+
+Built with KivyMD, the app is a practical tool for anyone looking to simplify the process of working with spectrum analyzers.
+
+
 This is only a GUI for the Spectrum Control.
 The script that does the controlling is "Spectrum_Keysight_N9010.py"
 
