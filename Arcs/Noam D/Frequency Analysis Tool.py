@@ -8,7 +8,7 @@ from scipy.signal import stft
 import webbrowser
 import threading
 # Function to plot SPI files
-def plot_spi_files(folder_path, files, fs=50e3 / 3, progress_text=None, Secondy_axis=False):
+def plot_spi_files(folder_path, files, fs=50e3 / 3, progress_text=None, Secondy_axis=False, replace_time=False, index_col=0):
     # Get time and date and save plot_time_date
     import datetime
     now = datetime.datetime.now()
@@ -26,6 +26,9 @@ def plot_spi_files(folder_path, files, fs=50e3 / 3, progress_text=None, Secondy_
         try:
             if file_name.endswith('.txt'):
                 data = pd.read_csv(file_path)
+            elif file_name.endswith(('.csv')):
+                data = pd.read_csv(file_path)
+                print('file_name:', file_name)
             elif file_name.endswith(('.xls', '.xlsx')):
                 data = pd.read_excel(file_path)
             else:
@@ -38,8 +41,13 @@ def plot_spi_files(folder_path, files, fs=50e3 / 3, progress_text=None, Secondy_
                     progress_text.update()
                 continue
 
-            num_points = len(data)
-            time = [i / fs for i in range(num_points)]
+            if replace_time:
+                x_values = data.iloc[:, index_col]
+                x_axis_title = f"Column {index_col}"
+            else:
+                num_points = len(data)
+                x_values = [i / fs for i in range(num_points)]
+                x_axis_title = "Time (s)"
 
             primary_columns = []
             secondary_columns = []
@@ -54,13 +62,13 @@ def plot_spi_files(folder_path, files, fs=50e3 / 3, progress_text=None, Secondy_
             fig = go.Figure()
             for column in data.columns:
                 if column in secondary_columns:
-                    fig.add_trace(go.Scatter(x=time, y=data[column], mode='lines', name=f"{column} (Secondary)", yaxis="y2"))
+                    fig.add_trace(go.Scatter(x=x_values, y=data[column], mode='lines', name=f"{column} (Secondary)", yaxis="y2"))
                 else:
-                    fig.add_trace(go.Scatter(x=time, y=data[column], mode='lines', name=f"{column} (Primary)"))
+                    fig.add_trace(go.Scatter(x=x_values, y=data[column], mode='lines', name=f"{column} (Primary)"))
 
             fig.update_layout(
                 title=f"Plot for {file_name}",
-                xaxis_title="Time (s)",
+                xaxis_title=x_axis_title,
                 yaxis_title="Primary Axis Values",
                 yaxis2=dict(title="Secondary Axis Values", overlaying="y", side="right"),
                 xaxis=dict(rangeslider=dict(visible=True)),
@@ -204,6 +212,10 @@ def original_tool():
         plot_raw_data(df, selected_columns, f"{output_folder}/raw_data.html")
 
         for column in selected_columns:
+            #IGNORE UNNAMED COLUMNS
+            if 'Unnamed' in column:
+                continue
+
             signal_column = df[column]
 
             # Compute STFT
@@ -224,7 +236,7 @@ def original_tool():
 
     # File selection
     def select_file():
-        input_csv = filedialog.askopenfilename(title="Select CSV File", filetypes=[("CSV Files", "*.csv")])
+        input_csv = filedialog.askopenfilename(title="Select CSV File", filetypes=[("CSV Files", "*.csv"), ("Text Files", "*.txt")])
         if input_csv:
             file_label.config(text=input_csv)
             df = pd.read_csv(input_csv)
@@ -370,6 +382,119 @@ def original_tool():
     # Run button
     tk.Button(frame, text="Run Analysis", command=run_analysis).pack(pady=10)
 
+
+def slice_time_tool():
+    def select_file():
+        file_path = filedialog.askopenfilename(title="Select File", filetypes=[("CSV Files", "*.csv"), ("Text Files", "*.txt"), ("Excel Files", "*.xls;*.xlsx")])
+        if file_path:
+            file_label.config(text=file_path)
+            load_and_plot_signal(file_path)
+
+    def load_and_plot_signal(file_path):
+        if file_path.endswith('.txt') or file_path.endswith('.csv'):
+            data = pd.read_csv(file_path)
+        elif file_path.endswith(('.xls', '.xlsx')):
+            data = pd.read_excel(file_path)
+        else:
+            messagebox.showerror("Error", "Unsupported file format!")
+            return
+
+        fs_value = fs_dropdown.get()
+        if fs_value == "Other":
+            sampling_rate = float(entry_fs_custom.get())
+        else:
+            sampling_rate = eval(fs_value)
+
+        if 'Time' not in data.columns:
+            data['Time'] = np.arange(len(data)) / sampling_rate
+
+        fig = go.Figure()
+        for col in data.columns:
+            if col != 'Time':
+                fig.add_trace(go.Scatter(x=data['Time'], y=data[col], mode='lines', name=col))
+
+        fig.update_layout(
+            title="Signal",
+            xaxis_title="Time",
+            yaxis_title="Amplitude",
+            template="plotly_white"
+        )
+
+        plot_html = os.path.join(os.path.dirname(file_path), "temp_plot.html")
+        fig.write_html(plot_html, auto_open=False)
+        webbrowser.open(plot_html)
+
+    def slice_signal():
+        try:
+            file_path = file_label.cget("text")
+            if not file_path or file_path == "No file selected":
+                raise ValueError("Please select a valid file first!")
+
+            start_time = float(entry_start_time.get())
+            end_time = float(entry_end_time.get())
+
+            if file_path.endswith('.txt') or file_path.endswith('.csv'):
+                data = pd.read_csv(file_path)
+            elif file_path.endswith(('.xls', '.xlsx')):
+                data = pd.read_excel(file_path)
+            else:
+                raise ValueError("Unsupported file format!")
+
+            fs_value = fs_dropdown.get()
+            if fs_value == "Other":
+                sampling_rate = float(entry_fs_custom.get())
+            else:
+                sampling_rate = eval(fs_value)
+
+            if 'Time' not in data.columns:
+                data['Time'] = np.arange(len(data)) / sampling_rate
+
+            sliced_data = data[(data['Time'] >= start_time) & (data['Time'] <= end_time)]
+            sliced_file_path = os.path.join(os.path.dirname(file_path), f"sliced_{os.path.basename(file_path)}")
+            sliced_data.to_csv(sliced_file_path, index=False)
+
+            messagebox.showinfo("Success", f"Sliced data saved to {sliced_file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    frame = ttk.Frame(tab3)
+    frame.pack(fill="both", expand=True)
+
+    tk.Label(frame, text="Slice Time Tool", font=("Helvetica", 16)).pack(pady=10)
+
+    tk.Button(frame, text="Select File", command=select_file).pack()
+    file_label = tk.Label(frame, text="No file selected", fg="blue")
+    file_label.pack()
+
+    tk.Label(frame, text="Start Time:").pack()
+    entry_start_time = tk.Entry(frame)
+    entry_start_time.pack()
+
+    tk.Label(frame, text="End Time:").pack()
+    entry_end_time = tk.Entry(frame)
+    entry_end_time.pack()
+
+    tk.Label(frame, text="Sampling Rate (Hz):").pack()
+    fs_dropdown = ttk.Combobox(frame, values=["50000/3", "12500", "1e6", "2e6", "Other"], state="readonly")
+    fs_dropdown.pack()
+    fs_dropdown.set("1e6")  # Default value
+
+    def toggle_custom_fs(*args):
+        if fs_dropdown.get() == "Other":
+            entry_fs_custom.grid(row=2, column=1, padx=5, pady=5)
+        else:
+            entry_fs_custom.grid_remove()
+
+    fs_dropdown.bind("<<ComboboxSelected>>", toggle_custom_fs)
+
+    # Custom Fs Entry (Initially Hidden)
+    entry_fs_custom = tk.Entry(frame)
+    entry_fs_custom.pack()
+    entry_fs_custom.pack_forget()
+
+    tk.Button(frame, text="Slice Signal", command=slice_signal).pack(pady=10)
+
+
 # File Search and Plot Tool
 def file_search_tool():
     selected_files = []
@@ -401,13 +526,15 @@ def file_search_tool():
             messagebox.showinfo("No Files Found", f"No files found with the name '{search_name}'.")
 
     def plot_files():
-        nonlocal selected_files, selected_folder,Secondy_axis
+        nonlocal selected_files, selected_folder, Secondy_axis
         if not selected_files or not selected_folder:
             messagebox.showerror("Error", "Please search and select files first!")
             return
 
         try:
             Secondy_axis = Secondy_axis_bool.get()
+            replace_time = replace_time_bool.get()
+            index_col = int(entry_index_col.get())
             fs_input = entry_fs.get()
             try:
                 fs = eval(fs_input)
@@ -418,7 +545,7 @@ def file_search_tool():
 
             progress_text.delete("1.0", tk.END)
             for file_name in selected_files:
-                plot_spi_files(selected_folder, [file_name], fs, progress_text,Secondy_axis)
+                plot_spi_files(selected_folder, [file_name], fs, progress_text, Secondy_axis, replace_time, index_col)
 
             progress_text.insert(tk.END, "Plotting Completed.\n")
             progress_text.see(tk.END)
@@ -460,10 +587,18 @@ def file_search_tool():
     Secondy_axis_bool = tk.BooleanVar()
     tk.Checkbutton(plot_frame, text="Secondary Axis", variable=Secondy_axis_bool).grid(row=0, column=2, padx=5, pady=5)
 
+    replace_time_bool = tk.BooleanVar()
+    tk.Checkbutton(plot_frame, text="Replace Time", variable=replace_time_bool).grid(row=0, column=4, padx=5, pady=5)
+
+    tk.Label(plot_frame, text="Index Column:").grid(row=0, column=5, sticky="w")
+    entry_index_col = tk.Entry(plot_frame, width=5)
+    entry_index_col.grid(row=0, column=6, padx=5, pady=5)
+    entry_index_col.insert(0, "0")
+
     tk.Button(plot_frame, text="Plot", command=plot_files).grid(row=0, column=3, padx=5, pady=5)
 
     progress_text = tk.Text(plot_frame, height=10, width=80)  # Increased width
-    progress_text.grid(row=1, column=0, columnspan=4, padx=5, pady=5)
+    progress_text.grid(row=1, column=0, columnspan=7, padx=5, pady=5)
 
 # Main Application
 def open_gui():
@@ -471,19 +606,19 @@ def open_gui():
     root.title("Analysis Tools")
 
     notebook = ttk.Notebook(root)
-    global tab1, tab2
+    global tab1, tab2,tab3
 
     tab1 = ttk.Frame(notebook)
     tab2 = ttk.Frame(notebook)
-
+    tab3 = ttk.Frame(notebook)
     notebook.add(tab1, text="File Search and Plot")
     notebook.add(tab2, text="Original Tool")
-
+    notebook.add(tab3, text="Slice Time tool")
     notebook.pack(expand=1, fill="both")
 
     file_search_tool()
     original_tool()
-
+    slice_time_tool()
     root.mainloop()
 
 if __name__ == "__main__":
