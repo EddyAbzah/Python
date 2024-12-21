@@ -1,0 +1,401 @@
+#####   Popup dialogs   #####
+
+<IPDialogContent>:
+    orientation: "vertical"
+    MDTextField:
+        id: ip_input
+        hint_text: "Enter IP address (xx.xx.xx.xx)" if app.enable_hint_text else ""
+        text: app.ip_address
+        size_hint_x: 0.5
+        pos_hint: {"center_x": 0.5, "center_y": 0}
+    MDLabel:
+        id: ip_error_label
+        text: ""
+        color: 1, 0, 0, 1  # Red color for error message
+        halign: "center"
+
+<MismatchDialogContent>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: 200
+
+    MDLabel:
+        id: mismatch_label
+        text: ""
+        markup: True
+        color: 0, 0, 0, 1  # Red color for error message
+        halign: "center"
+
+
+
+#####   Global variables   #####
+
+<ScrollView>:
+    control_text_width: 200
+    element_height_1: "40dp"
+    element_height_2: "80dp"
+    element_height_rbw: "60dp"
+    element_spacing: 5      # 10 is OK, but bigger than that and the Sliders stop working
+
+<MDRaisedButton>:
+    font_size: sp(16)  # Apply to all MDRaisedButtons
+
+<MDLabel>:
+    font_size: sp(16)  # Apply to all MDLabels
+
+<MDTextField>:
+    font_size: sp(16)  # Apply to all MDTextFields
+    text_color_normal: 0, 0, 0, 1
+
+
+
+ScrollView:
+    do_scroll_x: False  # Only vertical scrolling
+    do_scroll_y: True if app.is_scrollable else False
+    bar_width: 10  # Adjust scrollbar width if necessary
+
+
+    #####   Main window to fit vertically: Spectrum screen, labels, and buttons   #####
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint_x: 1
+        size_hint_y: None if app.is_scrollable else 1
+        height: "1250dp" if app.is_scrollable else 1
+
+        # Top window to fit the connection label, and Spectrum screen
+        BoxLayout:
+            orientation: "vertical" if app.is_scrollable else "horizontal"
+            size_hint_y: 0.6 if app.is_scrollable else 0.65
+            padding: "10dp"
+
+            # Connection label
+            MDCard:
+                id: connection_card
+                size_hint: None, None
+                size: "200dp", "50dp"
+                pos_hint: {"center_y": 0.9}
+                x: 0
+                elevation: 4  # Shadow depth
+                radius: [5, ]  # Rounded corners if needed
+                padding: "10dp"
+                md_bg_color: app.color_red
+                opacity: 1
+                orientation: "vertical"
+
+                MDLabel:
+                    id: connection_label
+                    halign: "center"
+                    padding: 10
+                    font_size: 15
+                    text: "Disconnected"
+
+            # Spectrum screen
+            Image:
+                id: spectrum_image
+                size_hint_x: 1
+                padding: "10dp"
+                source: "Icon.png"
+
+        # Two columns of labels
+        BoxLayout:
+            orientation: "vertical" if app.is_scrollable else "horizontal"
+            size_hint_y: 0.75 if app.is_scrollable else 0.6
+            padding: 10
+
+
+
+    #####   Left Side labels   #####
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 1 if app.is_scrollable else 0.5
+                spacing: root.element_spacing
+
+                # Start Frequency
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_2
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Start Frequency [kHz]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: root.element_height_2
+                        spacing: root.element_spacing
+
+                        MDTextField:
+                            id: start_input
+                            hint_text: "Enter start frequency" if app.enable_hint_text else ""
+                            text: str(app.start_frequency)
+                            input_filter: "float"
+                            on_focus: if not self.focus: app.set_start_frequency(self.text)
+
+
+                        MDSlider:
+                            id: slider_start
+                            min: app.spectrum_range_start
+                            max: app.spectrum_range_stop
+                            value: app.start_frequency
+                            step: 1
+                            on_value: app.update_start_slider(self.value)
+
+                # Stop Frequency
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_2
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Stop Frequency [kHz]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: root.element_height_2
+                        spacing: root.element_spacing
+
+                        MDTextField:
+                            id: stop_input
+                            hint_text: "Enter stop frequency" if app.enable_hint_text else ""
+                            text: str(app.stop_frequency)
+                            input_filter: "float"
+                            on_focus: if not self.focus: app.set_stop_frequency(self.text)
+
+                        MDSlider:
+                            id: slider_stop
+                            min: app.spectrum_range_start
+                            max: app.spectrum_range_stop
+                            value: app.stop_frequency
+                            step: 1
+                            on_value: app.update_stop_slider(self.value)
+
+                # RBW
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_rbw
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "RBW [kHz]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: rbw
+                        text: str(app.rbw)
+                        hint_text: "Enter 0 to set to AUTO" if app.enable_hint_text else ""
+                        input_filter: "float"
+                        on_focus: if not self.focus: app.check_if_bw_is_0(self.text, "rbw")
+
+                # VBW
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "VBW [kHz]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: vbw
+                        text: str(app.vbw)
+                        hint_text: "Enter 0 to set to AUTO" if app.enable_hint_text else ""
+                        input_filter: "float"
+                        on_focus: if not self.focus: app.check_if_bw_is_0(self.text, "vbw")
+
+                # Dropdown - Test type (frequency selector)
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+
+                    MDLabel:
+                        text: "Test type: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDDropDownItem:
+                        id: test_type_dropdown
+                        text: app.test_type
+                        on_release: app.menu_test_type.open()
+
+
+
+    #####   Right Side labels   #####
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 1 if app.is_scrollable else 0.5
+                padding: 10
+                spacing: root.element_spacing
+
+                # Dropdown - Traces (Avg and MH)
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Traces: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDDropDownItem:
+                        id: traces_dropdown
+                        text: app.trace_type
+                        on_release: app.menu_traces.open()
+
+                # Impedance
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Impedance [ohm]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: impedance
+                        text: str(app.impedance)
+                        hint_text: "Enter 50 or 75" if app.enable_hint_text else ""
+                        input_filter: "int"
+
+                # Dropdown - Coupling (AC and DC)
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+
+                    MDLabel:
+                        text: "Coupling: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDDropDownItem:
+                        id: coupling_dropdown
+                        text: str(app.coupling)
+                        on_release: app.menu_coupling.open()
+
+                # Dropdown - Average Type (Log and RMS)
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+
+                    MDLabel:
+                        text: "Average type: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDDropDownItem:
+                        id: avg_type_dropdown
+                        text: app.average_type
+                        on_release: app.menu_avg_type.open()
+
+                # Attenuation
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Attenuation [dB]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: attenuation
+                        text: str(app.attenuation)
+                        hint_text: "Default is 10" if app.enable_hint_text else ""
+                        input_filter: "float"
+
+                # Reference Level
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Reference Level [dBm]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: reference_level
+                        text: str(app.reference_level)
+                        hint_text: "Default = 0dBm. 100Ω = 10dBm. 500Ω = 20dBm" if app.enable_hint_text else ""
+                        input_filter: "float"
+
+                # Y Reference Level
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: root.element_height_1
+                    spacing: root.element_spacing
+
+                    MDLabel:
+                        text: "Y Reference Level [dBm]: "
+                        size_hint_x: None
+                        width: root.control_text_width
+
+                    MDTextField:
+                        id: y_reference_level
+                        text: str(app.y_reference_level)
+                        hint_text: "Default = 0; affects only the Y-axis" if app.enable_hint_text else ""
+                        input_filter: "float"
+
+        # Buttons centered at the bottom
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            size_hint_x: 1
+            height: "50dp"
+            spacing: 10 if app.is_scrollable else 50
+            padding: 10
+            pos_hint: {"center_x": 0.5, "center_y": 0}
+
+            MDRaisedButton:
+                id: connection_button
+                text: "Connect"
+                size_hint_x: 0.2
+                on_release: app.spectrum_connection()
+
+            MDRaisedButton:
+                text: "Config"
+                size_hint_x: 0.2
+                on_release: app.config_spectrum()
+
+            MDRaisedButton:
+                text: "Reset"
+                size_hint_x: 0.2
+                on_release: app.reset_spectrum()
+
+            MDRaisedButton:
+                text: "Run"
+                size_hint_x: 0.2
+                on_release: app.traces_run()
+
+            MDRaisedButton:
+                text: "Stop"
+                size_hint_x: 0.2
+                on_release: app.traces_stop()

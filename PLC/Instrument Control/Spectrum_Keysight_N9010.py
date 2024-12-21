@@ -56,7 +56,7 @@ class KeysightN9010B:
         except Exception as e:
             if self.use_prints:
                 print(f'Connection error: {e}')
-            return f'Connection error: {str(e).split(':')[0]}.'
+            return f'Connection error: {str(e).split(":")[0]}.'
 
     def disconnect(self):
         """Disconnect from the spectrum analyzer. Return True is there is no error; otherwise, return the error."""
