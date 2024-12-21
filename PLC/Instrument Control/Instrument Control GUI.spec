@@ -6,12 +6,13 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[('Instrument Control GUI.kv', '.'), ('Icon.png', '.')],
-    hiddenimports=[],
+    hiddenimports=['pyvisa_py'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
+    optimize=0,
 )
 pyz = PYZ(a.pure)
 

@@ -11,7 +11,7 @@ This is only a GUI for the Spectrum Control.
 The script that does the controlling is "Spectrum_Keysight_N9010.py"
 
 Use this to convert to EXE:
-pyinstaller --noconfirm --onedir --windowed --contents-directory "Spectrum Control" --icon "Icon.ico" --add-data "Instrument Control GUI.kv;." --add-data "Icon.png;." "Instrument Control GUI.py"
+pyinstaller --noconfirm --onedir --windowed --contents-directory "Spectrum Control" --icon "Icon.ico" --add-data "Instrument Control GUI.kv;." --add-data "Icon.png;." -hidden-import=pyvisa_py "Instrument Control GUI.py"
 """
 
 
