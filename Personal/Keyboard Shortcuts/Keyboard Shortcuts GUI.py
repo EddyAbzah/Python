@@ -18,6 +18,7 @@ def get_shortcuts_data():
         path = os.path.dirname(sys.executable)
     else:
         path = os.path.dirname(os.path.abspath(__file__))
+    path += "\\Applications"
     for file_name in os.listdir(path):
         if ".txt" in file_name:
             # print(f'{file_name = }')
@@ -36,18 +37,30 @@ def get_shortcuts_data():
 
 
 def get_current_program():
-    running_processes = [proc.info["name"] for proc in psutil.process_iter(["name"])]
-    running_processes = [string[:5].lower() for string in running_processes]
-    my_shortcuts = [string[:5].lower() for string in shortcuts_data.keys()]
+    running_processes = [proc.info["name"].rsplit('.', 1)[0] for proc in psutil.process_iter(["name"])]
+    running_processes = [''.join(re.findall(r'[A-Za-z]', string)).lower() for string in running_processes]
+    if "devenv" in running_processes and "Visual Studio" in shortcuts_data.keys():
+        return "Visual Studio"
+    if "pycharm" in running_processes and "Pycharm" in shortcuts_data.keys():
+        return "Pycharm"
+    if "xviix" in running_processes and "LTSpice" in shortcuts_data.keys():
+        return "LTSpice"
+    if "photoshop" in running_processes and "Adobe Photoshop" in shortcuts_data.keys():
+        return "Adobe Photoshop"
+    if "premiere" in running_processes and "Adobe Premiere Pro" in shortcuts_data.keys():
+        return "Adobe Premiere Pro"
+    if "excel" in running_processes and "Excel" in shortcuts_data.keys():
+        return "Excel"
+    if "notepad" in running_processes and "Notepad++" in shortcuts_data.keys():
+        return "Notepad++"
+    if "Windows" in shortcuts_data.keys():
+        return "Windows"
+    my_shortcuts = [string.lower() for string in shortcuts_data.keys()]
     matching_program_index = [index for index, program in enumerate(my_shortcuts) if program.lower() in running_processes]
     if matching_program_index:
         return list(shortcuts_data.keys())[matching_program_index[0]]
     else:
-        # print("No matching programs found.")
-        if "Windows" in shortcuts_data.keys():
-            return "Windows"
-        else:
-            return list(shortcuts_data.keys())[0]
+        return list(shortcuts_data.keys())[0]
 
 
 def set_window_properties():

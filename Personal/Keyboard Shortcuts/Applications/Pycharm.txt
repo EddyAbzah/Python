@@ -1,4 +1,5 @@
 Find Action				CTRL + SHIFT + A
+Bookmarks				ALT + 2
 Toggle Breakpoint			CTRL + F8
 View all Breakpoints			CTRL + SHIFT + F8
 View edit history			ALT + SHIFT + C
