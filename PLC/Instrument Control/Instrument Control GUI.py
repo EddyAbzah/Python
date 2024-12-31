@@ -287,8 +287,8 @@ class InstrumentControlGUI(MDApp):
 
     def get_gui_values(self):
         """Get all GUI values before configuring the Spectrum."""
-        self.rbw = self.check_if_bw_is_0(self.rbw, "rbw")
-        self.vbw = self.check_if_bw_is_0(self.vbw, "vbw")
+        self.rbw = self.check_if_bw_is_0(self.root.ids.rbw.text, "rbw")
+        self.vbw = self.check_if_bw_is_0(self.root.ids.vbw.text, "vbw")
         self.impedance = self.root.ids.impedance.text
         self.attenuation = self.root.ids.attenuation.text
         self.reference_level = self.root.ids.reference_level.text
