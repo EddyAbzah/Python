@@ -6,6 +6,9 @@ Middle-click toggles the GUI's "Always on Top" state.
 
 Dependencies:
 pip install PyQt5 pynput screeninfo pillow
+
+Export EXE:
+pyinstaller --noconfirm --onedir --windowed --contents-directory "Color Comparison" "Color Comparison.py"
 """
 
 
@@ -89,6 +92,7 @@ class ColorWidget(QWidget):
         self.color_right = None
         self.rgb_left = None
         self.rgb_right = None
+        self.next_half = "left"
         self.update()
 
     def paintEvent(self, event):
@@ -100,21 +104,32 @@ class ColorWidget(QWidget):
 
         # Fill the left half
         if self.color_left:
-            painter.fillRect(0, 0, width // 2, height, self.color_left)
+            exaggerated_color = self.exaggerate_color(self.rgb_left)
+            painter.fillRect(0, 0, width // 2, height // 6, exaggerated_color)
+            painter.fillRect(0, height // 6, width // 2, height, self.color_left)
             if self.rgb_left:
-                painter.setPen(Qt.white if self.color_left.lightness() < 128 else Qt.black)
+                painter.setPen(Qt.white if exaggerated_color.lightness() < 128 else Qt.black)
                 painter.drawText(10, 10 + font_size, f"RGB: {self.rgb_left}")
         else:
             painter.fillRect(0, 0, width // 2, height, Qt.white)
 
         # Fill the right half
         if self.color_right:
-            painter.fillRect(width // 2, 0, width // 2, height, self.color_right)
+            exaggerated_color = self.exaggerate_color(self.rgb_right)
+            painter.fillRect(width // 2, 0, width // 2, height // 6, exaggerated_color)
+            painter.fillRect(width // 2, height // 6, width // 2, height, self.color_right)
             if self.rgb_right:
-                painter.setPen(Qt.white if self.color_right.lightness() < 128 else Qt.black)
+                painter.setPen(Qt.white if exaggerated_color.lightness() < 128 else Qt.black)
                 painter.drawText(width // 2 + 10, 10 + font_size, f"RGB: {self.rgb_right}")
         else:
             painter.fillRect(width // 2, 0, width // 2, height, Qt.white)
+
+    @staticmethod
+    def exaggerate_color(rgb_color):
+        color_ratios = [(color - min(rgb_color) + 1) for color in rgb_color]
+        scale_factor = 255 / max(color_ratios)
+        scaled_rgb = tuple(min(int(cr * scale_factor), 255) for cr in color_ratios)
+        return QColor(*scaled_rgb)
 
 
 if __name__ == "__main__":
