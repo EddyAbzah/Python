@@ -12,13 +12,13 @@ from tkinter import ttk
 from tkinter import messagebox
 
 
-def get_shortcuts_data():
+def get_shortcuts_data(sub_folder):
     full_shortcuts = {}
     if getattr(sys, 'frozen', False):  # Check if it's a PyInstaller executable
         path = os.path.dirname(sys.executable)
     else:
         path = os.path.dirname(os.path.abspath(__file__))
-    path += "\\Applications"
+    path += "\\" + sub_folder
     for file_name in os.listdir(path):
         if ".txt" in file_name:
             # print(f'{file_name = }')
@@ -63,8 +63,8 @@ def get_current_program():
         return list(shortcuts_data.keys())[0]
 
 
-def set_window_properties():
-    width = 400
+def set_window_properties(type="Applications"):
+    width = 400 if type == "Applications" else 1000
     height = 50     # initial height for window elements
     height += len(shortcuts_data[current_program]) * 20
     root.geometry(f"{width}x{height}")
@@ -78,11 +78,11 @@ def toggle_always_on_top():
     context_menu.entryconfig("Always on Top", variable=always_on_top_var)
 
 
-def switch_program(program):
+def switch_program(program, type="Applications"):
     global current_program
     current_program = program
     update_table()
-    set_window_properties()
+    set_window_properties(type)
     for label, var in program_vars.items():
         var.set(label == program)
 
@@ -98,7 +98,8 @@ def show_context_menu(event):
     context_menu.post(event.x_root, event.y_root)
 
 
-shortcuts_data = get_shortcuts_data()
+shortcuts_data = get_shortcuts_data("Applications")
+coding_tips = get_shortcuts_data("Code")
 current_program = get_current_program()
 
 root = tk.Tk()
@@ -142,7 +143,13 @@ program_vars = {}
 context_menu_labels = list(shortcuts_data.keys())
 for program in shortcuts_data:
     program_vars[program] = tk.BooleanVar(value=(program == current_program))
-    context_menu.add_checkbutton(label=program, command=lambda p=program: switch_program(p), variable=program_vars[program])
+    context_menu.add_checkbutton(label=program, command=lambda p=program: switch_program(p, "Applications"), variable=program_vars[program])
+
+context_menu.add_separator()
+for coding_program in coding_tips:
+    program_vars[coding_program] = tk.BooleanVar(value=False)
+    context_menu.add_checkbutton(label=coding_program, command=lambda p=coding_program: switch_program(p, "Code"), variable=program_vars[coding_program])
+shortcuts_data.update(coding_tips)
 
 tree.bind("<Button-3>", show_context_menu)
 update_table()
