@@ -6,6 +6,12 @@ from datetime import datetime
 from functools import partial
 
 
+"""
+IMPORTANT NOTE
+Hebrew file paths are not supported
+"""
+
+
 mouse_click_counter = 0
 
 # Files
@@ -14,6 +20,7 @@ include_subfolders = True
 filter_in = ["*.jpg"]
 filter_out = [""]
 folder_out = r""
+folder_out_original = r""
 edit_name = ""      # "edit 01"
 timestamp = ""      # "%Y-%m-%d %H-%M-%S"
 
@@ -65,6 +72,8 @@ def edit_photo(path, file_out):
     if Method == "White patch reference":
         # Convert to 8 bit before saving
         img_edit = (img_edit * 255).astype(int)
+    if folder_out_original != "":
+        cv2.imwrite(folder_out_original + "\\" + file_out.rsplit('\\', 1)[-1], img)
     cv2.imwrite(file_out, img_edit)
 
 
@@ -164,6 +173,7 @@ if __name__ == "__main__":
                 file_out = f" _ {datetime.now().strftime(timestamp)})".join(file_out.rsplit(')', 1))
             if folder_out != "":
                 file_out = folder_out + "\\" + file_out.rsplit('\\', 1)[-1]
+            print(f'{file_out = }')
             edit_photo(file, file_out)
     else:
         raise Exception("There are no files to edit")
