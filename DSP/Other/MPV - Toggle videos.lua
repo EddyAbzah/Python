@@ -1,10 +1,15 @@
+-- Initial settings:
 mp.set_property("osd-font-size", 20)
-
 local delay = 0.05
 local last_position = 0
+
+
+-- Initial files to load:
+local prefix = [[]]
+local suffix = [[]]
 local file_list = {
-    [[]],
-    [[]]
+    prefix .. [[]] .. suffix,
+    prefix .. [[]] .. suffix,
 }
 
 
