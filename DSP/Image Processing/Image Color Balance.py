@@ -1,5 +1,6 @@
 import os
 import cv2
+import piexif
 import numpy as np
 from fnmatch import fnmatch
 from datetime import datetime
@@ -20,9 +21,10 @@ include_subfolders = True
 filter_in = ["*.jpg"]
 filter_out = [""]
 folder_out = r""
-folder_out_original = r""
+folder_out_copy_original = r""
 edit_name = ""      # "edit 01"
 timestamp = ""      # "%Y-%m-%d %H-%M-%S"
+copy_exif_data = True
 
 # Conversion
 Method = ["Gray-world algorithm", "White patch reference"][0]
@@ -52,10 +54,14 @@ def get_files(folders_in, include_subfolders, filter_in, filter_out):
                 break
     return files
 
+
 def edit_photo(path, file_out):
     global mouse_click_counter
     mouse_click_counter = 0
     # reading the image; Flags=1: Any transparency of image will not be neglected
+    if copy_exif_data:
+        exif_data = piexif.load(path)
+        exif_bytes = piexif.dump(exif_data)
     img = cv2.imread(path, flags=None if Method == "Gray-world algorithm" else 1)
     if Method == "White patch reference":
         show_image(img.copy(), f"{path} - pick the white spot", with_mouse_callback=True)
@@ -72,9 +78,11 @@ def edit_photo(path, file_out):
     if Method == "White patch reference":
         # Convert to 8 bit before saving
         img_edit = (img_edit * 255).astype(int)
-    if folder_out_original != "":
-        cv2.imwrite(folder_out_original + "\\" + file_out.rsplit('\\', 1)[-1], img)
+    if folder_out_copy_original != "":
+        cv2.imwrite(folder_out_copy_original + "\\" + file_out.rsplit('\\', 1)[-1], img)
     cv2.imwrite(file_out, img_edit)
+    if copy_exif_data:
+        piexif.insert(exif_bytes, file_out)
 
 
 def gray_world_white_balance(image, brightness_factor=1.0):
@@ -161,6 +169,11 @@ def show_image(image, window_name, with_mouse_callback=False):
 
 
 if __name__ == "__main__":
+    if all([parameter == "" for parameter in [folder_out, edit_name, timestamp]]):
+        if "n" in input("""\033[93m\nThe following parameters are empty: folder_out, edit_name, and timestamp.
+This means the original file will be overwritten.
+Are you sure you want to proceed? (yes/no)\033[0m\n""").lower():
+            exit()
     files = get_files(folders_in, include_subfolders, filter_in, filter_out)
     if len(files) > 0:
         if folder_out != "":
