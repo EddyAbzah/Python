@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 directory = r""
 pattern_in = r"PXL_(\d{8})_(\d{9})"
-pattern_out = "%Y%m%d_%H%M%S"
+pattern_out = "%Y-%m-%d _ %H-%M-%S"
 new_name_prefix = ""
 new_name_suffix = "_PXL"
 time_delta = timedelta(days=0, hours=2, seconds=0, minutes=0)
