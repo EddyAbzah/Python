@@ -12,6 +12,7 @@ from plotly.subplots import make_subplots
 
 label_prefix = 'Plot'
 label_index = 1
+yaxis_range = [None, None]
 
 
 def print_lines(df):
@@ -44,7 +45,7 @@ def print_chrome(df, labels='', path='', file_name='', title='', auto_open=True)
                 labels = [f'Trace {n}' for n in range(len(df))]
         for index, (info, trace) in enumerate(zip(labels, df)):
             fig.add_trace(go.Scatter(y=trace, name=info), col=1, row=1)
-    fig.update_layout(title=title, title_font_color="#407294", title_font_size=40, legend_title="Plots:")
+    fig.update_layout(title=title, title_font_color="#407294", title_font_size=40, legend_title="Plots:", yaxis_range=yaxis_range)
     plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=path, auto_open=auto_open)
     label_index = label_index + 1
 
