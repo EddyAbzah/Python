@@ -6,3 +6,7 @@ Type Hints				Only for indication; def example(brand: str, speed: int) → str:
 __slots__				Use to prevent accidental modifications of attributes, and to reduces memory usage
 Decorators				A function that takes another function as input, modifies it, and returns it
 *args, **kwargs				Positional Arguments (tuple) and Keyword Arguments (dictionary)
+threading.Lock()			To lock a single parameter; use lock.acquire() or lock.release()
+threading.BoundedSemaphore()		To limit the number of threads; use semaphore.acquire() or semaphore.release()
+threading.Event()			To block a method via event.wait() until event.set() is used
+threading.Thread(daemon)		set to True if the thread is disposable and can be closed at any time
