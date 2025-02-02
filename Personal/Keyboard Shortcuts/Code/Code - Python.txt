@@ -1,0 +1,15 @@
+Encapsulation				Restricting direct access and allowing controlled access through methods
+Public attributes			Accessible from anywhere (e.g., self.value)
+Protected attributes			Indicated with a single underscore _value (convention, not enforced)
+Private attributes			Indicated with a double underscore __value (name-mangled to prevent direct access)
+Type Hints				Only for indication; def example(brand: str, speed: int) → str:
+__slots__				Use to prevent accidental modifications of attributes, and to reduces memory usage
+Decorators				A function that takes another function as input, modifies it, and returns it
+*args, **kwargs				Positional Arguments (tuple) and Keyword Arguments (dictionary)
+threading.Thread()			(target=my_method, args=*my_args); don't forget start() and join() to wait
+threading.Lock()			To lock a single parameter; use "with lock", or lock.acquire() and lock.release()
+threading.BoundedSemaphore()		To limit the number of threads; use semaphore.acquire() or semaphore.release()
+threading.Event()			To block a method via event.wait() until event.set() is used
+threading.Thread(daemon)		Set to True if the thread is disposable and can be closed at any time
+queue.PriorityQueue()			A list the handles items; use q.get()
+import builtins				To access the original python functions (like print)

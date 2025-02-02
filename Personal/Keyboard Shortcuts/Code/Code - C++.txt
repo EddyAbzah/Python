@@ -4,4 +4,4 @@ Stack overflow				When you exceed the Stack's limit (e.g., through deep recursio
 malloc vs. calloc			malloc to allocate heap memory; calloc is to initialize to zero
 References				& = address-of; * = de-reference; always pass by reference
 Always delete memory			Add brackets after the delete if you need to delete an array
-Structures				are passed by value; not reference
+Structures				Are passed by value; not reference
