@@ -1,0 +1,2 @@
+HEAD					A reference to the current commit or the current branch in your local repository
+Rebase					Effectively rewrites history; avoid if you have already pushed your commits
