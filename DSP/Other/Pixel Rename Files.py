@@ -11,8 +11,17 @@ new_name_suffix = "_PXL"
 time_delta = timedelta(days=0, hours=2, seconds=0, minutes=0)
 file_data = []
 
+index_start = 1
+index_count = 666666
+rename = False
+# rename = True
 
-for filename in os.listdir(directory):
+
+files = os.listdir(directory)
+files.sort()
+for index, filename in enumerate(files):
+    if index + 1 < index_start or index - index_start + 2 > index_count:
+        continue
     match = re.match(pattern_in, filename)
     if match:
         _, file_extension = os.path.splitext(filename)
@@ -43,5 +52,6 @@ for file_info in file_data:
     if os.path.exists(new_path):
         print(f"ERROR! Cannot rename {file_info['original_name']} -> {file_info['new_name']}")
     else:
-        os.rename(old_path, new_path)
+        if rename:
+            os.rename(old_path, new_path)
         print(f"Renamed: {file_info['original_name']} -> {file_info['new_name']}")
