@@ -5,3 +5,4 @@ malloc vs. calloc			malloc to allocate heap memory; calloc is to initialize to z
 References				& = address-of; * = de-reference; always pass by reference
 Always delete memory			Add brackets after the delete if you need to delete an array
 Structures				Are passed by value; not reference
+Pointer arithmetic			Incrementing a pointer will adjust its value according to the type

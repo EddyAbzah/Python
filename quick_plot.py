@@ -3,23 +3,29 @@ import Plot_Graphs_with_Sliders as _G
 from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as _PP, print_lines as _PL, send_mail as _SM
 
 import io, gc, os, re, sys, glob, math, time, cmath, pylab, queue, scipy, shutil, struct, asyncio, filecmp, inspect, pathlib, smtplib
-import datetime, requests, warnings, threading, functools, matplotlib, statistics, webbrowser, progressbar, multipledispatch
+import datetime, requests, warnings, threading, functools, matplotlib, statistics, webbrowser, progressbar, multipledispatch, fnmatch, difflib
 import pandas as pd, plotly as py, openpyxl as px, numpy as np, plotly.express as px, scipy.signal as signal, plotly.graph_objs as go
 import matplotlib.pyplot as plt, plotly.graph_objects as go, plotly.figure_factory as ff
 
 
 folder_paths = [r""]
-pattern = re.compile(r"^.*\.(txt|csv)$")
+patterns = ["*.txt", "*.csv"]
+remove_unnamed_column = True
 add_sample_rate = [False, 50e3 / 3]
 output_html__auto_open = [True, True]
 output_fft__auto_open = [False, True]
-file_paths = [os.path.join(folder_path, f) for folder_path in folder_paths for f in os.listdir(folder_path) if pattern.match(f)]
-
+file_paths = [os.path.join(folder_path, f) for folder_path in folder_paths for f in os.listdir(folder_path) if any(fnmatch.fnmatch(f, pattern) for pattern in patterns)]
 
 for file_index, file_path in enumerate(file_paths):
     print(f"file_index = {file_index + 1}: {file_path}")
     df = pd.read_csv(file_path)
     print(f"df.columns = {list(df.columns)}")
+    if remove_unnamed_column:
+        df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
+    columns_lower = {col.lower(): col for col in df.columns}
+    closest_match = difflib.get_close_matches("freq", columns_lower.keys(), n=1, cutoff=0.6)
+    if closest_match:
+        df = df.set_index(columns_lower[closest_match[0]])
     if add_sample_rate[0]:
         df['time'] = np.arange(len(df)) / add_sample_rate[1]
         df = df.set_index('time')
