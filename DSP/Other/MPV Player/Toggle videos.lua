@@ -7,6 +7,7 @@
 mp.set_property("osd-font-size", 20)
 local delay = 0.05						-- delay to set the time position correctly 
 local last_position = 0					-- to save the time position of the current file
+local file_size = 0						-- to save the file size of the current file
 local set_intial_playlist = false		-- to set the playlist at stratup
 local initial_bind_count = 8			-- bind this many keys (so you wouldn't have to reset the bind keys)
 
@@ -28,9 +29,11 @@ local function load_file(index)
 		if #file > 0 then					-- # = length
 			last_position = mp.get_property_number("time-pos") or 0
 			mp.commandv("playlist-play-index", index - 1)
-			mp.osd_message(file, 2)
+			--mp.osd_message(file, 2)
 			mp.add_timeout(delay, function()
 				mp.set_property_number("time-pos", last_position)
+				file_size = (mp.get_property_number("file-size") or 0) / (1024 * 1024)		-- convert to MB
+				mp.osd_message(file .. "\n" .. string.format("File Size: %.2f MB", file_size), 2)
 			end)
 		else
 			mp.osd_message("No file in playlist for key: F" .. index .. "\nPress Shift+F1 to update the playlist", 4)
