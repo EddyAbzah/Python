@@ -32,21 +32,27 @@ directory_source = r""
 directory_target = r""
 true_if_video = True
 copy_file_first = False
-files = [f for f in os.listdir(directory_source) if f.lower().endswith('.mp4')]
+files = [f for f in os.listdir(directory_source) if f.lower().endswith(".mp4" if true_if_video else ".jpg")]
+file_filter = ""
+
 
 for file in files:
+    if file_filter not in file:
+        continue
     file_original = os.path.join(directory_source, file)
     file_new = os.path.join(directory_target, file)
     if copy_file_first:
         shutil.copy(file_original, file_new)
-
-    if true_if_video:
-        metadata = get_all_metadata(file_original)
-        if metadata:
-            set_video_metadata(file_new, metadata)
+    try:
+        if true_if_video:
+            metadata = get_all_metadata(file_original)
+            if metadata:
+                set_video_metadata(file_new, metadata)
+        else:
+            exif_data = piexif.load(file_original)
+            exif_bytes = piexif.dump(exif_data)
+            piexif.insert(exif_bytes, file_new)
+    except:
+        print(f"File {file_new} not found")
     else:
-        exif_data = piexif.load(file_original)
-        exif_bytes = piexif.dump(exif_data)
-        piexif.insert(exif_bytes, file_new)
-
-    print(f"All metadata copied from {file_original} to {file_new}.\n")
+        print(f"All EXIF data copied from {file_original} to {file_new}.")
