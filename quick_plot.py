@@ -10,20 +10,31 @@ import matplotlib.pyplot as plt, plotly.graph_objects as go, plotly.figure_facto
 
 folder_paths = [r""]
 patterns = ["*.txt", "*.csv"]
+keep_columns = [True, [""]]
+rename_columns = [False, {"": ""}]
 remove_unnamed_column = True
 add_sample_rate = [False, 50e3 / 3]
 output_html__auto_open = [True, True]
-output_fft__auto_open = [False, True]
+output_fft__auto_open__output_csv = [False, False, False]
+remove_fft_dc = True
 file_paths = [os.path.join(folder_path, f) for folder_path in folder_paths for f in os.listdir(folder_path) if any(fnmatch.fnmatch(f, pattern) for pattern in patterns)]
+
 
 for file_index, file_path in enumerate(file_paths):
     print(f"file_index = {file_index + 1}: {file_path}")
-    df = pd.read_csv(file_path)
+    # df = pd.read_csv(file_path, encoding='unicode_escape')
+    df = pd.read_csv(file_path, encoding='utf-8')
     print(f"df.columns = {list(df.columns)}")
-    if remove_unnamed_column:
+    if keep_columns[0]:
+        df = df[keep_columns[1]]
+    elif remove_unnamed_column:
         df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
+    if rename_columns[0]:
+        df = df.rename(columns=rename_columns[1])
+    if keep_columns[0] or rename_columns[0]:
+        print(f"df.columns NEW = {list(df.columns)}")
     columns_lower = {col.lower(): col for col in df.columns}
-    closest_match = difflib.get_close_matches("freq", columns_lower.keys(), n=1, cutoff=0.6)
+    closest_match = difflib.get_close_matches("freq", columns_lower.keys(), n=1, cutoff=0.4)
     if closest_match:
         df = df.set_index(columns_lower[closest_match[0]])
     if add_sample_rate[0]:
@@ -32,13 +43,13 @@ for file_index, file_path in enumerate(file_paths):
 
     if output_html__auto_open[0]:
         _PC(df, path=str(pathlib.Path(file_path).parent), file_name=pathlib.Path(file_path).stem, title=pathlib.Path(file_path).stem, auto_open=output_html__auto_open[1])
-        print(f"Output HTML to {str(pathlib.Path(file_path).with_suffix('.html'))}")
+        print(f"Output HTML to {file_path[:-4] + ".html"}")
 
-    if output_fft__auto_open[0]:
+    if output_fft__auto_open__output_csv[0]:
         fft_data = {}
         frequencies = None
         for column in df.columns:
-            signal = df[column]
+            signal = pd.to_numeric(df[column], errors='coerce')
             fft_values = np.fft.fft(signal)
             freqs = np.fft.fftfreq(len(fft_values), d=1 / add_sample_rate[1])
             fft_data[column] = np.abs(fft_values)[:len(freqs) // 2]
@@ -47,5 +58,10 @@ for file_index, file_path in enumerate(file_paths):
 
         df_fft = pd.DataFrame(fft_data, index=frequencies)
         df_fft.index.name = 'Frequency (Hz)'
-        _PC(df_fft, path=str(pathlib.Path(file_path).parent), file_name=pathlib.Path(file_path).stem + " - FFT", title=pathlib.Path(file_path).stem + " - FFT", auto_open=output_html__auto_open[1])
-        print(f"Output HTML to {(str(pathlib.Path(file_path) + " - FFT").with_suffix('.html'))}")
+        if remove_fft_dc:
+            df_fft = df_fft.iloc[1:]
+        if output_fft__auto_open__output_csv[2]:
+            df_fft.to_csv(file_path[:-4] + " - FFT.csv")
+            print(f"Output CSV to {file_path[:-4] + " - FFT.csv"}")
+        _PC(df_fft, path=str(pathlib.Path(file_path).parent), file_name=pathlib.Path(file_path).stem + " - FFT", title=pathlib.Path(file_path).stem + " - FFT", auto_open=output_fft__auto_open__output_csv[1])
+        print(f"Output HTML to {file_path[:-4] + " - FFT.html"}")
