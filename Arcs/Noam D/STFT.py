@@ -30,35 +30,39 @@ def compute_stft(signal, fs=1.0, window_sec=0.256):
     return f, t, Zxx_db
 
 
-def plot_stft(f, t, Zxx_db, file_path="STFT.html"):
+def plot_stft(f, t, Zxx_db, file_title="STFT"):
     """Plots the STFT with frequency on the x-axis and magnitude in dB on the y-axis, each window as a trace."""
     fig = go.Figure()
     for i, time in enumerate(t):
         fig.add_trace(go.Scatter(x=f, y=Zxx_db[:, i], mode='lines', name=f'Time {time:.2f}s'))
 
     fig.update_layout(
-        title=file_path.rsplit("\\")[-1][:-5],
+        title=file_title,
         xaxis_title='Frequency [Hz]',
         yaxis_title='Magnitude [dB]',
         legend_title='Time Windows'
     )
-    plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=file_path, auto_open=auto_open_html)
+    return fig
 
 
 def main():
     # file_in_path = r""
-    folder_path = r"C:\Users\eddy.a\Downloads\Noise Floor Test 03\15 SPI RX2"
+    folder_path = r""
     fs = 50e3 / 3
     window_sec = 0.5
-    column = 2
+    column = 0
 
     for file_in_path in [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith("csv")]:
         print(f'{file_in_path = }')
+
         file_out_path = file_in_path[:-4] + " - STFT.html"
+        file_title = file_out_path.rsplit("\\")[-1][:-5]
+
         signal = read_csv(file_in_path, column=column)
         f, t, Zxx_db = compute_stft(signal, fs, window_sec)
-        plot_stft(f, t, Zxx_db, file_out_path)
-        
+        fig = plot_stft(f, t, Zxx_db, file_title)
+        plotly.offline.plot(fig, config={'scrollZoom': True, 'editable': True}, filename=file_out_path, auto_open=auto_open_html)
+
         del signal, f, t, Zxx_db
         gc.collect()
 
