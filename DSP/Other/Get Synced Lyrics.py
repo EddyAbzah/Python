@@ -56,8 +56,7 @@ for root, dirs, files in os.walk(base_directory):
     for file in files:
         if file.lower().endswith('.mp3'):
             full_path = os.path.join(root, file)
-            # if not any(os.path.exists(full_path[:-4] + ext) for ext in ('.txt', '.lrc', '.lyric')):
-            if not any(os.path.exists(full_path[:-4] + ext) for ext in ('.txt', '.lrc')):
+            if not any(os.path.exists(full_path[:-4] + ext) for ext in ('.txt', '.lrc', '.lyric')):
                 if any(fs.lower() in root.lower() for fs in filter_special):
                     download_lyrics(full_path, file.split(" - ")[0], file.split(" - ")[1][:-4])
                 else:
