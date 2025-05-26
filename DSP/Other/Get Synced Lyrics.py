@@ -33,7 +33,7 @@ def download_lyrics(full_path, root, file):
     if lyrics:
         lyrics = [line for line in lyrics.split('\n') if not re.search(r'[\u4e00-\u9fff]', line) and 'contributor' not in line.lower() and 'lyric' not in line.lower()]
 
-        if re.search(r"\[\d{2}:\d{2}\.\d{2}\]", lyrics[0]):
+        if re.search(r"\[\d{2}:\d{2}\.\d{3}\]", lyrics[0]):
             extension = ".lrc"
         else:
             extension = ".txt"
