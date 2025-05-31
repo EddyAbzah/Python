@@ -3,8 +3,9 @@ from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, USLT, error
 
 
-DELETE_SOURCE_FILES = True  # Set to True to delete embedded files
-CLEAN_LYRICS = True         # Set to True to remove lines with [hh:mm.ss] format
+DELETE_SOURCE_FILES = True          # Set to True to delete embedded files
+CLEAN_LYRICS = True                 # Set to True to remove lines with [hh:mm.ss] format
+REPLACE_ODD_CHARACTERS = True       # Set to True to replace characters not supported in Windows filenames with a whitespace
 used_lyric_files = set()
 used_image_files = set()
 
@@ -19,6 +20,12 @@ def find_cover_image(directory, artist, album):
 
 def clean_lyrics_text(text):
     return "\n".join(line for line in text.splitlines() if not re.match(r"^\[\d{2}:\d{2}\.\d{2,3}\]", line.strip()))
+
+
+def sanitize_filename(filename):
+    unsupported_chars = r'[<>:"/\\|?*]'
+    sanitized_filename = re.sub(unsupported_chars, ' ', filename)
+    return sanitized_filename
 
 
 def process_mp3_files(directory):
@@ -53,7 +60,6 @@ def process_mp3_files(directory):
                     lyric_ext = ext
                     if DELETE_SOURCE_FILES:
                         used_lyric_files.add(lyrics_path)
-                        print(f'{lyrics_path = }')
                     break  # Only use the first found
 
             # === Embed album art ===
@@ -62,6 +68,8 @@ def process_mp3_files(directory):
             if artist and album:
                 artist_str = artist.text[0]
                 album_str = album.text[0]
+                if REPLACE_ODD_CHARACTERS:
+                    album_str = sanitize_filename(album_str)
                 image_path = find_cover_image(root, artist_str, album_str)
                 if image_path:
                     with open(image_path, 'rb') as img:
@@ -69,7 +77,6 @@ def process_mp3_files(directory):
                     added_cover = True
                     if DELETE_SOURCE_FILES:
                         used_image_files.add(image_path)
-                        print(f'{image_path = }')
             id3.save(mp3_path, v2_version=4)
 
             # === Final output ===
