@@ -40,6 +40,8 @@ if __name__ == '__main__':
             new_filename = new_name_prefix
             new_filename += new_datetime.strftime(pattern_out)
             new_filename += new_name_suffix
+            if file_extension.lower() == ".jpeg":
+                file_extension = ".jpg"
             new_filename += file_extension.lower()
 
             file_info = {"original_name": filename, "new_name": new_filename, "date": original_datetime}
