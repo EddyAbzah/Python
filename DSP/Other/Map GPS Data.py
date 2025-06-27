@@ -2,7 +2,11 @@ import os
 import re
 import folium
 import exifread
+import webbrowser
 from pymediainfo import MediaInfo
+
+
+auto_open_output = True
 
 
 def get_gps_from_image(img_path):
@@ -50,7 +54,7 @@ def get_gps_from_video(video_path):
 
 
 def build_map(folder, subfolder):
-    """Extract GPS data from images/videos and build a map."""
+    """Extract GPS data from images/videos and build a map with labels and auto-open."""
     coordinates = []
     folder_path = folder + "\\" + subfolder
 
@@ -65,25 +69,28 @@ def build_map(folder, subfolder):
             gps = get_gps_from_video(full_path)
         print(f'{filename = }\t→\t{gps = }')
         if gps:
-            coordinates.append(gps)
+            coordinates.append((gps, filename))
 
     if not coordinates:
         print("No GPS data found in images or videos.")
         return
 
     # Create map with English tile layer
-    m = folium.Map(location=coordinates[0], zoom_start=13, tiles="OpenStreetMap")
+    m = folium.Map(location=coordinates[0][0], zoom_start=13, tiles="OpenStreetMap")
 
     # Draw path
-    folium.PolyLine(coordinates, color="blue", weight=2.5).add_to(m)
+    folium.PolyLine([coord for coord, _ in coordinates], color="blue", weight=2.5).add_to(m)
 
-    # Add markers
-    for coord in coordinates:
-        folium.Marker(coord).add_to(m)
+    # Add markers with filename labels
+    for coord, filename in coordinates:
+        folium.Marker(coord, popup=filename).add_to(m)
 
     output_file = os.path.join(folder, subfolder + ".html")
     m.save(output_file)
     print(f"Map saved to: {output_file}")
+
+    if auto_open_output:
+        webbrowser.open('file://' + os.path.abspath(output_file))
 
 
 if __name__ == "__main__":
