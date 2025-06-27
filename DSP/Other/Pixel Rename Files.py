@@ -8,12 +8,12 @@ directory = r""
 pattern_in = r"PXL_(\d{8})_(\d{9})"
 pattern_out = "%Y-%m-%d _ %H-%M-%S"
 time_zone = "Asia/Jerusalem"
-# time_zone = "Asia/Tbilisi"
 
 new_name_prefix = ""
 new_name_suffix = ""
 check_if_edit = [True, "~", " (edit)"]                  # enable, what to look for, suffix if found
-check_if_moving_picture = [True, ".MP", " (MP)"]        # enable, what to look for, suffix if found
+check_if_moving_picture = [False, ".MP", " (MP)"]       # enable, what to look for, suffix if found
+rename_in_reverse_order = True
 
 index_start = 1
 index_count = 666666666
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         print(f"Duplicate files found: {', '.join(duplicates)}")
         input("Please resolve the duplicates before proceeding. Press Enter to continue.")
 
-    file_data.sort(key=lambda x: x["date"], reverse=True)
+    file_data.sort(key=lambda x: x["date"], reverse=rename_in_reverse_order)
     for file_info in file_data:
         old_path = os.path.join(directory, file_info["original_name"])
         new_path = os.path.join(directory, file_info["new_name"])
