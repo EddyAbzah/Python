@@ -13,3 +13,4 @@ threading.Event()			To block a method via event.wait() until event.set() is used
 threading.Thread(daemon)		Set to True if the thread is disposable and can be closed at any time
 queue.PriorityQueue()			A list the handles items; use q.get()
 import builtins				To access the original python functions (like print)
+def xx(a=[]):				Don’t use mutable data structures as default values - They are re-used across method invocations.
