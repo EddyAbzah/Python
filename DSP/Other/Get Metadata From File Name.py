@@ -1,12 +1,54 @@
+"""
+=== File Metadata vs Filename Date Excitation Table ===
+
+This table describes the decision logic for handling mismatches between
+metadata timestamps and filename timestamps.
+
+| Case | Metadata | Filename Date | Match Format | < max_offset | < rename_file_from_metadata[1] | Action             | Reasoning                                                   |
+|------|----------|---------------|--------------|-------------|---------------------------------|--------------------|-------------------------------------------------------------|
+| 1    | Yes      | Yes           | Full         | Yes         | —                               | No action          | Close enough match between filename and metadata.           |
+| 2    | Yes      | Yes           | Full         | No          | Yes                             | Rename file        | Difference is small (≤ 1 hour), rename file from metadata.  |
+| 3    | Yes      | Yes           | Full         | No          | No                              | Edit metadata      | Large mismatch, update metadata to match filename.          |
+| 4    | Yes      | Yes           | Date only    | —           | —                               | No action          | Date (not time) matches; considered acceptable.             |
+| 5    | Yes      | Yes           | Date only    | —           | —                               | Edit metadata      | Date mismatch; metadata is changed to match filename.       |
+| 6    | Yes      | No            | No date      | —           | —                               | Rename file        | No date in filename; rename file from metadata.             |
+| 7    | No       | Yes           | Any          | —           | —                               | No action          | Metadata missing; filename date present, but nothing to do. |
+| 8    | No       | No            | No date      | —           | —                               | No action          | No usable date in metadata or filename; skip.               |
+"""
+
+
 import os
 import re
+import json
 import piexif
 import subprocess
 import pandas as pd
 from PIL import Image
 from PIL.ExifTags import TAGS
 from pymediainfo import MediaInfo
-from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
+
+
+def get_creation_time_ffprobe(filepath):
+    try:
+        cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_entries", "format_tags=creation_time", filepath]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
+        if result.returncode == 0:
+            metadata = json.loads(result.stdout)
+
+            # Extract raw creation time string
+            creation_time_str = metadata.get("format", {}).get("tags", {}).get("creation_time")
+            if not creation_time_str:
+                return None  # Could not find creation time
+
+            creation_time_str = creation_time_str.rstrip("Z")
+            creation_dt = datetime.strptime(creation_time_str[:19], "%Y-%m-%dT%H:%M:%S")
+            return creation_dt
+        else:
+            return None
+    except:
+        return None
 
 
 def write_creation_date_jpg(path, dt):
@@ -17,6 +59,9 @@ def write_creation_date_jpg(path, dt):
         exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = date_str
         exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = date_str
         exif_dict['0th'][piexif.ImageIFD.DateTime] = date_str
+
+        exif_dict['Exif'][piexif.ExifIFD.OffsetTimeOriginal] = time_zone_offset
+        exif_dict['Exif'][piexif.ExifIFD.OffsetTimeDigitized] = time_zone_offset
 
         try:
             exif_bytes = piexif.dump(exif_dict)
@@ -39,7 +84,8 @@ def write_creation_date_jpg(path, dt):
 
 
 def write_creation_date_mp4(file_path, dt):
-    iso_dt = dt.strftime("%Y-%m-%dT%H:%M:%SZ")  # must be UTC ISO format
+    local_datetime = dt.replace(tzinfo=ZoneInfo(time_zone)).astimezone(timezone.utc).replace(tzinfo=None)
+    iso_dt = local_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")  # must be UTC ISO format
     temp_file = file_path.replace(".mp4", "_temp.mp4")
 
     try:
@@ -58,6 +104,7 @@ def write_creation_date_mp4(file_path, dt):
 def main():
     results = []
     for subdir, _, files in os.walk(root_dir):
+        files.sort(reverse=True)
         for file in files:
             if file.lower().endswith(('.mp4', '.jpg')):
                 full_path = os.path.join(subdir, file)
@@ -73,11 +120,17 @@ def main():
                             for key, value in track.to_data().items():
                                 if "encoded_date" in key and isinstance(value, str):
                                     try:
-                                        value = re.sub(r'\s*UTC\s*', '', value)
-                                        metadata_dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                                        if "utc" in value.lower():
+                                            value = re.sub(r'\s*utc\s*', '', value.lower())
+                                            utc_datetime = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                                            metadata_dt = utc_datetime.astimezone(ZoneInfo(time_zone)).replace(tzinfo=None)
+                                        else:
+                                            metadata_dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                                     except ValueError:
                                         pass
                                     break
+                    if metadata_dt is None:
+                        metadata_dt = get_creation_time_ffprobe(full_path)
                 else:  # .jpg
                     try:
                         with Image.open(full_path) as img:
@@ -164,15 +217,22 @@ def main():
 
 
 if __name__ == '__main__':
-    root_dir = r"C:\Users\eddya\OneDrive\תמונות\Family"
+    root_dir = r""
+    file_out = r"Get Metadata From File Name.xlsx"
+
+    time_zone = "Asia/Jerusalem"
+    time_zone_offset = "+02:00"
+
     max_offset = timedelta(minutes=10)
-    edit_files = True
+    edit_files = False
+    # edit_files = True
     write_metadata_from_filename = True
-    rename_file_from_metadata = [True, timedelta(hours=4)]
+    rename_file_from_metadata = [True, timedelta(hours=1)]
 
     full_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})\s*[_\-]\s*(\d{2}-\d{2}-\d{2})')
     date_only_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})')
     whatsapp_pattern = re.compile(r'-(\d{4}\d{2}\d{2})-WA')
 
     df = pd.DataFrame(main())
-    df.to_excel(r"C:\Users\eddya\Downloads\MANA.xlsx", index=False)
+    df.to_excel(file_out, index=False)
+    os.startfile(file_out)
