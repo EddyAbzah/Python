@@ -1,3 +1,14 @@
+"""
+Needs PyPDF2 version 2.12.1 or lower to work.
+
+Check:
+print(PyPDF2.__version__)
+
+Install:
+pip install PyPDF2==2.12.1
+"""
+
+
 import PyPDF2
 from pdf2image import convert_from_path
 
@@ -11,7 +22,7 @@ output_file = r""
 
 
 def rotate_pdf():
-    reader = PyPDF2.PdfReader(rotate[1])
+    reader = PyPDF2.PdfReader(rotate[2])
     writer = PyPDF2.PdfWriter()
     for page in reader.pages:
         page.rotate(rotate[1])
@@ -22,8 +33,13 @@ def rotate_pdf():
 
 def merge_pdfs():
     merger = PyPDF2.PdfMerger()
+
     for file in merge[1]:
         merger.append(file)
+    # Or, to select specific pages (zero-based index + non-inclusive end index):
+    # merger.append(merge[1][0], pages=(0, 1))
+    # merger.append(merge[1][1], pages=(2, 3))
+
     merger.write(output_file)
     merger.close()
 
