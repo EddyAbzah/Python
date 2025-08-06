@@ -5,6 +5,7 @@ from collections import defaultdict
 
 folder_path = r""
 rename = True
+jpeg_to_jpg = True
 
 pattern = re.compile(r".*-(\d{4})(\d{2})(\d{2})-.*")
 date_counters = defaultdict(int)
@@ -20,6 +21,8 @@ for filename in files:
         count = date_counters[formatted_date]
 
         ext = os.path.splitext(filename)[1].lower()
+        if jpeg_to_jpg and ext == "jpeg":
+            ext = "jpg"
         new_name = f"{formatted_date} _ {count:03}{ext}"
         src = os.path.join(folder_path, filename)
         dst = os.path.join(folder_path, new_name)
