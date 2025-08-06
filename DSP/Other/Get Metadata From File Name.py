@@ -213,6 +213,8 @@ def main():
                 # --- Append result row ---
                 results.append({'File path': subdir, 'Old file name': file_name, 'New file name': new_file_name, 'Extension': file_name[-4:], 'Date format': match_format,
                                 'Old metadata': metadata_str, 'New metadata': new_metadata, 'Match': match_result, 'Edit method': edit_method})
+    if not results:
+        print(f"No files were found in: {root_dir}")
     return results
 
 
@@ -225,7 +227,6 @@ if __name__ == '__main__':
 
     max_offset = timedelta(minutes=10)
     edit_files = False
-    # edit_files = True
     write_metadata_from_filename = True
     rename_file_from_metadata = [True, timedelta(hours=1)]
 
@@ -234,5 +235,14 @@ if __name__ == '__main__':
     whatsapp_pattern = re.compile(r'-(\d{4}\d{2}\d{2})-WA')
 
     df = pd.DataFrame(main())
-    df.to_excel(file_out, index=False)
-    os.startfile(file_out)
+    if edit_files:
+        df.to_excel(file_out, index=False)
+        os.startfile(file_out)
+    else:
+        from tabulate import tabulate
+        print(tabulate(df, headers='keys', tablefmt='pretty', showindex=False))
+
+# if "2024 Tour de Vikings" in subdir:
+#     continue
+# if "2022 England" in subdir:
+#     continue
