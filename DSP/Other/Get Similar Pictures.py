@@ -34,7 +34,6 @@ def find_and_copy_duplicates():
     for hash_value, files in hashes.items():
         if len(files) > 1:
             duplicates_found = True
-            os.makedirs(output_directory, exist_ok=True)
             log(f"\n{group_num:03} - Duplicate images with hash {hash_value}:")
             for i, file in enumerate(files, start=1):
                 log(file)
