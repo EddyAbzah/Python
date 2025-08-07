@@ -30,6 +30,9 @@ from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta, timezone
 
 
+Image.MAX_IMAGE_PIXELS = 200_000_000        # Some pictures are 108MP and above the limit
+
+
 def get_creation_time_ffprobe(filepath):
     try:
         cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_entries", "format_tags=creation_time", filepath]
@@ -104,7 +107,8 @@ def write_creation_date_mp4(file_path, dt):
 def main():
     results = []
     for subdir, _, files in os.walk(root_dir):
-        files.sort(reverse=True)
+        if sort_reverse:
+            files.sort(reverse=True)
         for file in files:
             if file.lower().endswith(('.mp4', '.jpg')):
                 full_path = os.path.join(subdir, file)
@@ -191,6 +195,8 @@ def main():
                     edit_method = "Edit metadata"
 
                 if edit_method == "Edit metadata":
+                    if match_format == "Date only":
+                        file_datetime = file_datetime + timedelta(hours=4)
                     new_metadata = file_datetime.strftime("%Y-%m-%d %H-%M-%S")
                     if edit_files and write_metadata_from_filename:
                         if file.lower().endswith('.jpg'):
@@ -221,28 +227,28 @@ def main():
 if __name__ == '__main__':
     root_dir = r""
     file_out = r"Get Metadata From File Name.xlsx"
+    sort_reverse = True
 
     time_zone = "Asia/Jerusalem"
     time_zone_offset = "+02:00"
+    # out_excel = False
+    out_excel = True
 
     max_offset = timedelta(minutes=10)
     edit_files = False
+    # edit_files = True
     write_metadata_from_filename = True
-    rename_file_from_metadata = [True, timedelta(hours=1)]
+    rename_file_from_metadata = [True, timedelta(hours=0)]
 
     full_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})\s*[_\-]\s*(\d{2}-\d{2}-\d{2})')
     date_only_pattern = re.compile(r'(\d{4}-\d{2}-\d{2})')
     whatsapp_pattern = re.compile(r'-(\d{4}\d{2}\d{2})-WA')
 
     df = pd.DataFrame(main())
-    if edit_files:
-        df.to_excel(file_out, index=False)
-        os.startfile(file_out)
-    else:
-        from tabulate import tabulate
-        print(tabulate(df, headers='keys', tablefmt='pretty', showindex=False))
-
-# if "2024 Tour de Vikings" in subdir:
-#     continue
-# if "2022 England" in subdir:
-#     continue
+    if not df.empty:
+        if out_excel:
+            df.to_excel(file_out, index=False)
+            os.startfile(file_out)
+        else:
+            from tabulate import tabulate
+            print(tabulate(df, headers='keys', tablefmt='pretty', showindex=False))
