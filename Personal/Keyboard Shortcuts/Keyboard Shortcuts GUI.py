@@ -39,6 +39,8 @@ def get_shortcuts_data(sub_folder):
 def get_current_program():
     running_processes = [proc.info["name"].rsplit('.', 1)[0] for proc in psutil.process_iter(["name"])]
     running_processes = [''.join(re.findall(r'[A-Za-z]', string)).lower() for string in running_processes]
+    if "reaper" in running_processes and "REAPER" in shortcuts_data.keys():
+        return "REAPER"
     if "devenv" in running_processes and "Visual Studio" in shortcuts_data.keys():
         return "Visual Studio"
     if "pycharm" in running_processes and "Pycharm" in shortcuts_data.keys():
@@ -64,7 +66,7 @@ def get_current_program():
 
 
 def set_window_properties(type="Applications"):
-    width = 400 if type == "Applications" else 1000
+    width = 600 if type == "Applications" else 1000
     height = 50     # initial height for window elements
     height += len(shortcuts_data[current_program]) * 20
     root.geometry(f"{width}x{height}")
@@ -118,7 +120,7 @@ tree = ttk.Treeview(frame, columns=columns, show="headings", height=8)
 tree.heading("Action", text="Action")
 tree.heading("Shortcut", text="Shortcut")
 tree.column("Action", width=180, anchor="w")
-tree.column("Shortcut", width=180, anchor="center")
+tree.column("Shortcut", width=280, anchor="center")
 
 # Add a scrollbar
 scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
