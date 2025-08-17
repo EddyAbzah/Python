@@ -1,0 +1,60 @@
+Alt+Space				Play/pause
+Ctrl+Enter / R				Record
+Enter					Redo Record
+Shift+Enter, C				Toggle pre-roll on record
+{					Set start point
+}					Set end point
+R					Toggle repeat
+Ctrl+Shift+R				Toggle stop playback at end of loop if repeat is disabled
+					
+Ctrl+Space				Play solo track(s)
+S					Toggle solo for selected tracks
+Shift+S					Exclusive Solo
+D					Solo in front
+Shift+D					Toggle track solo defeat
+Ctrl+Alt+Shift+Mousewheel		Adjust solo in front dim
+A, Alt+M				Toggle items/tracks mute
+					
+M					Insert marker at current position
+[					Go to previous marker/project start
+]					Go to next marker/project end
+num					Go to marker (num)
+Ctrl+num				Add/move marker (num) to play/edit cursor
+Z					Move edit cursor to next zero crossing in items
+Ctrl+W, Home				Go to start of project
+Shift+Q					Go to edit cursor
+Shift+W, '				Go to play cursor/position
+Ctrl+W					Select and move to item in next track
+Ctrl+Q					Select and move to item in previous track
+					
+Backspace				Ripple Delete
+Alt+S					Split items at time selection or razor edit
+Q					Trim Left
+W					Trim Right
+Alt+Shift+Down				3dB Down
+Alt+Shift+Up				3dB Up
+					
+?					Show action list
+F2					Toggle show media item/take properties
+Ctrl+Shift+M / `			Show track manager window
+E					Display item source time ruler in H:M:S:F format
+Shift+1					Expand selected track height, minimize others
+Shift+2					Minimize all tracks
+Mousewheel				Scroll horizontally
+Ctrl+Alt+Mousewheel			Scroll vertically
+Alt+Mousewheel				Zoom horizontally
+Ctrl+Mousewheel				Zoom vertically
+					
+<					Shift left (by time selection length)
+>					Shift right (by time selection length)
+X					Crossfade items within time selection
+G					Group items
+U					Remove items from group
+Y					Activate take under mouse
+					
+Ctrl+H					Hide and Mute Tracks
+Ctrl+Shift+1				Set to custom color...
+Ctrl+Shift+2				Set to default color
+Ctrl+Shift+3				Set to one random color
+Ctrl+Shift+4				Set to random colors
+
