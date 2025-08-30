@@ -15,12 +15,23 @@ internal_storage_path = "/storage/emulated/0/"
 external_storage_path = "/sdcard/"
 storage_path = internal_storage_path
 
-min_date = date(2025, 8, 8)
+min_date = date(2025, 8, 17)
 jpeg_to_jpg = True
 organize_into_folders = True
 # organize_into_folders = False
 copy_files = True
 # copy_files = False
+create_txt_file = True
+
+
+txt_file_output = []
+
+
+def custom_print(*args, **kwargs):
+    output = ' '.join(map(str, args))
+    if create_txt_file:
+        txt_file_output.append(output)
+    print(output)
 
 
 def get_full_path(path):
@@ -35,14 +46,14 @@ def list_android_files(path="", folders_only=False):
     try:
         result = subprocess.run(["adb", "shell", f"ls -d {path}/*" + ("/" if folders_only else "")], capture_output=True, text=True, encoding='utf-8')
         if result.returncode != 0:
-            print("ADB Error:", result.stderr)
+            custom_print("ADB Error:", result.stderr)
 
         folders = [f.replace(storage_path, "").replace("/", "") for f in result.stdout.strip().split("\n")]
-        print(f"Folders found in {path}:")
+        custom_print(f"Folders found in {path}:")
         for folder in folders:
-            print("\t", folder)
+            custom_print("\t", folder)
     except Exception as e:
-        print("Error:", e)
+        custom_print("Error:", e)
 
 
 def list_all_files(path):
@@ -50,7 +61,7 @@ def list_all_files(path):
     cmd = ["adb", "shell", f"ls -l {path}"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
     if result.returncode != 0:
-        print("ADB error:", result.stderr)
+        custom_print("ADB error:", result.stderr)
         return []
 
     files = []
@@ -96,24 +107,24 @@ def pull_files(path, files, dest_folder):
     for f in files:
         local_path = f"{dest_folder}\\{f['filename_new']}"
         if os.path.exists(local_path):
-            print(f"⚠️ ATTENTION: File already exists → {local_path}")
+            custom_print(f"ATTENTION: File already exists → {local_path}")
         else:
             remote_path = get_full_path(f"{path}/{f['filename']}")
             remote_path = remote_path.replace("'", "")
             try:
                 result = subprocess.run(["adb", "pull", remote_path, local_path], capture_output=True, text=True, encoding='utf-8')
                 if result.returncode == 0:
-                    print(f"✅ Successfully pulled: {remote_path} -> {local_path}")
+                    custom_print(f"Successfully pulled: {remote_path} -> {local_path}")
                 else:
-                    print(f"❌ Failed to pull: {remote_path} -> {local_path}")
+                    custom_print(f"Failed to pull: {remote_path} -> {local_path}")
             except Exception as e:
-                print(f"🚨 Exception while pulling {remote_path}: {e}")
+                custom_print(f"Exception while pulling {remote_path}: {e}")
 
 
 if __name__ == "__main__":
     list_android_files()
 
-    destination_folder = r"C:\Users\eddya\Downloads\NEW"
+    destination_folder = r"C:\Users\eddya\Downloads\Pixel Media"
     directories = [
                    "DCIM/Camera",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs",
@@ -139,13 +150,13 @@ if __name__ == "__main__":
         if files:
             filtered_files = [f for f in files if f['datetime'].date() >= min_date]
 
-        print(f"\n\n\n##########   {folder_path}:   {len(filtered_files)} filtered files from {len(files)}   ##########")
+        custom_print(f"\n\n\n##########   {folder_path}:   {len(filtered_files)} filtered files from {len(files)}   ##########")
         if filtered_files:
             filtered_files = get_renaming_scheme(filtered_files)
             filtered_files.sort(key=lambda x: x['datetime'])
             table_data = [f.values() for f in filtered_files]
             headers = ["Old Filename", "New Filename", "Datetime", "Size (MB)"]
-            print(tabulate(table_data, headers=headers, tablefmt="grid"))
+            custom_print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
             if copy_files:
                 if organize_into_folders:
@@ -157,3 +168,14 @@ if __name__ == "__main__":
                 else:
                     new_destination_folder = destination_folder
                 pull_files(folder_path, filtered_files, new_destination_folder)
+
+    current_time = datetime.now().strftime("%Y-%m-%d _ %H-%M-%S")
+    custom_print("All copies complete")
+    custom_print(f"Current time: {current_time}")
+
+    if create_txt_file:
+        filename = f"{destination_folder}\\{current_time}.txt"
+        with open(filename, 'w', encoding='utf-8') as log_file:
+            log_file.write("\n".join(txt_file_output))
+
+        print(f"File '{filename}' created successfully!")
