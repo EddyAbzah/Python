@@ -69,18 +69,18 @@ def print_results_table(results):
         table_data.append([idx, filename, offset_str, relation])
 
     print("\n" + tabulate(table_data, headers=headers, tablefmt="grid"))
-    # print("\n".join([f"{offset[2]:.3f}" for offset in results]))
+    print("\n".join([f"{offset[2]:.3f}" for offset in results]))
 
 
 if __name__ == "__main__":
-    folder = r""
-    filter_files = re.compile(r'.*\.mp3$', re.IGNORECASE)
-    audio_files = [file for file in os.listdir(folder) if filter_files.match(file)]        # and "guitar pro" not in file.lower()
+    folder = r"C:\Users\eddya\Files\Music\Guitar Test 2024-10-24\Media"
+    filter_files = re.compile(r'^09.*\.mp3$', re.IGNORECASE)
+    audio_files = [folder + "\\" + file for file in os.listdir(folder) if filter_files.match(file) and "guitar pro" not in file.lower()]
     audio_files.sort()
 
     reference_file_index = 0
-    trim_seconds_from_start = 0
-    trim_to_length = 0
+    trim_seconds_from_start = 5
+    trim_to_length = 30
 
     results = []
 

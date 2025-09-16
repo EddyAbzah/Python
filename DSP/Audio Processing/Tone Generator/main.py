@@ -1,6 +1,8 @@
+import random
 from kivy.app import App
 from kivy.utils import platform
 from kivy.uix.label import Label
+from kivy.uix.button import Button
 from kivy.uix.carousel import Carousel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.core.audio import SoundLoader
@@ -8,7 +10,6 @@ from kivy.core.audio import SoundLoader
 # set orientation according to user's preference
 if platform == "android":
     from jnius import autoclass
-
     PythonActivity = autoclass("org.kivy.android.PythonActivity")
     ActivityInfo = autoclass("android.content.pm.ActivityInfo")
     activity = PythonActivity.mActivity
@@ -16,26 +17,35 @@ if platform == "android":
 
 
 NOTE_FREQUENCIES = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
+BUTTONS = ["C3", "D3", "E3", "A3", "D4", "G4", "B4", "E5"]      # Guitar Standard Tuning; this is an octave higher
 OCTAVES = range(1, 9)       # if higher than 9, set correctly the DEFAULT_NOTE check
 DEFAULT_NOTE = "A4"
 
 
-def play_tone_from_file(file_index, note, octave, volume=1.0, current_file=None):
+def get_frequency(note, octave):
+    """Return frequency in Hz for a note+octave using A4=440Hz."""
+    a4_index = 9 + 12 * 4
+    note_index = NOTE_FREQUENCIES[note] + 12 * octave
+    note_freq = 440.0 * (2 ** ((note_index - a4_index) / 12))
+    return note_freq
+
+
+def play_tone_from_file(file_index, note, octave, current_file=None):
     """Play pre-generated WAV file (for Android)."""
     if current_file:
         current_file.stop()
-    file_path = f"assets/{file_index:02} {note}{octave}.wav"
+    file_path = f"Tones/{file_index:02} {note}{octave}.wav"
     try:
         sound = SoundLoader.load(file_path)
         if sound:
-            sound.volume = volume
             sound.loop = True
             sound.play()
-            return sound, file_path
+            return sound
         else:
-            return None, f"Failed to load {file_path}"
-    except:
-        return None, f"Missing file: {file_path}"
+            print(f"Failed to load {file_path}")
+    except Exception as e:
+        print(f"Error loading file {file_path}: {e}")
+    return None
 
 
 class Reel(Carousel):
@@ -54,7 +64,6 @@ class SineWaveApp(App):
         self.total_notes = len(NOTE_FREQUENCIES)
         self.current_file = None
 
-        self.volume = 0.5
         self.fs = 44100
         self.phase = 0.0
 
@@ -65,15 +74,13 @@ class SineWaveApp(App):
         layout_top_right = BoxLayout(orientation="vertical", padding=5, spacing=5)
 
         # Octave reel
-        layout_top_left.add_widget(Label(text="Octave", size_hint=(1, 0.1)))
-        self.octave_reel = Reel(items=[str(i) for i in OCTAVES], size_hint=(1, 0.9))
-        self.octave_reel.index = OCTAVES.index(int(DEFAULT_NOTE[-1:]))
+        layout_top_left.add_widget(Label(text="Octave", size_hint=(1, 0.2)))
+        self.octave_reel = Reel(items=[str(i) for i in OCTAVES], size_hint=(1, 0.8))
         layout_top_left.add_widget(self.octave_reel)
 
         # Note reel
-        layout_top_right.add_widget(Label(text="Note", size_hint=(1, 0.1)))
-        self.note_reel = Reel(items=list(NOTE_FREQUENCIES.keys()), size_hint=(1, 0.9))
-        self.note_reel.index = list(NOTE_FREQUENCIES.keys()).index(DEFAULT_NOTE[:-1])
+        layout_top_right.add_widget(Label(text="Note", size_hint=(1, 0.2)))
+        self.note_reel = Reel(items=list(NOTE_FREQUENCIES.keys()), size_hint=(1, 0.8))
         layout_top_right.add_widget(self.note_reel)
 
         layout_top.add_widget(layout_top_left)
@@ -84,16 +91,37 @@ class SineWaveApp(App):
         self.last_note_index = self.note_reel.index
         self.note_reel.bind(index=self.full_circle_note_rotation_check)
 
+        # --- 6 circular buttons row ---
+        button_row = BoxLayout(orientation="horizontal", size_hint=(1, 0.2), spacing=10)
+        for note in BUTTONS:
+            btn = Button(text=note, size_hint=(1, 1), background_normal="", background_color=(0.3, 0.6, 0.9, 1),)
+            btn.bind(on_press=self.change_note)
+            button_row.add_widget(btn)
+        layout_full.add_widget(button_row)
+        btn = Button(text="Random", size_hint=(1, 0.2), background_normal="", background_color=(0.3, 0.6, 0.9, 1), )
+        btn.bind(on_press=self.change_note)
+        layout_full.add_widget(btn)
+
         # Android (pre-made WAVs)
         self.note_reel.bind(index=self.on_note_or_octave_change)
         self.octave_reel.bind(index=self.on_note_or_octave_change)
-
-        # Volume slider
-        self.bottom_label = Label(text="Label", size_hint=(1, 0.3))
-        layout_full.add_widget(self.bottom_label)
-
         self.on_note_or_octave_change()
+
+        self.set_note(DEFAULT_NOTE)
         return layout_full
+
+    def set_note(self, note):
+        self.octave_reel.index = OCTAVES.index(int(note[-1:]))
+        self.note_reel.index = list(NOTE_FREQUENCIES.keys()).index(note[:-1])
+
+    # --- Callbacks ---
+    def change_note(self, button):
+        if button.text.lower() == "random":
+            note = random.choice(list(NOTE_FREQUENCIES.keys()))
+            octave = random.choice(OCTAVES)
+            self.set_note(note + str(octave))
+        else:
+            self.set_note(button.text)
 
     def full_circle_note_rotation_check(self, instance, value):
         # Forward wrap-around (last -> first)
@@ -111,8 +139,7 @@ class SineWaveApp(App):
         file_index = self.note_reel.index + (self.octave_reel.index * self.total_notes) + 1
         note = self.note_reel.get_value()
         octave = int(self.octave_reel.get_value())
-        self.current_file, file_path = play_tone_from_file(file_index, note, octave, self.volume, self.current_file)
-        self.bottom_label.text = file_path
+        self.current_file = play_tone_from_file(file_index, note, octave, self.current_file)
 
 
 if __name__ == "__main__":
