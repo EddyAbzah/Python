@@ -15,7 +15,7 @@ internal_storage_path = "/storage/emulated/0/"
 external_storage_path = "/sdcard/"
 storage_path = internal_storage_path
 
-min_date = date(2025, 8, 17)
+min_date = date(2025, 9, 12)
 jpeg_to_jpg = True
 organize_into_folders = True
 # organize_into_folders = False
@@ -127,6 +127,8 @@ if __name__ == "__main__":
     destination_folder = r"C:\Users\eddya\Downloads\Pixel Media"
     directories = [
                    "DCIM/Camera",
+                   "DCIM/Blackmagic Camera",
+                   "DCIM/CapCut",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Sent",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
