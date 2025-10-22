@@ -7,6 +7,7 @@ from pymediainfo import MediaInfo
 
 
 auto_open_output = True
+skip_zero_coordinates = True
 
 
 def get_gps_from_image(img_path):
@@ -68,7 +69,7 @@ def build_map(folder, subfolder):
         elif lower.endswith(('.mp4', '.mov', '.avi', '.mkv')):
             gps = get_gps_from_video(full_path)
         print(f'{filename = }\t→\t{gps = }')
-        if gps:
+        if gps and (not skip_zero_coordinates or gps != (0, 0)):
             coordinates.append((gps, filename))
 
     if not coordinates:
