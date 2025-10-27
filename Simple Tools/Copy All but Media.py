@@ -60,8 +60,17 @@ def copy_files(source: str, destination: str, filter_extensions: set[str]):
             for file in folder_files:
                 src_file = os.path.join(root, file)
                 dst_file = os.path.join(dest_path, file)
+                if os.path.exists(dst_file):
+                    custom_print(f"File exists: {dst_file}")
                 if copy:
-                    shutil.copy2(src_file, dst_file)
+                    try:
+                        shutil.copy2(src_file, dst_file)
+                    except Exception as e:
+                        custom_print()
+                        custom_print(f"ERROR!!! shutil.copy2: {e}")
+                        custom_print(f'{src_file = }')
+                        custom_print(f'{dst_file = }')
+                        custom_print()
 
 
 if __name__ == "__main__":
