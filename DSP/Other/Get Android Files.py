@@ -15,7 +15,7 @@ internal_storage_path = "/storage/emulated/0/"
 external_storage_path = "/sdcard/"
 storage_path = internal_storage_path
 
-min_date = date(2025, 9, 12)
+min_date = date(2025, 10, 28)
 jpeg_to_jpg = True
 organize_into_folders = True
 # organize_into_folders = False
@@ -127,8 +127,12 @@ if __name__ == "__main__":
     destination_folder = r"C:\Users\eddya\Downloads\Pixel Media"
     directories = [
                    "DCIM/Camera",
-                   "DCIM/Blackmagic Camera",
-                   "DCIM/CapCut",
+                   # "DCIM/Blackmagic Camera",
+                   # "DCIM/CapCut",
+                   # "DCIM/CapCut",
+                   # "DCIM/Insta360Download",
+                   # "Android/data/com.arashivision.insta360akiko/files/Insta360OneR/galleryOriginal/Camera01",
+                   # "Android/data/com.arashivision.insta360akiko/files/Insta360OneR/galleryOriginal/LRV",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Sent",
                    "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
