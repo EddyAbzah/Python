@@ -4,14 +4,24 @@ import filecmp
 from datetime import datetime
 
 
+txt_file_output = []
+
+
+def custom_print(*args, **kwargs):
+    output = ' '.join(map(str, args))
+    if output_text[0]:
+        txt_file_output.append(output)
+    print(output)
+
+
 def print_list(title, list_to_print):
-    print(title)
+    custom_print(title)
     if len(list_to_print) > 0:
         for item in list_to_print:
-            print(item)
+            custom_print(item)
     else:
-        print('NO FILES')
-    print()
+        custom_print('NO FILES')
+    custom_print()
 
 
 def are_dir_trees_equal(dir1, dir2, report_type="selective"):
@@ -58,20 +68,17 @@ def are_dir_trees_equal_bool(dir1, dir2):
 
 
 if __name__ == "__main__":
-    main_folder = r"C:\Users\eddy.a\OneDrive - SolarEdge\Documents\Python Scripts\_Personal"
+    main_folder = r""
     output_text = [False, main_folder + "\\Compare Two Folders " + datetime.now().strftime("%H-%M-%S")]
-    folder_1 = main_folder + "\\" + "folder_1"
-    folder_2 = main_folder + "\\" + "folder_2"
-    if output_text[0]:
-        default_stdout = sys.stdout
-        sys.stdout = open(output_text[1], 'w')
+    folder_1 = r""
+    folder_2 = r""
 
-    print("\n" + "Compare Two Folders:")
-    print("folder_1 = " + folder_1)
-    print("folder_2 = " + folder_2 + "\n\n")
+    custom_print("\n" + "Compare Two Folders:")
+    custom_print("folder_1 = " + folder_1)
+    custom_print("folder_2 = " + folder_2 + "\n\n")
     are_dir_trees_equal(folder_1, folder_2)
-    print(f'\n-------\nSummary: {are_dir_trees_equal_bool(folder_1, folder_2) = }\n-------\n')
+    custom_print(f'\n-------\nSummary: {are_dir_trees_equal_bool(folder_1, folder_2) = }\n-------\n')
 
     if output_text[0]:
-        sys.stdout.close()
-        sys.stdout = default_stdout
+        with open(output_text[1], 'w', encoding='utf-8') as log_file:
+            log_file.write("\n".join(txt_file_output))
