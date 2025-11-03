@@ -3,7 +3,7 @@ import shutil
 import datetime
 
 
-main_folder_out = r"C:\Users\eddya\Downloads\Files"
+main_folder_out = r"C:\Users\eddya\Files\Non-Media Backup"
 
 folders_in = [
     r"C:\Users\eddya\OneDrive\תמונות\Family",
