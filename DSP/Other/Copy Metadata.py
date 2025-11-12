@@ -49,6 +49,7 @@ directory_source = r"C:\Users\eddya\Downloads\Pixel Media"
 directory_target = r"C:\Users\eddya\Videos"
 true_if_video = True
 copy_file_first = False
+debug = True
 file_filter = ""
 
 files = [os.path.join(root, f) for root, _, filenames in os.walk(directory_source) for f in filenames if f.lower().endswith(".mp4" if true_if_video else ".jpg")]
@@ -60,18 +61,22 @@ for file_original in files:
     if file_filter not in filename:
         continue
     file_new = os.path.join(directory_target, filename)
-    if copy_file_first:
-        shutil.copy(file_original, file_new)
-    try:
-        if true_if_video:
-            metadata = get_all_metadata(file_original)
-            if metadata:
-                set_video_metadata(file_new, metadata)
-        else:
-            exif_data = piexif.load(file_original)
-            exif_bytes = piexif.dump(exif_data)
-            piexif.insert(exif_bytes, file_new)
-    except:
-        print(f"File {file_new} not found")
+    if not os.path.exists(file_new):
+        print(f"The file {file_new} does not exist.")
     else:
-        print(f"All EXIF data copied from {file_original} to {file_new}.")
+        if copy_file_first:
+            shutil.copy(file_original, file_new)
+        try:
+            if true_if_video:
+                metadata = get_all_metadata(file_original)
+                if metadata and not debug:
+                    set_video_metadata(file_new, metadata)
+            else:
+                exif_data = piexif.load(file_original)
+                exif_bytes = piexif.dump(exif_data)
+                if not debug:
+                    piexif.insert(exif_bytes, file_new)
+        except Exception as e:
+            print(f"Issue: {e}")
+        else:
+            print(f"All EXIF data copied from {file_original} to {file_new}.")
