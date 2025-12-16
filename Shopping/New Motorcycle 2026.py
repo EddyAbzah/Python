@@ -1,4 +1,6 @@
 import AskAI
+import AskMotorcycleSpecsDatabase
+
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -6,7 +8,8 @@ from openpyxl import load_workbook
 
 
 create_txt_file = True
-txt_file_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026"
+# txt_file_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026"
+txt_file_path = r"C:\Users\eddya\Downloads\New Motorcycle 2026"
 txt_file_output = []
 
 
@@ -120,17 +123,18 @@ def fill_in_database(database):
 
 
 if __name__ == "__main__":
-    # ask_gemini_for_missing_data = True
-    ask_gemini_for_missing_data = False
+    ask_gemini_for_missing_data = True
+    # ask_gemini_for_missing_data = False
+    ask_motorcycle_specs_database = True
     get_motorcycle_from_excel = True
     get_motorcycle_index_number = 1
 
     if get_motorcycle_from_excel:
-        motorcycle_excel_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026\New Motorcycle 2026.xlsx"
+        motorcycle_excel_path = r"C:\Users\eddya\Downloads\New Motorcycle 2026\New Motorcycle 2026.xlsx"
         motorcycle, url = get_row_with_hyperlink(motorcycle_excel_path, get_motorcycle_index_number)
     else:
-        motorcycle = ""
-        url = ""
+        motorcycle = "Honda CB500X 2020"
+        url = "https://www.philharmonicmoto.com/product/honda-cb500x-my-19-21/"
     custom_print(f'{motorcycle = }')
     custom_print(f'{url = }')
     custom_print(f'')
@@ -141,12 +145,19 @@ if __name__ == "__main__":
     custom_print(f'{missing_output = }')
 
     if ask_gemini_for_missing_data:
-        response_text = AskAI.ask_gemini_motorcycle_data(motorcycle, missing_output)
-        custom_print(f'{response_text = }')
-        headers, values = response_text.splitlines()
-        keys = headers.split(",")
-        vals = values.split(",")
-        bike_data.update(dict([(key, float(value) if "." in value else int(value)) for key, value in zip(keys, vals)]))
+        try:
+            response_text = AskAI.ask_gemini_motorcycle_data(motorcycle, missing_output)
+            custom_print(f'{response_text = }')
+            response_text = response_text.splitlines()
+            if len(response_text) < 2:
+                keys = missing_output
+                vals = response_text[0].split(",")
+            else:
+                keys = response_text[0].split(",")
+                vals = response_text[1].split(",")
+            bike_data.update(dict([(key, float(value) if "." in value else int(value)) for key, value in zip(keys, vals)]))
+        except Exception as e:
+            custom_print(f"ERROR asking Gemini:\n{e}")
 
     custom_print()
     for k, v in bike_data.items():
@@ -154,6 +165,28 @@ if __name__ == "__main__":
     custom_print()
     custom_print("\t".join(bike_data.keys()))
     custom_print("\t".join(str(v) for v in bike_data.values()) + "\n")
+
+    if ask_motorcycle_specs_database:
+        try:
+            brand = motorcycle.split(" ", 1)[0]
+            year = motorcycle.rsplit(" ", 1)[-1]
+            model = motorcycle.replace(brand, "").replace(year, "").strip()
+            motorcycle_data = AskMotorcycleSpecsDatabase.main(brand, model, int(year))
+
+            custom_print()
+            custom_print("price\tfuelConsumption")
+            custom_print(f"{motorcycle_data["price"]}\t{motorcycle_data["fuelConsumption"]}")
+
+            if motorcycle_data:
+                for k, v in motorcycle_data.items():
+                    custom_print(f"{k}: {v}")
+                custom_print()
+                custom_print("\t".join(motorcycle_data.keys()))
+                custom_print("\t".join(str(v) for v in motorcycle_data.values()) + "\n")
+            else:
+                custom_print("No data to display.")
+        except Exception as e:
+            custom_print(f"ERROR asking Motorcycle Specs Database:\n{e}")
 
     if create_txt_file:
         filename = f"{txt_file_path}\\{motorcycle}.txt"
