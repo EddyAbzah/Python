@@ -8,8 +8,7 @@ from openpyxl import load_workbook
 
 
 create_txt_file = True
-# txt_file_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026"
-txt_file_path = r"C:\Users\eddya\Downloads\New Motorcycle 2026"
+txt_file_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026"
 txt_file_output = []
 
 
@@ -130,11 +129,11 @@ if __name__ == "__main__":
     get_motorcycle_index_number = 1
 
     if get_motorcycle_from_excel:
-        motorcycle_excel_path = r"C:\Users\eddya\Downloads\New Motorcycle 2026\New Motorcycle 2026.xlsx"
+        motorcycle_excel_path = r"C:\Users\eddya\Files\Shopping\New Motorcycle 2026\New Motorcycle 2026.xlsx"
         motorcycle, url = get_row_with_hyperlink(motorcycle_excel_path, get_motorcycle_index_number)
     else:
-        motorcycle = "Honda CB500X 2020"
-        url = "https://www.philharmonicmoto.com/product/honda-cb500x-my-19-21/"
+        motorcycle = ""
+        url = "https://www.philharmonicmoto.com/product"
     custom_print(f'{motorcycle = }')
     custom_print(f'{url = }')
     custom_print(f'')
