@@ -20,14 +20,21 @@ def ramp_up_brightness(writer):
             intensity = int(255 * ramp_idx / (ramp_frames - 1))
         else:
             intensity = 255
-        frame = np.full((height, width, 3), intensity, dtype=np.uint8)
 
-        text = f"RGB: {intensity}, {intensity}, {intensity}"
+        red = intensity if pick_color in [0, 3] else 0
+        green = intensity if pick_color in [1, 3] else 0
+        blue = intensity if pick_color in [2, 3] else 0
+        frame = np.zeros((height, width, 3), dtype=np.uint8)
+        frame[:, :, 2] = red
+        frame[:, :, 1] = green
+        frame[:, :, 0] = blue
+
+        text = f"RGB: {red}, {green}, {blue}"
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 2
         thickness = 4
-        text_color = (255 - intensity, 0, intensity)  # blue → red contrast
-        # Center the text
+        text_color = (255, 255, 255) if sum([red, green, blue]) / 3 < 128 else (0, 0, 0)
+
         text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
         text_x = (width - text_size[0]) // 2
         text_y = (height + text_size[1]) // 2
@@ -37,14 +44,16 @@ def ramp_up_brightness(writer):
 
 
 if __name__ == '__main__':
-    output_file = r""
-
     width, height = 1920, 1080
     fps = 30
     duration = 10
     total_frames = fps * duration
+    color = ["White", "Red", "Green", "Blue"]
+    pick_color = 0
     frame_distribution = [10, 80, 10]
     assert sum(frame_distribution) == 100
+
+    output_file = rf"Test 01 - {color[pick_color]}.mp4"
 
     writer = cv2.VideoWriter(output_file, fourcc, fps, (width, height))
     ramp_up_brightness(writer)
