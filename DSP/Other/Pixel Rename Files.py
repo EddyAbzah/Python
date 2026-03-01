@@ -11,8 +11,9 @@ time_zone = "Asia/Jerusalem"
 
 new_name_prefix = ""
 new_name_suffix = ""
-check_if_edit = [False, "~", " (edit)"]                  # enable, what to look for, suffix if found
-check_if_moving_picture = [False, ".MP", " (MP)"]       # enable, what to look for, suffix if found
+check_if_edit = [False, "~", " (edit)"]                                 # enable, what to look for, suffix if found
+check_if_night_sight = [True, "VB-02.MAIN", " (Night Sight)"]           # enable, what to look for, suffix if found
+check_if_moving_picture = [False, ".MP", " (MP)"]                       # enable, what to look for, suffix if found
 rename_in_reverse_order = True
 
 index_start = 1
@@ -36,6 +37,8 @@ def get_renaming_scheme(filename):
 
         if check_if_edit[0] and check_if_edit[1] in filename:
             new_filename += check_if_edit[2]
+        if check_if_night_sight[0] and check_if_night_sight[1] in filename:
+            new_filename += check_if_night_sight[2]
         if check_if_moving_picture[0] and check_if_moving_picture[1] in filename:
             new_filename += check_if_moving_picture[2]
         if file_extension.lower() == ".jpeg":
