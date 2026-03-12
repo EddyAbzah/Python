@@ -95,7 +95,7 @@ def run_demucs(file: Path):
     for model in demucs_models:
         stem_folder = output_folder_separated / model / file.stem
         if enable_skip_if_file_exists and stem_folder.exists() and any(stem_folder.iterdir()):
-            log(f"Skipping Demucs: {stem_folder}")
+            log(f"Skipping Demucs: {file.name}")
             continue
         for ext in output_types:
             cmd = ["demucs", "--device", "cuda", "-n", model, "--shifts", "1", "-j", "2"]
@@ -115,6 +115,13 @@ def mix_stems(file: Path, title: str, artist: str):
             if not stem_folder.exists():
                 log(f"Stem folder not found: {stem_folder}")
                 continue
+
+            # Check if all outputs exist, skip if so
+            if enable_skip_if_file_exists:
+                temp_outputs = [no_drums_output, drums_only_output, vocals_only_output]
+                if all((not enabled) or (enabled and (output_folder_mixed / model / f"({suffix_short}) {title}.{ext}").exists()) for (enabled, suffix_long, suffix_short) in temp_outputs):
+                    log(f"Skipping Mixing altogether for: {file.name})")
+                    continue
 
             # Load stems
             stems = {}
@@ -140,7 +147,7 @@ def mix_stems(file: Path, title: str, artist: str):
                 out_file = output_folder_mixed / model / f"({suffix_short}) {title}.{ext}"
 
                 if enable_skip_if_file_exists and out_file.exists():
-                    log(f"Skipping Mixing: {out_file})")
+                    log(f'Skipping Mixing of "{suffix_long}" for: {out_file})')
                     continue
 
                 # Overlay stems
