@@ -20,6 +20,8 @@ https://github.com/adefossez/demucs
 
 Python packages:
 pip install demucs, pydub, tqdm, mutagen
+
+Press F8 anywhere on Windows to gracefully shutdown (finish last song).
 """
 
 
@@ -29,6 +31,7 @@ import traceback
 import subprocess
 from tqdm import tqdm
 from pathlib import Path
+from pynput import keyboard
 from pydub import AudioSegment
 from datetime import datetime
 from mutagen.easyid3 import EasyID3
@@ -64,6 +67,7 @@ enable_skip_if_file_exists = True
 title_match_pattern = r"(\(\d{4}\)\s\d{2}\s)(.+)"
 save_log = True
 log_file_output = []
+system_stop_requested = False
 
 
 def log(line):
@@ -71,6 +75,16 @@ def log(line):
     tqdm.write(line)
     if save_log:
         log_file_output.append(line)
+
+
+def graceful_shutdown(key):
+    global system_stop_requested
+    try:
+        if key == keyboard.Key.f8:
+            log("Stop requested (F8 pressed). Finishing current song...")
+            system_stop_requested = True
+    except AttributeError:
+        pass
 
 
 def get_source_tags(file: Path):
@@ -214,9 +228,15 @@ log(f"{len(mp3_files)} files remaining after filtering out '{files_filter_out}'"
 if enable_mix:
     for model in demucs_models:
         (output_folder_mixed / model).mkdir(parents=True, exist_ok=True)
+listener = keyboard.Listener(on_press=graceful_shutdown)
+listener.start()
 
 for file in tqdm(mp3_files, desc="Processing songs", colour="cyan", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]"):
+    if system_stop_requested:
+        log("Stop requested (F8 pressed).")
+        break
     log(f"Starting song: {file.name}")
+
     try:
         title, artist, album = get_source_tags(file)
         if enable_demucs:
@@ -230,6 +250,7 @@ for file in tqdm(mp3_files, desc="Processing songs", colour="cyan", bar_format="
         log(traceback.format_exc())
         log(f"{type(e).__name__}: {e}")
 
+listener.stop()
 finish_time = datetime.now()
 duration = finish_time - start_time
 log(f"Script finished at: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}")
