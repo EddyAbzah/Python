@@ -14,8 +14,9 @@ whatsapp_pattern = re.compile(r".*-(\d{4})(\d{2})(\d{2})-.*")
 internal_storage_path = "/storage/emulated/0/"
 external_storage_path = "/sdcard/"
 storage_path = internal_storage_path
+date_format = "%Y-%m-%d _ %H-%M-%S"
 
-min_date = datetime(2026, 3, 5, 0, 0)
+min_date = [True, True, datetime(2026, 4, 1, 0, 0)]       # Enable, Check External file, Manual min_time
 jpeg_to_jpg = True
 organize_into_folders = True
 # organize_into_folders = False
@@ -39,6 +40,26 @@ def get_full_path(path):
     # if path[-1] != "/":
     #     path += "/"
     return f"'{path}'"
+
+
+def get_latest_timestamp(destination_folder):
+    latest_date = None
+    if min_date[1]:
+        for filename in os.listdir(destination_folder):
+            if not filename.endswith(".txt"):
+                continue
+            name_without_ext = filename[:-4]
+            try:
+                dt = datetime.strptime(name_without_ext, date_format)
+                if latest_date is None or dt > latest_date:
+                    latest_date = dt
+            except ValueError:
+                continue
+
+    if not min_date[1] or not latest_date:
+        latest_date = min_date[2]
+    custom_print(f"\n\n\n##########   Filter files from = {latest_date.strftime(date_format)}   ##########")
+    return latest_date
 
 
 def list_android_files(path="", folders_only=False):
@@ -89,7 +110,7 @@ def get_renaming_scheme(files_in):
         if whatsapp_pattern.search(filename):
             _, file_extension = os.path.splitext(filename)
             for i in range(0, 60):
-                datetime_str = (file_datetime + timedelta(seconds=i)).strftime("%Y-%m-%d _ %H-%M-%S")
+                datetime_str = (file_datetime + timedelta(seconds=i)).strftime(date_format)
                 filename_new = datetime_str + file_extension
                 if filename_new not in [d["filename_new"] for d in files if "filename_new" in d]:
                     break
@@ -152,15 +173,16 @@ if __name__ == "__main__":
                    ]
     for folder_path in directories:
         files = list_all_files(folder_path)
-        filtered_files = []
-        if files:
-            filtered_files = [f for f in files if f['datetime'] >= min_date]
+        custom_print(f"\n\n\n##########   {folder_path}:   Number of files = {len(files)}   ##########")
+        if files and min_date[0]:
+            latest_timestamp = get_latest_timestamp(destination_folder)
+            files = [f for f in files if f['datetime'] >= latest_timestamp]
+            custom_print(f"\n\n\n##########   {folder_path}:   Files after filter = {len(files)}   ##########")
 
-        custom_print(f"\n\n\n##########   {folder_path}:   {len(filtered_files)} filtered files from {len(files)}   ##########")
-        if filtered_files:
-            filtered_files = get_renaming_scheme(filtered_files)
-            filtered_files.sort(key=lambda x: x['datetime'])
-            table_data = [f.values() for f in filtered_files]
+        if files:
+            files = get_renaming_scheme(files)
+            files.sort(key=lambda x: x['datetime'])
+            table_data = [f.values() for f in files]
             headers = ["Old Filename", "New Filename", "Datetime", "Size (MB)"]
             custom_print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
@@ -173,9 +195,9 @@ if __name__ == "__main__":
                     os.makedirs(new_destination_folder, exist_ok=True)
                 else:
                     new_destination_folder = destination_folder
-                pull_files(folder_path, filtered_files, new_destination_folder)
+                pull_files(folder_path, files, new_destination_folder)
 
-    current_time = datetime.now().strftime("%Y-%m-%d _ %H-%M-%S")
+    current_time = datetime.now().strftime(date_format)
     custom_print("All copies complete")
     custom_print(f"Current time: {current_time}")
 
