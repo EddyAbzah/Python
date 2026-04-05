@@ -106,12 +106,11 @@ def delete_orphaned_files(source: str, destination: str, filter_extensions: set[
                 custom_print(f"Deleted folder: {root}")
                 if delete_orphans:
                     try:
-                        os.rmdir(root)
+                        # os.rmdir(root)
+                        shutil.rmtree(root)
                     except Exception as e:
                         had_errors = True
                         custom_print(f"\nERROR deleting folder: {e}")
-                        custom_print(f'{src_file = }')
-                        custom_print(f'{dst_file = }\n')
 
 
 if __name__ == "__main__":
@@ -123,7 +122,7 @@ if __name__ == "__main__":
     # All files but mp3 files:
     for src, dst in zip(music_folders_in, music_folders_out):
         copy_files(src, dst, music_exclude_extensions)
-        delete_orphaned_files(src, dst, exclude_extensions)
+        delete_orphaned_files(src, dst, music_exclude_extensions)
 
     current_time = datetime.datetime.now().strftime("%Y-%m-%d _ %H-%M-%S")
     if had_errors:
