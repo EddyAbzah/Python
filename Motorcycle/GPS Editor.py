@@ -1,12 +1,28 @@
+# pyinstaller --noconfirm --onedir --windowed --contents-directory "GPS Editor" --icon "GPS Editor.png"  "GPS Editor.py"
+
+
+import os
+import sys
 import gpxpy
 import folium
 import webbrowser
-import os
 
 
 FILE = r""
 GPX_FILE_IN = FILE + ".gpx"
 HTML_FILE_OUT = FILE + ".html"
+
+
+# ## ### Enable for PyInstaller ### ## #
+
+# if len(sys.argv) < 2:
+#     print("Drag a GPX file onto this EXE")
+#     sys.exit(1)
+#
+# GPX_FILE_IN = sys.argv[1]
+# HTML_FILE_OUT = GPX_FILE_IN.replace(".gpx", ".html")
+
+# ## ### Enable for PyInstaller ### ## #
 
 
 with open(GPX_FILE_IN, "r", encoding="utf-8") as gpx_file:
