@@ -22,3 +22,8 @@ Approximately equal (≈)			ALT (hold) + 247
 Square Root (√)				ALT (hold) + 251
 Squared (²)				ALT (hold) + 0178
 Em dash (—)				ALT (hold) + 0151
+
+
+Auto Sum				ALT (hold) + =
+Select entire row				Shift (hold) + Space
+Select entire column 			Cntrl (hold) + Space

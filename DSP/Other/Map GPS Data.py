@@ -86,7 +86,10 @@ def build_map(folder, subfolder):
     for coord, filename in coordinates:
         folium.Marker(coord, popup=filename).add_to(m)
 
-    output_file = os.path.join(folder, subfolder + ".html")
+    if "Pixel Media" in folder:
+        output_file = os.path.join(folder, "___ Location History ___", subfolder + ".html")
+    else:
+        output_file = os.path.join(folder, subfolder + ".html")
     m.save(output_file)
     print(f"Map saved to: {output_file}")
 
