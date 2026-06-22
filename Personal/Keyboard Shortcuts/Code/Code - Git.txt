@@ -1,2 +1,15 @@
 HEAD					A reference to the current commit or the current branch in your local repository
-Rebase					Effectively rewrites history; avoid if you have already pushed your commits
+Stage / Index			Area where changes are prepared before committing
+Fetch / Pull			Fetch changes from a remote / merge them into your branch
+Commit					A snapshot of changes saved to the repository history
+Merge					Combine changes from one branch into another, usually creating a merge commit
+Checkout / Switch		Move your working directory to a different branch or commit
+Rebase					Effectively rewrites history, creating a cleaner linear history; avoid if you have already pushed your commits
+Fast-Forward Merge		Merge that simply moves the branch pointer forward without creating a merge commit
+Squash					Combine multiple commits into one commit
+Revert					Create a new commit that undoes a previous commit
+Reset					Move a branch pointer and optionally modify staged/working changes (rewrites local history)
+Amend					Modify the most recent commit
+Merge Conflict			Occurs when Git cannot automatically combine changes
+Resolve Conflict		Manually choose how conflicting changes should be combined
+Pull Request (PR)		Proposal to merge changes into another branch (GitHub/GitLab feature, not Git itself)
