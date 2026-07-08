@@ -1,6 +1,6 @@
 """This script is for converting LiveSPICE files to LTspice"""
 
-path_folder = r"C:\Users\eddy.a\OneDrive - SolarEdge\Documents\Yuvi et Eddy\Pedals - future\Way Huge - Swollen Pickle MkII\LTspice" + "\\"
+path_folder = r"Documents\Yuvi et Eddy\Pedals - future\Way Huge - Swollen Pickle MkII\LTspice" + "\\"
 path_in = "Way Huge - Swollen Pickle MkII 01" + ".schx"
 path_out = "Way Huge - Swollen Pickle MkII 01" + ".asc"
 txt_out = ["Version 4"]

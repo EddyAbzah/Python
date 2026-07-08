@@ -31,7 +31,7 @@ def get_chart_details(file_path):
 
 
 # Example usage
-file_path = r"C:\Users\eddy.a\Downloads\Automation Console 2\Arcs 02\Full_Arc_Test-05_08_24-17_10\Test 06 with CosPhi.xlsx"
+file_path = r".xlsx"
 chart_details = get_chart_details(file_path)
 
 print("\t".join(chart_details[0].keys()))

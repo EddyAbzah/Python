@@ -1,4 +1,4 @@
-# pyinstaller --onefile --noconsole --icon Salvador.ico --add-data "C:/Users/eddy.a/OneDrive - SolarEdge/Documents/Python Scripts/Sahar/TelemetriesGUI 03/Media;Media/"  Salvador.py
+# pyinstaller --onefile --noconsole --icon Salvador.ico --add-data "TelemetriesGUI 03/Media;Media/"  Salvador.py
 
 
 import os

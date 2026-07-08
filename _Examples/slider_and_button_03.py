@@ -2,8 +2,8 @@ import plotly.graph_objects as go
 import pandas as pd
 
 
-path_folder = r'M:\Users\HW Infrastructure\PLC team\INVs\Jupiter48\Jupiter48 BU - New layout + DC conducted - EddyA 2.2024\Cable Automation\Cable Automation 05'
-path_file_out = 'Jup48 New DC Filter'
+path_folder = r''
+path_file_out = ''
 df = pd.read_csv(f'{path_folder}\\{path_file_out}.csv')
 scenarios = [s for s in df.iloc[:, :10].fillna('off').astype(str).agg(', '.join, axis=1).unique()]
 data_points = df['Measurement'].unique()

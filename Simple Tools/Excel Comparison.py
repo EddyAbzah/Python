@@ -55,7 +55,7 @@ def compare_and_write_excel(file1, file2, output_file):
 
 
 if __name__ == "__main__":
-    folder = r"M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy\Optimizer Automation Sanity Tests" + "\\"
+    folder = r"" + "\\"
     a, b = "25C", "85C"
     file_1 = folder + f"Sanity Test 06 {a}.xlsx"
     file_2 = folder + f"Sanity Test 06 {b}.xlsx"

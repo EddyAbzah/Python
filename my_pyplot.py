@@ -103,7 +103,7 @@ class Message_type(Enum):
     Pause = 3
 
 
-def send_mail(receivers='eddy.abzah@solaredge.com', message=Message_type.Finished, pc='eddyab-pc', file='N/A', line='N/A'):
+def send_mail(receivers='EA@SE.com', message=Message_type.Finished, pc='', file='N/A', line='N/A'):
     sender = "Python@Automation.com"
     if isinstance(receivers, str):
         receivers_list = [receivers]
@@ -142,7 +142,7 @@ File = {file}
 line = {line}
 """
     try:
-        smtpObj = smtplib.SMTP('cust59304-s.out.mailcontrol.com')
+        smtpObj = smtplib.SMTP('')
         smtpObj.sendmail(sender, receivers, message_full)
         print("Successfully sent email")
     except:

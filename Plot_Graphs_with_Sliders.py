@@ -27,7 +27,7 @@ from my_pyplot import omit_plot as _O, plot as _P, print_chrome as _PC, clear as
 
 
 # ## ### #### ##### Properties ##### #### ### ## #
-path_output = r'M:\Users\HW Infrastructure\PLC team\ARC\Temp-Eddy'
+path_output = r''
 kill_chrome = False
 auto_open_chrome_output = False
 plot_name = f'Over Power Vdc Arcs'
