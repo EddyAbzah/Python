@@ -17,19 +17,35 @@ source_folder = r""
 left_folder = r""
 right_folder = r""
 
-
-T_files__F_files = False
+T_images__F_videos = True
 index = 0
 current_file_path = None  # Track current image path
 cap = None  # OpenCV video capture object
 pending_action = None  # Store action to perform after skipping
 
 
-if T_files__F_files:
+if T_images__F_videos:
     files = [f for f in os.listdir(source_folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
 else:
     files = [f for f in os.listdir(source_folder) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
 files.sort()
+
+
+def create_help_window():
+    """Create a small window showing the keyboard controls."""
+    help_win = tk.Toplevel(root)
+    help_win.title("Keyboard Controls")
+    help_win.resizable(False, False)
+    help_win.attributes("-topmost", True)       # keep on top
+
+    frame = tk.Frame(help_win, padx=15, pady=15)
+    frame.pack()
+    key_style = {"width": 20, "height": 3, "relief": "raised", "borderwidth": 3, "font": ("Segoe UI", 10, "bold")}
+
+    tk.Label(frame, text="↑\nSkip", **key_style).grid(row=0, column=1, pady=4)
+    tk.Label(frame, text=f"←\n{os.path.basename(left_folder)}", **key_style).grid(row=1, column=0, padx=4)
+    tk.Label(frame, text="↓\nDelete", **key_style).grid(row=1, column=1, padx=4)
+    tk.Label(frame, text=f"→\n{os.path.basename(right_folder)}", **key_style).grid(row=1, column=2, padx=4)
 
 
 def show_image():
@@ -197,7 +213,9 @@ def skip_video():
 
 if __name__ == '__main__':
     root = tk.Tk()
-    if T_files__F_files:
+    create_help_window()
+
+    if T_images__F_videos:
         root.title("Image Sorter")
     else:
         root.title("Video Sorter")
@@ -208,7 +226,7 @@ if __name__ == '__main__':
     lbl.pack(fill=tk.BOTH, expand=True)  # Make label fill window
 
     # Bind arrow keys to actions
-    if T_files__F_files:
+    if T_images__F_videos:
         root.bind("<Left>", lambda _: move_image(left_folder))  # Left Arrow → Move to left_folder
         root.bind("<Right>", lambda _: move_image(right_folder))  # Right Arrow → Move to right_folder
         root.bind("<Down>", lambda _: delete_image())  # Down Arrow → Send to Recycle Bin
